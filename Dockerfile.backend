@@ -1,0 +1,29 @@
+# Personal AI Brain - FastAPI Backend (Python 컨테이너)
+# docker-compose.yml의 backend 서비스에서 사용
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# 시스템 의존성 (Python 패키지 빌드용 + Claude Code CLI 실행용 Node.js)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+# 의존성 설치: Docker에서는 Ollama 컨테이너 사용, gpt4all 미포함
+COPY requirements.txt requirements-docker.txt ./
+RUN pip install --no-cache-dir -r requirements-docker.txt
+
+# 앱 코드 (볼륨 마운트로 덮어쓸 수 있음)
+COPY backend ./backend
+COPY web ./web
+COPY brain ./brain
+COPY scripts ./scripts
+
+ENV PYTHONPATH=/app
+ENV PROJECT_ROOT=/app
+
+EXPOSE 8000
+
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]

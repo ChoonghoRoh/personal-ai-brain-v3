@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/css/dashboard.css" />
+    <title>Personal AI Brain - Dashboard</title>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header는 JavaScript로 동적 생성 -->
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <h3>총 문서 수</h3>
+          <div class="value" id="total-docs">-</div>
+        </div>
+        <div class="stat-card">
+          <h3>Qdrant 포인트</h3>
+          <div class="value" id="qdrant-points">-</div>
+        </div>
+        <div class="stat-card">
+          <h3>프로젝트 수</h3>
+          <div class="value" id="projects-count">-</div>
+        </div>
+        <div class="stat-card">
+          <h3>총 작업 수</h3>
+          <div class="value" id="total-works">-</div>
+        </div>
+      </div>
+
+      <div class="status-section">
+        <h2>🚀 Reasoning Quick Start</h2>
+        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1)">
+          <p style="margin-bottom: 15px; color: #666">지식 구조를 탐색하고 Reasoning을 실행해보세요.</p>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap">
+            <a href="/knowledge" style="padding: 10px 20px; background: #2563eb; color: white; text-decoration: none; border-radius: 6px; font-weight: 500">
+              📊 Knowledge Studio 열기
+            </a>
+            <a href="/reason" style="padding: 10px 20px; background: #10b981; color: white; text-decoration: none; border-radius: 6px; font-weight: 500"> 🧠 Reasoning Lab 열기 </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="status-section">
+        <h2>⚙️ 지식 관리</h2>
+        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1)">
+          <p style="margin-bottom: 15px; color: #666">라벨 관리 및 청크 승인을 수행하세요.</p>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap">
+            <a href="/knowledge-admin" style="padding: 10px 20px; background: #7c3aed; color: white; text-decoration: none; border-radius: 6px; font-weight: 500">
+              ⚙️ Knowledge Admin 열기
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="status-section">
+        <h2>시스템 상태</h2>
+        <div id="system-status">
+          <div class="loading">로딩 중...</div>
+        </div>
+      </div>
+
+      <div class="recent-work">
+        <h2>최근 작업</h2>
+        <div id="recent-work">
+          <div class="loading">로딩 중...</div>
+        </div>
+      </div>
+
+      <div class="status-section">
+        <h2>자동화 상태</h2>
+        <div id="automation-status">
+          <div class="loading">로딩 중...</div>
+        </div>
+      </div>
+
+      <div class="recent-work">
+        <h2>최근 업데이트 문서</h2>
+        <div id="recent-documents">
+          <div class="loading">로딩 중...</div>
+        </div>
+      </div>
+
+      <div class="analytics-panel">
+        <h2>활동 분석</h2>
+        <div id="activity-chart">
+          <div class="loading">로딩 중...</div>
+        </div>
+        <div class="activity-summary" id="activity-summary"></div>
+      </div>
+
+      <div class="recent-work">
+        <h2>📄 문서 목록</h2>
+        <div style="margin-bottom: 15px">
+          <input
+            type="text"
+            id="document-search"
+            placeholder="문서 검색..."
+            style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px"
+            onkeyup="filterDocuments()"
+          />
+        </div>
+        <div id="documents-list">
+          <div class="loading">로딩 중...</div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/js/components/layout-component.js"></script>
+    <script src="/static/js/components/header-component.js"></script>
+    <script src="/static/js/components/utils.js"></script>
+    <script src="/static/js/components/document-utils.js"></script>
+    <script src="/static/js/dashboard/dashboard.js"></script>
+  </body>
+</html>

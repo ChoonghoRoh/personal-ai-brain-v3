@@ -1,0 +1,520 @@
+{
+  "name": "Phase Auto Checker v1",
+  "nodes": [
+    {
+      "parameters": {
+        "command": "={{\"cd /workspace/docs/phases/\" + $node[\"SET_PhaseId\"].json.phaseDirId + \" && ls -1 | grep -E '^\" + $node[\"SET_PhaseId\"].json.phaseFileBase + \"(-[0-9]+)?-' || true\"}}"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "57f49977-a080-4f45-97df-71ff08c36937",
+      "name": "CMD_ListPhaseFiles"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1) 이전 Execute Command 노드의 stdout(파일 목록 문자열)\n\nconst stdout = String($node[\"CMD_ListPhaseFiles\"].json.stdout || \"\");\nconst rulesText = String($node[\"CMD_LoadPhaseRules\"].json.stdout || \"\");\nconst hasRules = rulesText && !/(MISSING)/.test(rulesText);\n\n\n// 2) 줄 단위로 파일명 배열\nconst files = stdout\n  .split(\"\\n\")\n  .map(s => s.trim())\n  .filter(Boolean);\n\n// 3) phaseFileBase 가져오기 (SET_PhaseId에서 넘겨준 값)\nconst phaseFileBase = String($node[\"SET_PhaseId\"].json.phaseFileBase || \"\").trim();\n\n// 4) 정규식 헬퍼\nconst escRe = (s) => s.replace(/[.*+?^${}()|[\\]\\\\]/g, \"\\\\$&\");\nconst base = escRe(phaseFileBase);\n\nconst hasRe = (re) => files.some(f => re.test(f));\n\n// 5) 네 규칙 반영한 패턴들\nconst RE_PLAN  = new RegExp(`^${base}-plan\\\\.md$`);\nconst RE_TODO  = new RegExp(`^${base}-todo-list\\\\.md$`);\nconst RE_FINAL = new RegExp(`^${base}-final-summary-report\\\\.md$`);\n\n// task change/test: ^phaseFileBase(-[0-9]+)?-.*-(change-report|test-report)\\.md$\nconst RE_TASK_REPORT = new RegExp(`^${base}(-[0-9]+)?-.*-(change-report|test-report)\\\\.md$`);\n\n// (선택) 체크리스트/유저테스트 결과도 base 기준으로 묶고 싶으면 아래처럼\nconst RE_CHECKLIST = new RegExp(`^${base}(-[0-9]+)?-.*-(user-test-checklist|test-checklist)\\\\.md$`);\n\nconst RE_USER_TEST_RESULTS = new RegExp(`^${base}(-[0-9]+)?(-.*)?-user-test-results\\\\.md$`);\n\nconst hasFinalSummary = hasRe(RE_FINAL);\n// 6) 결과\nconst result = {\n  files,\n  phaseFileBase,\n\n  hasPlan: hasRe(RE_PLAN),\n  hasTodo: hasRe(RE_TODO),\n  hasChecklist: hasRe(RE_CHECKLIST),\n  hasUserTestResults: hasRe(RE_USER_TEST_RESULTS),\n\n  hasFinalSummary: hasRe(RE_FINAL),\n  needFinalSummary: hasRe(RE_USER_TEST_RESULTS) && !hasRe(RE_FINAL),\n\n  hasTaskReports: hasRe(RE_TASK_REPORT),\n  canCreatePlan: hasFinalSummary,\n  \n  // ✅ 추가\n  hasRules,\n  rulesText,\n  \n};\n\nreturn [{ json: result }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        0
+      ],
+      "id": "3840545b-624d-4ee3-a2d7-d1b308a256b3",
+      "name": "JS_CheckPhaseArtifacts"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a63ce486-82f5-41f2-bacb-ec07fbe1d570",
+              "leftValue": "={{$json.needFinalSummary}}",
+              "rightValue": "=true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": "=",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1056,
+        0
+      ],
+      "id": "338501ca-deb3-4328-bdba-15c92837dd8c",
+      "name": "IF_NeedFinalSummary"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        0
+      ],
+      "id": "ef2270b8-9a6c-4179-b2ba-889cbfc7ccad",
+      "name": "Trigger_Manual"
+    },
+    {
+      "parameters": {
+        "executeOnce": "={{ true }}",
+        "command": "=cd /workspace || exit 1\n\nPHASE_DIR=\"docs/phases/{{$node[\"SET_PhaseId\"].json.phaseDirId}}\"\nOUT=\"$PHASE_DIR/{{$node[\"SET_PhaseId\"].json.phaseFileBase}}-final-summary-report.md\"\n\nif [ -f \"$OUT\" ]; then\n  echo \"SKIP: already exists -> $OUT\"\n  exit 0\nfi\n\nmkdir -p \"$PHASE_DIR\"\nFILES=$(ls -1 \"$PHASE_DIR\" 2>/dev/null | sort || true)\n\nNOW=$(date -Iseconds)\n{\n  echo \"---\"\n  echo \"doc_type: phase-final-summary\"\n  echo \"phase_id: {{$node[\"SET_PhaseId\"].json.phaseFileBase}}\"\n  echo \"generated_by: n8n\"\n  echo \"generated_at: $NOW\"\n  echo \"---\"\n  echo\n  echo \"# {{$node[\"SET_PhaseId\"].json.phaseFileBase}} Final Summary\"\n} > \"$OUT\"\n\necho \"OK: created -> $OUT\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1312,
+        -80
+      ],
+      "id": "b6e7986e-28ee-47c3-aa3f-6cabae947b6c",
+      "name": "GEN_CreateFinalSummary"
+    },
+    {
+      "parameters": {
+        "command": "echo \"SKIP: phase-{{$json.phaseId}} already has final summary\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1344,
+        736
+      ],
+      "id": "7fdcffdc-ea0f-4f4c-a6a2-89cbfb4d12d4",
+      "name": "LOG_SkipFinalSummary"
+    },
+    {
+      "parameters": {
+        "command": "cd /workspace || exit 1\n\nOUT=\"docs/phases/{{$node[\"SET_PhaseId\"].json.phaseDirId}}/{{$node[\"SET_PhaseId\"].json.phaseFileBase}}-final-summary-report.md\"\n\nif [ -f \"$OUT\" ]; then\n  echo \"FOUND\"\n  ls -l \"$OUT\"\nelse\n  echo \"NOT FOUND\"\nfi"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1552,
+        -80
+      ],
+      "id": "b02ea08f-04e5-4986-94c0-7687425b50f5",
+      "name": "CMD_VerifyFinalSummary"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a6be2fec-54da-40ce-a4df-275dfe3e4a2f",
+              "name": "phaseDirId",
+              "value": "Testphase1-0",
+              "type": "string"
+            },
+            {
+              "id": "55101aca-8551-482e-8247-e783197dab41",
+              "name": "phaseFileBase",
+              "value": "Testphase1-0-0",
+              "type": "string"
+            },
+            {
+              "id": "6ab85e58-fa6f-44d9-aa54-70db540a04c1",
+              "name": "nextPhaseDirId",
+              "value": "Testphase1-0-0",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        0
+      ],
+      "id": "250816b6-2b9a-4839-bf77-46b7f93b16f6",
+      "name": "SET_PhaseId"
+    },
+    {
+      "parameters": {
+        "command": "cd /workspace\n\nRULES_FILES=\"\ndocs/ai/ai-rule-phase-naming.md\ndocs/ai/ai-rule-phase-auto-generation.md\ndocs/ai/ai-rule-decision.md\ndocs/prompts/phase-auto-create-prompt.md\n\"\n\nRULES_TEXT=\"\"\n\nfor f in $RULES_FILES; do\n  if [ -f \"$f\" ]; then\n    RULES_TEXT=\"${RULES_TEXT}\\n\\n# --- ${f} ---\\n\"\n    RULES_TEXT=\"${RULES_TEXT}$(cat \"$f\")\"\n  else\n    RULES_TEXT=\"${RULES_TEXT}\\n\\n# --- ${f} (MISSING) ---\\n\"\n  fi\ndone\n\necho -e \"$RULES_TEXT\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "27832397-94dd-4b4d-9335-ab2db8f7ca20",
+      "name": "CMD_LoadPhaseRules"
+    },
+    {
+      "parameters": {
+        "command": "=cd /workspace || exit 1\n\nPHASE_DIR=\"docs/phases/{{$node[\"SET_PhaseId\"].json.phaseDirId}}\"\nSUMMARY=\"$PHASE_DIR/{{$node[\"SET_PhaseId\"].json.phaseFileBase}}-final-summary-report.md\"\n\nif [ ! -f \"$SUMMARY\" ]; then\n  echo \"MISSING: $SUMMARY\"\n  ls -la \"$PHASE_DIR\" 2>/dev/null || true\n  exit 0\nfi\n\necho \"FOUND: $SUMMARY\"\ncat \"$SUMMARY\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1312,
+        144
+      ],
+      "id": "31c7ae79-9a33-4ff9-a202-280a1402a61d",
+      "name": "CMD_LoadFinalSummary"
+    },
+    {
+      "parameters": {
+        "jsCode": "const curDir = String($node[\"SET_PhaseId\"].json.phaseDirId || \"\").trim();      // Testphase1-0\nconst curBase = String($node[\"SET_PhaseId\"].json.phaseFileBase || \"\").trim(); // Testphase1-0-0\n\n// Testphase1-0  -> Testphase1-1\nconst dirMatch = curDir.match(/^(.*?)(\\d+)-(\\d+)$/);\nif (!dirMatch) throw new Error(\"phaseDirId format invalid: \" + curDir);\n\nconst prefix = dirMatch[1];              // \"Testphase\"\nconst x = Number(dirMatch[2]);           // 1\nconst y = Number(dirMatch[3]);           // 0\nconst nextDir = `${prefix}${x}-${y+1}`;  // Testphase1-1\n\n// Testphase1-0-0 -> Testphase1-1-0\nconst baseMatch = curBase.match(/^(.*?)(\\d+)-(\\d+)-(\\d+)$/);\nif (!baseMatch) throw new Error(\"phaseFileBase format invalid: \" + curBase);\n\nconst bPrefix = baseMatch[1];            // \"Testphase\"\nconst bx = Number(baseMatch[2]);         // 1\nconst by = Number(baseMatch[3]);         // 0\nconst bz = Number(baseMatch[4]);         // 0\nconst nextBase = `${bPrefix}${bx}-${by+1}-0`; // Testphase1-1-0\n\nreturn [{\n  json: {\n    nextPhaseDirId: nextDir,\n    nextPhaseFileBase: nextBase,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        144
+      ],
+      "id": "e8a3f880-342d-450d-9074-8de85a8ee70f",
+      "name": "JS_SetNextPhaseId"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1856,
+        688
+      ],
+      "id": "0b921966-9f2e-41f8-b338-98826056ba89",
+      "name": "JS_NormalizeFinalSummary"
+    },
+    {
+      "parameters": {
+        "command": "=cd /workspace || exit 1\n\nPHASE_DIR=\"docs/phases/{{$node[\"JS_SetNextPhaseId\"].json.nextPhaseDirId}}\"\nOUT=\"$PHASE_DIR/{{$node[\"JS_SetNextPhaseId\"].json.nextPhaseFileBase}}-plan.md\"\n\nmkdir -p \"$PHASE_DIR\"\n\nPLAN_TEXT='{{$node[\"GPT_CreatePlan\"].json.output[0].content[0].text}}'\nprintf \"%s\" \"$PLAN_TEXT\" > \"$OUT\"\n\necho \"OK: created -> $OUT\"\nwc -c \"$OUT\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        2576,
+        144
+      ],
+      "id": "4c1c8f94-ee55-41cb-bc19-b3df7e3675e0",
+      "name": "CMD_WritePlanFile"
+    },
+    {
+      "parameters": {
+        "command": "=cd /workspace || exit 1\n\nPHASE_DIR=\"docs/phases/{{$node[\"JS_SetNextPhaseId\"].json.nextPhaseDirId}}\"\nPLAN=\"$PHASE_DIR/{{$node[\"JS_SetNextPhaseId\"].json.nextPhaseFileBase}}-plan.md\"\n\n# 1) 파일 존재 확인\nif [ ! -f \"$PLAN\" ]; then\n  echo \"NOT FOUND: $PLAN\"\n  ls -la \"$PHASE_DIR\" 2>/dev/null || true\n  exit 0\nfi\n\n# 2) 빈 파일/너무 짧은 파일 방지\nSIZE=$(wc -c < \"$PLAN\" 2>/dev/null || echo 0)\nif [ \"$SIZE\" -lt 200 ]; then\n  echo \"INVALID: plan too small ($SIZE bytes) -> $PLAN\"\n  echo \"----- HEAD -----\"\n  head -n 40 \"$PLAN\" || true\n  exit 0\nfi\n\n# 3) 설계 구조 검증(필수 섹션)\nmissing=0\ncheck() {\n  label=\"$1\"\n  pattern=\"$2\"\n  if ! grep -qF \"$pattern\" \"$PLAN\"; then\n    echo \"MISSING SECTION: $label (expected: $pattern)\"\n    missing=1\n  fi\n}\n\n# 제목(최소 조건)\nif ! head -n 5 \"$PLAN\" | grep -qE '^#\\s+'; then\n  echo \"MISSING TITLE: first heading must start with '# '\"\n  missing=1\nfi\n\n# Required Structure (phase-plan-guide-prompt / phase-auto-create 구조 기준)\ncheck \"1. Phase 목적\" \"## 1. Phase 목적\"\ncheck \"2. Phase 배경\" \"## 2. Phase 배경\"\ncheck \"3. 성공 기준 (Done Definition)\" \"## 3. 성공 기준 (Done Definition)\"\ncheck \"4. 범위 (Scope)\" \"## 4. 범위 (Scope)\"\ncheck \"4-포함\" \"### 포함\"\ncheck \"4-제외\" \"### 제외\"\ncheck \"5. 주요 전략\" \"## 5. 주요 전략\"\ncheck \"6. 예상 리스크\" \"## 6. 예상 리스크\"\ncheck \"7. 다음 단계 연결\" \"## 7. 다음 단계 연결\"\ncheck \"판단 근거\" \"## 판단 근거\"\n\n# 4) 결과 출력\nif [ \"$missing\" -eq 1 ]; then\n  echo \"VERIFY: FAIL -> $PLAN\"\n  echo \"----- HEAD -----\"\n  head -n 80 \"$PLAN\" || true\n  exit 0\nfi\n\necho \"VERIFY: PASS -> $PLAN\"\necho \"SIZE: $SIZE bytes\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        2800,
+        144
+      ],
+      "id": "f6b3789e-6dea-4b66-9b5b-bf2e4176965f",
+      "name": "CMD_VerifyPlan"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5.2",
+          "mode": "list",
+          "cachedResultName": "GPT-5.2"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=너는 “Phase 설계 문서 생성하는 AI” 다.\n\n너의 임무는:\n- 제공된 final-summary 문서를 근거로\n- 다음 Phase의 plan.md 설계 문서를 작성하는 것이다.\n\n반드시 아래 규칙을 따른다:\n- phase-plan-guide-prompt.md에 정의된 구조와 섹션을 100% 그대로 따른다.\n- 작업 목록(todo), 체크리스트, 구현 단계, 실행 절차를 작성하지 않는다.\n- 설명, 주석, 말투, 해설을 추가하지 않는다.\n- 출력은 오직 Markdown plan 문서 본문만 허용된다.\n- 코드블록, 인라인 설명, 부가 텍스트를 절대 출력하지 않는다.\n"
+            },
+            {
+              "content": "=[Phase Plan Guide]\n{{ $node[\"CMD_LoadPhasePlanGuide\"].json.stdout }}\n\n[Phase Plan Rules]\nRules: {{$node[\"CMD_LoadPhaseRules\"].json.stdout}}\n\n[Final Summary]\n{{ $node[\"CMD_LoadFinalSummary\"].json.stdout }}\n\n[Next Phase Meta]\ndir: {{ $node[\"JS_SetNextPhaseId\"].json.nextPhaseDirId }}\nfileBase: {{ $node[\"JS_SetNextPhaseId\"].json.nextPhaseFileBase }}\n\n[Output Rules]\n- 위 Phase Plan Guide의 구조를 그대로 따른다\n- plan.md 본문만 출력한다\n- 파일명 기준: {{ $node[\"JS_SetNextPhaseId\"].json.nextPhaseFileBase }}-plan.md\n- 제목 형식: # {{ $node[\"JS_SetNextPhaseId\"].json.nextPhaseFileBase }} — <Phase Title>\n\n"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        2224,
+        144
+      ],
+      "id": "c3da866f-dc8f-46b3-9ecf-96f0d90c3ab0",
+      "name": "GPT_CreatePlan",
+      "credentials": {
+        "openAiApi": {
+          "id": "npcqtQ4Nj8kK6D8w",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "command": "cd /workspace || exit 1\ncat docs/prompts/phase-plan-guide-prompt.md"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1968,
+        144
+      ],
+      "id": "3f8ac385-aeb9-482c-b8bd-74ef09c8e45e",
+      "name": "CMD_LoadPhasePlanGuide"
+    },
+    {
+      "parameters": {
+        "command": "=cd /workspace || exit 1\n\nPHASE_DIR=\"docs/phases/{{$node[\"SET_PhaseId\"].json.phaseDirId}}\"\nSUMMARY=\"$PHASE_DIR/{{$node[\"SET_PhaseId\"].json.phaseFileBase}}-user-test-results.md\"\n\nif [ ! -f \"$SUMMARY\" ]; then\n  echo \"MISSING: $SUMMARY\"\n  ls -la \"$PHASE_DIR\" 2>/dev/null || true\n  exit 0\nfi\n\necho \"FOUND: $SUMMARY\"\ncat \"$SUMMARY\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        144
+      ],
+      "id": "b5a03410-c720-46df-961e-161cee2837b9",
+      "name": "CMD_LoadUserChecklistSummary"
+    },
+    {
+      "parameters": {
+        "command": "={{ \n  \"cd /workspace && cat README.md\"\n}}"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        64,
+        0
+      ],
+      "id": "91c8e566-db98-4322-a295-284cfed51bdd",
+      "name": "CMD_LoadReadme"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "75bf934e-52b2-47d0-a552-0f7fdeaa272d",
+              "name": "stageFileRelPath",
+              "value": "=docs/phases/{{nextPhaseDirId}}/_stages/1-phase-definition.md",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        496,
+        384
+      ],
+      "id": "b7cda91d-a11a-4163-9b07-e0bb4561026a",
+      "name": "SET_Stage1_Meta"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "CMD_ListPhaseFiles": {
+      "main": [
+        [
+          {
+            "node": "CMD_LoadPhaseRules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JS_CheckPhaseArtifacts": {
+      "main": [
+        [
+          {
+            "node": "IF_NeedFinalSummary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF_NeedFinalSummary": {
+      "main": [
+        [
+          {
+            "node": "GEN_CreateFinalSummary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "CMD_LoadFinalSummary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger_Manual": {
+      "main": [
+        [
+          {
+            "node": "CMD_LoadReadme",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GEN_CreateFinalSummary": {
+      "main": [
+        [
+          {
+            "node": "CMD_VerifyFinalSummary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SET_PhaseId": {
+      "main": [
+        [
+          {
+            "node": "CMD_ListPhaseFiles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CMD_LoadPhaseRules": {
+      "main": [
+        [
+          {
+            "node": "JS_CheckPhaseArtifacts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CMD_LoadFinalSummary": {
+      "main": [
+        [
+          {
+            "node": "CMD_LoadUserChecklistSummary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LOG_SkipFinalSummary": {
+      "main": [
+        []
+      ]
+    },
+    "JS_SetNextPhaseId": {
+      "main": [
+        [
+          {
+            "node": "CMD_LoadPhasePlanGuide",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CMD_VerifyFinalSummary": {
+      "main": [
+        []
+      ]
+    },
+    "JS_NormalizeFinalSummary": {
+      "main": [
+        []
+      ]
+    },
+    "GPT_CreatePlan": {
+      "main": [
+        [
+          {
+            "node": "CMD_WritePlanFile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CMD_WritePlanFile": {
+      "main": [
+        [
+          {
+            "node": "CMD_VerifyPlan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CMD_LoadPhasePlanGuide": {
+      "main": [
+        [
+          {
+            "node": "GPT_CreatePlan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CMD_LoadUserChecklistSummary": {
+      "main": [
+        [
+          {
+            "node": "JS_SetNextPhaseId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CMD_LoadReadme": {
+      "main": [
+        [
+          {
+            "node": "SET_PhaseId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "7a3016e8-43b5-4a80-8fda-d6121fb3b7a7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ed06bbf2aa09f554ed7e8c76b92a7efe2c99d006253d946ef141c545bbf8fafb"
+  },
+  "id": "UMEpVOIq5r0Mw3rR7usTP",
+  "tags": []
+}

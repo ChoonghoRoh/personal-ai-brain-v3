@@ -1,0 +1,21 @@
+venv/
+.env
+__pycache__/
+.DS_Store
+.file_hashes.json
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Node / Playwright E2E
+node_modules/
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+
+# DB/벡터 DB 데이터 (ver2: qdrant-data, ver3: qdrant-data-ver3)
+postgres-data/
+qdrant-data/
+qdrant-data-ver3/

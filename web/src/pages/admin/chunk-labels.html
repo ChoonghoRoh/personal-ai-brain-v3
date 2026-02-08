@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/css/admin/admin-styles.css" />
+    <link rel="stylesheet" href="/static/css/admin/admin-labels.css" />
+    <link rel="stylesheet" href="/static/css/admin/admin-chunk-labels.css" />
+    <title>Personal AI Brain - 청크 관리</title>
+  </head>
+  <body>
+    <div class="container">
+      <div id="header-placeholder"></div>
+
+      <div id="error-message" class="error" style="display: none"></div>
+      <div id="success-message" class="success" style="display: none"></div>
+
+      <!-- 청크 관리: 좌(청크 목록+페이징) / 우(라벨 추가 → 청크 내용) -->
+      <div class="admin-container chunk-labels-layout">
+        <!-- 좌측: 청크 목록 + 페이징 -->
+        <div class="chunk-labels-left">
+          <div class="admin-panel">
+            <h3>📋 청크 목록</h3>
+            <div class="form-group">
+              <input type="text" id="chunk-search" placeholder="청크 검색..." onkeyup="searchChunks()" />
+            </div>
+            <div class="chunk-list" id="chunk-list">
+              <div class="loading">청크 목록을 불러오는 중...</div>
+            </div>
+            <div id="pagination-controls" class="chunk-labels-pagination" style="display: none">
+              <div class="chunk-labels-pagination-inner">
+                <div class="chunk-labels-per-page-row">
+                  <label for="items-per-page" class="chunk-labels-per-page-label">페이지당 항목:</label>
+                  <select id="items-per-page" class="chunk-labels-per-page-select">
+                    <option value="10">10</option>
+                    <option value="20" selected>20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                  </select>
+                </div>
+                <div id="pagination-info" class="chunk-labels-pagination-info"></div>
+                <div id="pagination-buttons" class="chunk-labels-pagination-buttons"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 우측: 라벨 추가 → 아래 청크 내용 -->
+        <div class="chunk-labels-right">
+          <div class="admin-panel chunk-labels-section" id="chunk-labels-section">
+            <h3>📝 선택된 청크</h3>
+            <div class="chunk-labels-add-block">
+              <!-- 위: 라벨 선택 (좌: 분류, 우: 목록) -->
+              <div class="label-picker-block">
+                <h4>라벨 선택</h4>
+                <div class="label-picker-row">
+                  <aside class="label-picker-filter">
+                    <span class="label-picker-filter-title">라벨 분류</span>
+                    <button type="button" class="label-filter-btn active" data-type="">전체</button>
+                    <button type="button" class="label-filter-btn" data-type="project_phase">프로젝트 단계</button>
+                    <button type="button" class="label-filter-btn" data-type="role">역할</button>
+                    <button type="button" class="label-filter-btn" data-type="domain">도메인</button>
+                    <button type="button" class="label-filter-btn" data-type="importance">중요도</button>
+                    <button type="button" class="label-filter-btn" data-type="keyword">키워드</button>
+                  </aside>
+                  <div class="label-picker-main">
+                    <div class="label-picker-toolbar">
+                      <button type="button" class="btn btn-small" onclick="labelManager.selectAllLabelsInPicker()">전체 선택</button>
+                      <button type="button" class="btn btn-small" onclick="labelManager.selectSimilarLabelsInPicker()">유사선택</button>
+                      <button type="button" class="btn btn-small" onclick="labelManager.deselectAllLabelsInPicker()">선택 해제</button>
+                      <button type="button" class="btn btn-primary btn-small" onclick="labelManager.addSelectedLabelsToChunk()">선택된 항목 라벨 추가</button>
+                    </div>
+                    <div id="label-picker-list" class="label-picker-list"></div>
+                  </div>
+                </div>
+              </div>
+              <!-- 아래: 청크내 연결된 라벨 -->
+              <div class="chunk-linked-labels-block">
+                <h4>청크내 연결된 라벨</h4>
+                <div id="current-labels" class="current-labels-wrap"></div>
+              </div>
+            </div>
+            <div class="chunk-content-block">
+              <h4>청크 내용</h4>
+              <div class="chunk-content-ai-row">
+                <button type="button" class="btn btn-primary btn-small" id="btn-ai-label-suggest">AI 키워드·라벨 추천</button>
+                <span id="ai-label-suggest-status" class="ai-suggest-status"></span>
+              </div>
+              <div id="ai-label-suggestions" class="ai-label-suggestions" style="display: none"></div>
+              <div id="ai-new-keywords-wrap" class="ai-new-keywords-wrap" style="display: none">
+                <h5 class="ai-new-keywords-title">새 키워드 (라벨로 등록 가능)</h5>
+                <div id="ai-new-keywords" class="ai-new-keywords"></div>
+              </div>
+              <div id="current-chunk-info" class="chunk-labels-current-info" aria-hidden="true"></div>
+              <div id="chunk-content-body" class="chunk-content-body"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/js/components/layout-component.js"></script>
+    <script src="/static/js/components/header-component.js"></script>
+    <script src="/static/js/admin/admin-common.js"></script>
+    <script src="/static/js/components/utils.js"></script>
+    <script src="/static/js/components/pagination-component.js"></script>
+    <script src="/static/js/admin/label-manager.js"></script>
+    <script src="/static/js/admin/admin-chunk-labels.js"></script>
+  </body>
+</html>

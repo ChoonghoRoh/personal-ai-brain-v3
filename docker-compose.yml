@@ -1,0 +1,173 @@
+# Personal AI Brain — ver3 전용 (ver2와 포트·컨테이너·데이터 분리)
+# - PostgreSQL: 5433 (ver2는 5432), 볼륨 postgres_data_ver3
+# - Qdrant: 6343/6344 (ver2는 6333/6334), 경로 ./qdrant-data-ver3
+# - Backend: 8001 (ver2는 8000), 컨테이너 pab-backend-ver3
+#
+# n8n · backend · web 파일 공유: PAB_PROJECT_ROOT (호스트 경로)
+# - n8n:    ${PAB_PROJECT_ROOT:-.} → /workspace
+# - backend: ${PAB_PROJECT_ROOT:-.} → /app
+# .env 에 PAB_PROJECT_ROOT=.(또는 절대경로) 설정 권장
+#
+# --- n8n 서비스 (Phase 8 워크플로우 개발 보류로 주석 처리) ---
+# n8n은 아래에서 주석 처리되어 기본 실행 시 기동하지 않습니다.
+# 재활성화: "n8n:" 블록과 volumes 의 "n8n_data:" 블록의 주석을 해제하세요.
+# 주의: 본 프로젝트 리팩토링 시 n8n 관련 부분(n8n 서비스, n8n_data 볼륨, docs/n8n 등)은
+#       제외하고 진행하세요. Phase 8 워크플로우는 별도 프로젝트 권장 (docs/phases/phase-8-wrap-up.md).
+
+services:
+  # PostgreSQL Database (ver3 전용 — ver2와 겹치지 않음)
+  postgres:
+    image: postgres:15
+    container_name: pab-postgres-ver3
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-brain}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-brain_password}
+      - POSTGRES_DB=${POSTGRES_DB:-knowledge}
+    volumes:
+      - postgres_data_ver3:/var/lib/postgresql/data
+    networks:
+      - pab-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-brain} -d ${POSTGRES_DB:-knowledge}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Qdrant Vector Database (ver3 전용 — ver2와 겹치지 않음)
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant-ver3
+    restart: unless-stopped
+    ports:
+      - "6343:6333"
+      - "6344:6334"
+    volumes:
+      - ./qdrant-data-ver3:/qdrant/storage
+    networks:
+      - pab-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:6333/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- Ollama 로컬 LLM: localhost(호스트)에서 실행 (Docker 분리) ---
+  # Ollama는 호스트의 localhost:11434 에서 실행 (ollama serve). backend는 host.docker.internal 로 접속.
+  # Docker에서 Ollama 사용 시 아래 주석 해제하고 backend의 OLLAMA_BASE_URL 를 http://ollama:11434 로 변경.
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: ollama
+  #   restart: unless-stopped
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   networks:
+  #     - pab-network
+
+  # FastAPI Backend Server (ver3 전용 — ver2와 겹치지 않음)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: pab-backend-ver3
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    extra_hosts:
+      # Linux: host.docker.internal 로 호스트 접속 (Mac/Windows Docker Desktop 은 기본 지원)
+      - "host.docker.internal:host-gateway"
+    environment:
+      - PROJECT_ROOT=/app
+      - WORKSPACE_ROOT=/app
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DEBUG=${DEBUG:-false}
+      # Database
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-brain}:${POSTGRES_PASSWORD:-brain_password}@postgres:5432/${POSTGRES_DB:-knowledge}
+      - POSTGRES_USER=${POSTGRES_USER:-brain}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-brain_password}
+      - POSTGRES_DB=${POSTGRES_DB:-knowledge}
+      # Qdrant
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - QDRANT_API_KEY=${QDRANT_API_KEY:-}
+      # API
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      # Ollama는 localhost(호스트)에서 실행. .env 에 없으면 아래 기본값 사용
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen2.5:7b}
+      # Security (Phase 9-1)
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-development_secret_key_change_in_production}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      - JWT_EXPIRE_MINUTES=${JWT_EXPIRE_MINUTES:-30}
+      - API_SECRET_KEY=${API_SECRET_KEY:-}
+      - AUTH_ENABLED=${AUTH_ENABLED:-false}
+      # CORS (Phase 9-1)
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:8080}
+      - CORS_ALLOW_CREDENTIALS=${CORS_ALLOW_CREDENTIALS:-true}
+      # Rate Limiting (Phase 9-1)
+      - RATE_LIMIT_ENABLED=${RATE_LIMIT_ENABLED:-true}
+      - RATE_LIMIT_PER_MINUTE=${RATE_LIMIT_PER_MINUTE:-60}
+      - RATE_LIMIT_LLM_PER_MINUTE=${RATE_LIMIT_LLM_PER_MINUTE:-10}
+      # External APIs
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    volumes:
+      - ${PAB_PROJECT_ROOT:-.}:/app
+      # 로컬 Claude Code CLI 사용 시: 호스트 .npm-global + 인증 디렉터리 마운트. Backend가 CLI 우선 실행, API 키 불필요
+      - /Users/map-rch/.npm-global:/host-npm-global:ro
+      # CLI 인증 + 쓰기: 로컬에서 claude login 한 ~/.claude. CLI가 debug/cache 등 쓰기 필요하므로 :ro 제거
+      - /Users/map-rch/.claude:/root/.claude
+    networks:
+      - pab-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+
+  # n8n Workflow Automation (보류: 주석 해제 시 재활성화)
+  # n8n:
+  #   image: n8nio/n8n:latest
+  #   container_name: n8n
+  #   restart: unless-stopped
+  #   ports:
+  #     - "5678:5678"
+  #   environment:
+  #     - N8N_HOST=localhost
+  #     - N8N_PORT=5678
+  #     - N8N_PROTOCOL=http
+  #     - WORKSPACE_ROOT=/workspace
+  #     - BACKEND_URL=http://backend:8000
+  #     - DB_TYPE=postgresdb
+  #     - DB_POSTGRESDB_HOST=postgres
+  #     - DB_POSTGRESDB_PORT=5432
+  #     - DB_POSTGRESDB_DATABASE=n8n
+  #     - DB_POSTGRESDB_USER=brain
+  #     - DB_POSTGRESDB_PASSWORD=brain_password
+  #     - NODES_EXCLUDE='[]'
+  #   volumes:
+  #     - n8n_data:/home/node/.n8n
+  #     - ${PAB_PROJECT_ROOT:-.}:/workspace
+  #     - /Users/map-rch/.npm-global:/host-npm-global:ro
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
+  #   networks:
+  #     - pab-network
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+
+volumes:
+  postgres_data_ver3:
+    driver: local
+  # n8n_data:  # n8n 재활성화 시 위 n8n 서비스와 함께 주석 해제
+  #   driver: local
+  # ollama_data:  # Ollama Docker 재활성화 시 위 ollama 서비스와 함께 주석 해제
+  #   driver: local
+
+networks:
+  pab-network:
+    driver: bridge

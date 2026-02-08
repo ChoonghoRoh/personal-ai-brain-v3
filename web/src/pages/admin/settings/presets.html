@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/css/admin/admin-styles.css" />
+    <link rel="stylesheet" href="/static/css/admin/settings-common.css" />
+    <title>Personal AI Brain - Prompt Preset</title>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div id="header-placeholder"></div>
+
+      <div id="error-message" class="error" style="display: none"></div>
+      <div id="success-message" class="success" style="display: none"></div>
+
+      <!-- Preset List/Editor Layout -->
+      <div class="admin-container settings-layout">
+        <!-- Left: Preset List -->
+        <div class="settings-left">
+          <div class="admin-panel">
+            <div class="panel-header">
+              <h3>Prompt Preset List</h3>
+              <button type="button" id="create-preset-btn" class="btn btn-primary btn-small">
+                New Preset
+              </button>
+            </div>
+            <!-- Filters -->
+            <div class="settings-filters">
+              <div class="filter-row">
+                <select id="filter-task-type" class="filter-select">
+                  <option value="">All Task Types</option>
+                  <option value="decision">Decision</option>
+                  <option value="analysis">Analysis</option>
+                  <option value="summary">Summary</option>
+                  <option value="qa">Q&A</option>
+                </select>
+                <select id="filter-status" class="filter-select">
+                  <option value="">All Status</option>
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                </select>
+                <input type="text" id="filter-search" class="filter-input" placeholder="Search by name..." />
+                <button type="button" id="filter-apply-btn" class="btn btn-secondary btn-small">Search</button>
+              </div>
+            </div>
+            <!-- Preset Table -->
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Task Type</th>
+                  <th>Model</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="preset-table">
+                <tr>
+                  <td colspan="4" class="loading">Loading...</td>
+                </tr>
+              </tbody>
+            </table>
+            <!-- Pagination -->
+            <div id="pagination-controls" class="pagination-controls" style="display: none">
+              <span id="pagination-info" class="pagination-info"></span>
+              <div id="pagination-buttons" class="pagination-buttons"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Preset Editor -->
+        <div class="settings-right">
+          <div class="admin-panel">
+            <div class="panel-header">
+              <h3 id="editor-title">Preset Editor</h3>
+              <div class="editor-actions">
+                <button type="button" id="save-draft-btn" class="btn btn-secondary btn-small" disabled>
+                  Save Draft
+                </button>
+                <button type="button" id="publish-btn" class="btn btn-success btn-small" disabled>
+                  Publish
+                </button>
+                <button type="button" id="delete-btn" class="btn btn-danger btn-small" disabled>
+                  Delete
+                </button>
+              </div>
+            </div>
+            <form id="preset-form">
+              <div class="form-group">
+                <label for="preset-name">Name <span class="required">*</span></label>
+                <input type="text" id="preset-name" required placeholder="Preset name" />
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="preset-task-type">Task Type <span class="required">*</span></label>
+                  <select id="preset-task-type" required>
+                    <option value="">Select task type</option>
+                    <option value="decision">Decision</option>
+                    <option value="analysis">Analysis</option>
+                    <option value="summary">Summary</option>
+                    <option value="qa">Q&A</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="preset-status">Status</label>
+                  <input type="text" id="preset-status" readonly value="draft" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="preset-model">Model <span class="required">*</span></label>
+                  <select id="preset-model" required>
+                    <option value="">Select model</option>
+                    <option value="qwen2.5:7b">qwen2.5:7b</option>
+                    <option value="qwen2.5:14b">qwen2.5:14b</option>
+                    <option value="llama3.2:latest">llama3.2:latest</option>
+                    <option value="mistral:latest">mistral:latest</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="preset-max-tokens">Max Tokens</label>
+                  <input type="number" id="preset-max-tokens" min="100" max="16000" value="4096" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="preset-temperature">Temperature: <span id="temp-value">0.7</span></label>
+                  <input type="range" id="preset-temperature" min="0" max="2" step="0.1" value="0.7" />
+                </div>
+                <div class="form-group">
+                  <label for="preset-top-p">Top-P: <span id="top-p-value">0.9</span></label>
+                  <input type="range" id="preset-top-p" min="0" max="1" step="0.05" value="0.9" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="preset-description">Description</label>
+                <input type="text" id="preset-description" placeholder="Brief description" />
+              </div>
+              <div class="form-group">
+                <label for="preset-system-prompt">System Prompt</label>
+                <textarea id="preset-system-prompt" rows="8" placeholder="System prompt for the model"></textarea>
+              </div>
+              <div class="form-group">
+                <label for="preset-constraints">Constraints (comma-separated)</label>
+                <input type="text" id="preset-constraints" placeholder="e.g., max_length:500, format:json" />
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/js/components/layout-component.js"></script>
+    <script src="/static/js/components/header-component.js"></script>
+    <script src="/static/js/admin/admin-common.js"></script>
+    <script src="/static/js/components/utils.js"></script>
+    <script src="/static/js/components/pagination-component.js"></script>
+    <script src="/static/js/admin/settings/settings-common.js"></script>
+    <script src="/static/js/admin/settings/presets.js"></script>
+  </body>
+</html>

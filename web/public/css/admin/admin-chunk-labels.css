@@ -1,0 +1,324 @@
+/* 청크 라벨 관리 페이지 전용 */
+
+/* 좌(청크 목록+페이징) / 우(라벨 추가 → 청크 내용) 레이아웃, 좌:우 = 7:3 */
+.chunk-labels-layout.admin-container {
+  display: grid;
+  grid-template-columns: 3fr 7fr;
+  gap: 24px;
+  align-items: start;
+  max-width: none;
+}
+@media (max-width: 768px) {
+  .chunk-labels-layout.admin-container {
+    grid-template-columns: 1fr;
+  }
+}
+.chunk-labels-left {
+  position: sticky;
+  top: 16px;
+}
+.chunk-labels-left .admin-panel {
+  max-width: 100%;
+}
+/* 청크 목록: 스크롤 없이 아래로 나열 */
+.chunk-labels-left .chunk-list {
+  max-height: none;
+  overflow: visible;
+}
+/* 우측: 선택된 청크 — 스크롤 시 플로팅, 패널 내부 하단 스크롤 */
+.chunk-labels-right {
+  position: sticky;
+  top: 16px;
+}
+.chunk-labels-right .admin-panel {
+  min-width: 0;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  overflow-x: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* 우측: 라벨 추가 블록 */
+.chunk-labels-add-block {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.chunk-labels-add-block h4,
+.chunk-content-block h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #374151;
+}
+.current-labels-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  min-height: 24px;
+}
+
+/* 라벨 선택: 위쪽, 좌(분류) 우(목록) */
+.label-picker-block {
+  margin-top: 0;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.label-picker-block h4 {
+  margin: 0 0 10px 0;
+}
+.label-picker-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.label-picker-filter {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fafafa;
+  min-width: 120px;
+}
+.label-picker-filter-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+.label-filter-btn {
+  padding: 6px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 12px;
+  color: #374151;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s, border-color 0.2s;
+}
+.label-filter-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+.label-filter-btn.active {
+  background: #dbeafe;
+  border-color: #2563eb;
+  color: #1e40af;
+}
+.label-picker-main {
+  flex: 1;
+  min-width: 0;
+}
+.label-picker-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.label-picker-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fafafa;
+  min-height: 48px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* 청크내 연결된 라벨: 아래쪽 */
+.chunk-linked-labels-block {
+  margin-top: 16px;
+}
+.chunk-linked-labels-block h4 {
+  margin: 0 0 10px 0;
+}
+.chunk-linked-labels-block .current-labels-wrap {
+  margin-bottom: 0;
+}
+.label-picker-empty {
+  color: #9ca3af;
+  font-size: 13px;
+  margin: 0;
+}
+.label-picker-badge {
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.2s, opacity 0.2s;
+}
+.label-picker-badge:hover {
+  border-color: #93c5fd;
+}
+.label-picker-badge.selected {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px #2563eb;
+}
+.label-picker-badge.on-chunk {
+  opacity: 0.65;
+}
+.label-picker-badge.on-chunk.selected {
+  opacity: 1;
+}
+
+/* 우측: 청크 내용 블록 */
+.chunk-content-block {
+  margin-top: 16px;
+}
+.chunk-content-ai-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.ai-suggest-status {
+  font-size: 13px;
+  color: #6b7280;
+}
+.ai-label-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f0f9ff;
+}
+.ai-suggestion-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+}
+.ai-suggestion-conf {
+  font-size: 11px;
+  color: #6b7280;
+}
+.ai-suggestion-apply {
+  margin-left: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+}
+.ai-new-keywords-wrap {
+  margin-bottom: 12px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fefce8;
+}
+.ai-new-keywords-title {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: #713f12;
+}
+.ai-new-keywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ai-new-keyword-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: #fef9c3;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.ai-new-keyword-apply {
+  margin-left: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+}
+.chunk-labels-current-info {
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #6b7280;
+}
+.chunk-content-body {
+  padding: 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: min(400px, 50vh);
+  overflow-y: auto;
+  display: none;
+}
+.chunk-content-body:not(:empty) {
+  display: block;
+}
+
+.chunk-labels-pagination {
+  padding: 15px;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+  margin-top: 15px;
+}
+
+.chunk-labels-pagination-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.chunk-labels-per-page-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chunk-labels-per-page-label {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.chunk-labels-per-page-select {
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.chunk-labels-pagination-info {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.chunk-labels-pagination-buttons {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.label-badge .label-remove-btn {
+  margin-left: 5px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1em;
+  line-height: 1;
+}
+
+.label-badge .label-remove-btn:hover {
+  opacity: 0.8;
+}

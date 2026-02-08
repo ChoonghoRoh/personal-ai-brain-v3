@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/static/css/logs.css" />
+    <title>Personal AI Brain - Logs</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header는 JavaScript로 동적 생성 -->
+
+      <div class="filters">
+        <div class="filter-group">
+          <label>날짜:</label>
+          <input type="date" id="date-filter" />
+        </div>
+        <div class="filter-group">
+          <label>액션:</label>
+          <select id="action-filter">
+            <option value="">전체</option>
+            <option value="commit">커밋</option>
+            <option value="file_change">파일 변경</option>
+            <option value="embed">임베딩</option>
+            <option value="search">검색</option>
+            <option value="system">시스템</option>
+          </select>
+        </div>
+        <div class="filter-group search-box">
+          <input type="text" id="search-input" placeholder="검색어 입력..." class="search-input" />
+        </div>
+        <button onclick="applyFilters()" class="btn btn-primary">필터 적용</button>
+        <button onclick="resetFilters()" class="btn btn-secondary">초기화</button>
+      </div>
+
+      <div class="stats-panel">
+        <h2>로그 통계</h2>
+        <div class="stats-grid" id="stats-grid">
+          <div class="loading">로딩 중...</div>
+        </div>
+      </div>
+
+      <div class="logs-container">
+        <div class="logs-header">
+          <h2>작업 로그</h2>
+          <div class="view-buttons">
+            <button id="view-json-btn" onclick="switchView('json')" class="btn btn-primary">JSON 뷰</button>
+            <button id="view-md-btn" onclick="switchView('markdown')" class="btn btn-secondary">Markdown 뷰</button>
+          </div>
+        </div>
+        <div id="json-view">
+          <div class="timeline" id="logs-timeline">
+            <div class="loading">로딩 중...</div>
+          </div>
+          <!-- 페이징 컨트롤 -->
+          <div id="pagination-controls" class="pagination-controls">
+            <div class="pagination-wrapper">
+              <div class="pagination-items-per-page">
+                <label for="items-per-page">페이지당 항목:</label>
+                <select id="items-per-page" class="pagination-select">
+                  <option value="10">10</option>
+                  <option value="20" selected>20</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+              </div>
+              <div id="pagination-info" class="pagination-info"></div>
+              <div id="pagination-buttons" class="pagination-buttons"></div>
+            </div>
+          </div>
+        </div>
+        <div id="markdown-view" class="markdown-view">
+          <div id="work-log-content" class="work-log-content">
+            <div class="loading">로딩 중...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/js/components/layout-component.js"></script>
+    <script src="/static/js/components/header-component.js"></script>
+    <script src="/static/js/components/utils.js"></script>
+    <script src="/static/js/components/document-utils.js"></script>
+    <script src="/static/js/components/pagination-component.js"></script>
+    <script src="/static/js/logs/logs.js"></script>
+  </body>
+</html>
+

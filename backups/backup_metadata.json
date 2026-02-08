@@ -1,0 +1,43 @@
+{
+  "backups": [
+    {
+      "name": "full_20260111_000102",
+      "type": "full",
+      "incremental": false,
+      "timestamp": "2026-01-11T00:01:02.652342",
+      "files": [
+        {
+          "type": "qdrant",
+          "path": "full_20260111_000102_qdrant.tar.gz",
+          "size": 356790
+        },
+        {
+          "type": "metadata",
+          "path": "full_20260111_000102_metadata.tar.gz",
+          "size": 19530
+        }
+      ],
+      "status": "completed"
+    },
+    {
+      "name": "full_20260204_094017",
+      "type": "full",
+      "incremental": false,
+      "timestamp": "2026-02-04T09:40:17.741132",
+      "files": [
+        {
+          "type": "qdrant",
+          "path": "full_20260204_094017_qdrant.tar.gz",
+          "size": 357006
+        },
+        {
+          "type": "metadata",
+          "path": "full_20260204_094017_metadata.tar.gz",
+          "size": 21753
+        }
+      ],
+      "status": "completed"
+    }
+  ],
+  "last_backup": "2026-02-04T09:40:17.741132"
+}

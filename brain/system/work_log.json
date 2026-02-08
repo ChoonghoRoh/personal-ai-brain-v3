@@ -1,0 +1,1277 @@
+{
+  "entries": [
+    {
+      "date": "2026-01-07",
+      "time": "15:51:12",
+      "action": "feature",
+      "description": "키워드 추출 및 자동 라벨링 기능 구현",
+      "details": {
+        "files": [
+          "scripts/extract_keywords_and_labels.py",
+          "scripts/embed_and_store.py",
+          "backend/routers/knowledge.py",
+          "requirements.txt"
+        ],
+        "features": [
+          "정규식 기반 키워드 추출",
+          "LLM 기반 키워드 추출 (OpenAI API / GPT4All)",
+          "자동 불용어 필터링",
+          "라벨 자동 생성 및 청크 자동 라벨링",
+          "docs 폴더 문서 처리 지원",
+          "API 엔드포인트: POST /api/knowledge/documents/{id}/extract-keywords"
+        ],
+        "documentation": [
+          "docs/dev/phase7-6-upgrade-keyword.md"
+        ]
+      },
+      "phase": "7.6",
+      "daily_log_file": "work_log_260107.md"
+    },
+    {
+      "date": "2026-01-07",
+      "time": "16:01:32",
+      "action": "system",
+      "description": "키워드 추출 및 자동 라벨링 시스템 적용 완료",
+      "files": [
+        "scripts/extract_keywords_and_labels.py",
+        "scripts/embed_and_store.py"
+      ],
+      "metadata": {
+        "phase": "7.6",
+        "status": "completed",
+        "results": {
+          "labels_created": 112,
+          "chunks_labeled": 65,
+          "total_labelings": 598,
+          "documents_processed": 30
+        }
+      },
+      "daily_log_file": "work_log_260107.md"
+    },
+    {
+      "date": "2026-01-07",
+      "time": "16:31:05",
+      "action": "system",
+      "description": "Phase 7 완료: Trustable Knowledge Pipeline 및 키워드 추출 기능 구축",
+      "files": [
+        "backend/models/models.py",
+        "backend/routers/approval.py",
+        "backend/routers/suggestions.py",
+        "backend/routers/reason.py",
+        "backend/routers/knowledge.py",
+        "web/src/pages/knowledge-admin.html",
+        "scripts/extract_keywords_and_labels.py",
+        "docs/dev/phase7-5-upgrade.md",
+        "docs/dev/phase7-6-upgrade-keyword.md",
+        "docs/dev/phase7-6-upgrade-keyword-test-scenarios.md",
+        "docs/dev/phase7-6-upgrade-keyword-test-results.md"
+      ],
+      "metadata": {
+        "phase": 7,
+        "status": "completed",
+        "type": "phase_completion",
+        "summary": {
+          "features": [
+            "청크 승인/거절 워크플로우",
+            "AI 라벨/관계 추천 기능",
+            "키워드 추출 및 자동 라벨링",
+            "Knowledge Admin Approval Center",
+            "LLM 기반 키워드 추출 (GPT4All)"
+          ],
+          "results": {
+            "labels_created": 112,
+            "chunks_labeled": 65,
+            "total_labelings": 598
+          }
+        }
+      },
+      "daily_log_file": "work_log_260107.md"
+    },
+    {
+      "date": "2026-01-07",
+      "time": "16:48:54",
+      "action": "feature",
+      "description": "Phase 7.7: 키워드 그룹 및 카테고리 레이어 구현",
+      "files": [
+        "backend/models/models.py",
+        "backend/routers/labels.py",
+        "backend/routers/knowledge.py",
+        "backend/routers/reason.py",
+        "web/src/pages/knowledge-admin.html",
+        "scripts/add_phase7_7_columns.py"
+      ],
+      "metadata": {
+        "phase": "7.7",
+        "type": "feature",
+        "summary": {
+          "db_schema": [
+            "labels.parent_label_id",
+            "labels.color",
+            "labels.updated_at",
+            "documents.category_label_id"
+          ],
+          "apis": [
+            "GET/POST/PATCH/DELETE /api/labels/groups",
+            "GET/POST/DELETE /api/labels/groups/{id}/keywords",
+            "POST/DELETE /api/knowledge/chunks/{id}/labels",
+            "POST /api/knowledge/documents/{id}/category",
+            "Reasoning 필터 확장 (keyword_group, category)"
+          ],
+          "ui": [
+            "Keyword Group Management 보드",
+            "카드 기반 매칭 모드"
+          ]
+        }
+      },
+      "daily_log_file": "work_log_260107.md"
+    },
+    {
+      "timestamp": "2026-01-07T00:00:00",
+      "date": "2026-01-07",
+      "time": "00:00:00",
+      "action": "system",
+      "description": "1단계: 프로젝트 기본 구조 및 핵심 기능 구축 완료",
+      "files": [
+        "scripts/embed_and_store.py",
+        "scripts/search_and_query.py",
+        "brain/projects/alpha-project/context.md",
+        "brain/projects/alpha-project/roadmap.md",
+        "brain/projects/alpha-project/log.md"
+      ],
+      "metadata": {
+        "phase": 1,
+        "status": "completed",
+        "details": "프로젝트 구조 생성, Qdrant 설정, 문서 임베딩 및 검색 시스템 구현"
+      },
+      "daily_log_file": "work_log_260107.md"
+    },
+    {
+      "timestamp": "2026-01-07T01:00:00",
+      "date": "2026-01-07",
+      "time": "01:00:00",
+      "action": "system",
+      "description": "2단계: 자동화 시스템 구축 완료 (변경 감지, 자동 커밋, 문서 수집, 시스템 관리)",
+      "files": [
+        "scripts/watcher.py",
+        "scripts/auto_commit.py",
+        "scripts/collector.py",
+        "scripts/system_agent.py"
+      ],
+      "metadata": {
+        "phase": 2,
+        "status": "completed",
+        "details": "파일 변경 감지, Git 자동 커밋, PDF/DOCX 수집, 시스템 상태 관리"
+      },
+      "daily_log_file": "work_log_260107.md"
+    },
+    {
+      "timestamp": "2026-01-07T02:00:00",
+      "date": "2026-01-07",
+      "time": "02:00:00",
+      "action": "system",
+      "description": "3단계: 통합 작업 기록 시스템 구축 완료",
+      "files": [
+        "scripts/work_logger.py",
+        "brain/system/work_log.md",
+        "brain/system/work_log.json"
+      ],
+      "metadata": {
+        "phase": 3,
+        "status": "completed",
+        "details": "중앙 집중식 작업 로그 관리, 날짜별 그룹화, 자동 로그 기록 통합"
+      },
+      "daily_log_file": "work_log_260107.md"
+    },
+    {
+      "timestamp": "2026-01-07T03:00:00",
+      "date": "2026-01-07",
+      "time": "03:00:00",
+      "action": "system",
+      "description": "4단계: 웹 인터페이스 구축 완료 (Phase 4.1, 4.2, 4.3)",
+      "files": [
+        "backend/main.py",
+        "backend/routers/search.py",
+        "backend/routers/system.py",
+        "backend/routers/documents.py",
+        "backend/routers/ai.py",
+        "backend/routers/logs.py",
+        "web/src/pages/dashboard.html",
+        "web/src/pages/search.html",
+        "web/src/pages/document.html",
+        "web/src/pages/ask.html",
+        "web/src/pages/logs.html"
+      ],
+      "metadata": {
+        "phase": 4,
+        "status": "completed",
+        "details": "FastAPI 백엔드, Search/Document/AI/Logs API, 웹 UI 구축"
+      },
+      "daily_log_file": "work_log_260107.md"
+    },
+    {
+      "timestamp": "2026-01-07T04:00:00",
+      "date": "2026-01-07",
+      "time": "04:00:00",
+      "action": "system",
+      "description": "5단계: 지식 구조화 및 Reasoning 시스템 구축 완료 (Phase 5.1~5.5)",
+      "files": [
+        "backend/models/database.py",
+        "backend/models/models.py",
+        "backend/routers/labels.py",
+        "backend/routers/relations.py",
+        "backend/routers/reason.py",
+        "scripts/init_db.py"
+      ],
+      "metadata": {
+        "phase": 5,
+        "status": "completed",
+        "details": "PostgreSQL 지식 DB, 라벨링 시스템, 관계 그래프, Reasoning Pipeline"
+      },
+      "daily_log_file": "work_log_260107.md"
+    },
+    {
+      "timestamp": "2026-01-07T13:10:44.004841",
+      "date": "2026-01-07",
+      "time": "13:10:44",
+      "action": "system",
+      "description": "프로젝트 세팅 및 work_log 시스템 개선: GitHub 저장소 연결, Python 환경 설정, Docker 컨테이너 실행, 문서 API 개선, 로그 페이지 개선, work_log.json/md 동기화",
+      "files": [
+        "requirements.txt",
+        "backend/routers/documents.py",
+        "backend/routers/system.py",
+        "web/src/pages/logs.html",
+        "scripts/update_work_log_from_md.py"
+      ],
+      "metadata": {
+        "type": "setup_and_improvement",
+        "details": "프로젝트 초기 세팅 완료, brain/system 파일 접근 개선, work_log.md와 work_log.json 동기화"
+      },
+      "daily_log_file": "work_log_260107.md"
+    },
+    {
+      "timestamp": "2026-01-07T13:19:32.207003",
+      "date": "2026-01-07",
+      "time": "13:19:32",
+      "action": "setup",
+      "description": "프로젝트 초기 세팅: GitHub 저장소 연결, Python 가상환경 생성, requirements.txt 생성 및 패키지 설치",
+      "files": [
+        "requirements.txt",
+        "scripts/venv/"
+      ],
+      "metadata": {
+        "type": "setup",
+        "details": "Git 저장소 초기화 및 원격 저장소 연결, Python 3.12 가상환경 생성, 모든 필수 패키지 설치 완료"
+      },
+      "daily_log_file": "work_log_260107.md"
+    },
+    {
+      "timestamp": "2026-01-07T13:19:32.207441",
+      "date": "2026-01-07",
+      "time": "13:19:32",
+      "action": "infrastructure",
+      "description": "인프라 설정: Qdrant 및 PostgreSQL Docker 컨테이너 실행, 데이터베이스 초기화",
+      "files": [
+        "scripts/init_db.py"
+      ],
+      "metadata": {
+        "type": "infrastructure",
+        "details": "Qdrant 컨테이너 실행 (포트 6333-6334), PostgreSQL 컨테이너 실행 (포트 5432), DB 스키마 초기화 완료"
+      },
+      "daily_log_file": "work_log_260107.md"
+    },
+    {
+      "timestamp": "2026-01-07T13:19:32.207780",
+      "date": "2026-01-07",
+      "time": "13:19:32",
+      "action": "api_improvement",
+      "description": "문서 API 개선: brain/system 디렉토리 파일 접근 개선, work_log.md 읽기 API 추가, 파일 검색 로직 개선",
+      "files": [
+        "backend/routers/documents.py",
+        "backend/routers/system.py"
+      ],
+      "metadata": {
+        "type": "api_improvement",
+        "details": "파일명만 있는 경우 brain 디렉토리 전체 검색, 존재하지 않는 파일에 대한 친화적 에러 메시지, /api/documents/work-log 및 /api/system/work-log 엔드포인트 추가"
+      },
+      "daily_log_file": "work_log_260107.md"
+    },
+    {
+      "timestamp": "2026-01-07T13:19:32.208024",
+      "date": "2026-01-07",
+      "time": "13:19:32",
+      "action": "ui_improvement",
+      "description": "로그 페이지 개선: JSON/Markdown 뷰 전환 기능, work_log.md Markdown 렌더링, 스타일 개선",
+      "files": [
+        "web/src/pages/logs.html"
+      ],
+      "metadata": {
+        "type": "ui_improvement",
+        "details": "marked.js를 사용한 Markdown 렌더링, 뷰 전환 버튼 추가, 향상된 스타일링 및 가독성"
+      },
+      "daily_log_file": "work_log_260107.md"
+    },
+    {
+      "timestamp": "2026-01-07T13:19:32.208281",
+      "date": "2026-01-07",
+      "time": "13:19:32",
+      "action": "system",
+      "description": "work_log 시스템 개선: work_log.json과 work_log.md 동기화, test 항목 제거, 주요 단계 항목 추가",
+      "files": [
+        "scripts/update_work_log_from_md.py",
+        "brain/system/work_log.json",
+        "brain/system/work_log.md"
+      ],
+      "metadata": {
+        "type": "system_improvement",
+        "details": "work_log.md의 주요 단계를 JSON 항목으로 변환, test 항목 제거, 자동 동기화 스크립트 생성"
+      },
+      "daily_log_file": "work_log_260107.md"
+    },
+    {
+      "timestamp": "2026-01-07T13:19:32.208545",
+      "date": "2026-01-07",
+      "time": "13:19:32",
+      "action": "documentation",
+      "description": "문서 업데이트: README.md에 최근 업데이트 섹션 추가, 작업 내용 요약 정리",
+      "files": [
+        "README.md"
+      ],
+      "metadata": {
+        "type": "documentation",
+        "details": "프로젝트 세팅 및 시스템 개선 내용 요약, 주요 변경 파일 목록 추가"
+      },
+      "daily_log_file": "work_log_260107.md"
+    },
+    {
+      "timestamp": "2026-01-07T13:19:32.208814",
+      "date": "2026-01-07",
+      "time": "13:19:32",
+      "action": "commit",
+      "description": "Git 커밋 및 푸시: 모든 변경사항 커밋 및 GitHub에 푸시 완료",
+      "files": [
+        "README.md",
+        "backend/routers/documents.py",
+        "backend/routers/system.py",
+        "brain/system/work_log.json",
+        "brain/system/work_log.md",
+        "web/src/pages/logs.html",
+        "requirements.txt",
+        "scripts/update_work_log_from_md.py"
+      ],
+      "metadata": {
+        "type": "git",
+        "details": "커밋 메시지: feat: 프로젝트 세팅 및 work_log 시스템 개선, 8개 파일 변경, 668줄 추가, 780줄 삭제"
+      },
+      "daily_log_file": "work_log_260107.md"
+    },
+    {
+      "timestamp": "2026-01-07T13:48:59.023240",
+      "date": "2026-01-07",
+      "time": "13:48:59",
+      "action": "system",
+      "description": "Phase 7 완료: Reasoning UX 개선 및 Knowledge Admin v0 구축",
+      "files": [
+        "backend/routers/reason.py",
+        "web/src/pages/reason.html",
+        "web/src/pages/knowledge-admin.html",
+        "backend/main.py",
+        "web/public/js/header-component.js",
+        "scripts/phase_complete.py"
+      ],
+      "metadata": {
+        "phase": 7,
+        "status": "completed",
+        "type": "phase_completion"
+      },
+      "daily_log_file": "work_log_260107.md"
+    },
+    {
+      "timestamp": "2026-01-07T15:02:54.764233",
+      "date": "2026-01-07",
+      "time": "15:02:54",
+      "action": "system",
+      "description": "Phase 7 완료: 지식 구조, 지식 관리, Reasoning 매뉴얼 작성",
+      "files": [
+        "docs/manual/manual-knowledge-studio.md",
+        "docs/manual/manual-knowledge-admin.md",
+        "docs/manual/manual-reasoning-lab.md",
+        "README.md"
+      ],
+      "metadata": {
+        "phase": 7,
+        "status": "completed",
+        "type": "phase_completion"
+      },
+      "daily_log_file": "work_log_260107.md"
+    },
+    {
+      "timestamp": "2026-01-07T15:14:25.795849",
+      "date": "2026-01-07",
+      "time": "15:14:25",
+      "action": "system",
+      "description": "Phase 7 완료: Phase 7 통합 테스트 완료",
+      "files": [
+        "docs/dev/phase7-0-test-results.md",
+        "docs/dev/phase7-0-status.md",
+        "scripts/test_phase7.py"
+      ],
+      "metadata": {
+        "phase": 7,
+        "status": "completed",
+        "type": "phase_completion"
+      },
+      "daily_log_file": "work_log_260107.md"
+    },
+    {
+      "timestamp": "2026-01-07T15:30:11.742557",
+      "date": "2026-01-07",
+      "time": "15:30:11",
+      "action": "system",
+      "description": "Phase 7 완료: Phase 7 Upgrade - Trustable Knowledge Pipeline 구축",
+      "files": [
+        "backend/models/models.py",
+        "backend/routers/approval.py",
+        "backend/routers/suggestions.py",
+        "backend/routers/reason.py",
+        "backend/main.py",
+        "docs/dev/phase7-upgrade-test-scenarios.md",
+        "docs/dev/phase7-upgrade-test-results.md",
+        "README.md"
+      ],
+      "metadata": {
+        "phase": 7,
+        "status": "completed",
+        "type": "phase_completion"
+      },
+      "daily_log_file": "work_log_260107.md"
+    },
+    {
+      "timestamp": "2026-01-07T15:32:53.845238",
+      "date": "2026-01-07",
+      "time": "15:32:53",
+      "action": "system",
+      "description": "Phase 7 완료: Knowledge Admin UI 업그레이드 - Approval Center 추가",
+      "files": [
+        "web/src/pages/knowledge-admin.html"
+      ],
+      "metadata": {
+        "phase": 7,
+        "status": "completed",
+        "type": "phase_completion"
+      },
+      "daily_log_file": "work_log_260107.md"
+    },
+    {
+      "timestamp": "2026-01-07T17:30:00",
+      "date": "2026-01-07",
+      "time": "17:30:00",
+      "action": "fix",
+      "description": "knowledge-admin 페이지 헤더 및 탭 UI 오류 수정",
+      "files": [
+        "web/src/pages/knowledge-admin.html"
+      ],
+      "metadata": {
+        "phase": "7.7",
+        "status": "completed",
+        "type": "bugfix",
+        "details": "header-placeholder를 사용하여 헤더 렌더링 위치 정확화, 탭 네비게이션 스타일 개선, 중복 변수 선언 제거"
+      },
+      "daily_log_file": "work_log_260107.md"
+    },
+    {
+      "timestamp": "2026-01-07T22:30:00",
+      "date": "2026-01-07",
+      "time": "22:30:00",
+      "action": "feature",
+      "description": "Phase 7.7 청크 상세 라벨 매칭 카드 UI 구현 및 테스트 완료",
+      "files": [
+        "web/src/pages/knowledge.html",
+        "docs/dev/phase7-7-chunk-label-matching-test.md",
+        "docs/dev/phase7-7-chunk-label-matching-test-results.md"
+      ],
+      "metadata": {
+        "phase": "7.7",
+        "status": "completed",
+        "type": "feature",
+        "test_results": "8/8 통과 (100%)",
+        "details": "청크 상세 라벨 매칭 카드 UI 구현, 모든 테스트 시나리오 통과"
+      },
+      "daily_log_file": "work_log_260107.md"
+    },
+    {
+      "timestamp": "2026-01-08T22:58:27.706767",
+      "date": "2026-01-08",
+      "time": "22:58:27",
+      "action": "ui_improvement",
+      "description": "Phase 7.8: Knowledge Admin 메뉴 분리 및 헤더 구조 개선",
+      "files": [
+        "web/src/pages/admin/labels.html",
+        "web/src/pages/admin/groups.html",
+        "web/src/pages/admin/approval.html",
+        "web/public/js/header-component.js",
+        "web/src/pages/knowledge.html",
+        "docs/dev/phase7-8-admin-pages-test-checklist.md"
+      ],
+      "metadata": {
+        "phase": "7.8",
+        "status": "completed",
+        "type": "ui_improvement",
+        "details": "Knowledge Admin 3개 탭을 독립 페이지로 분리, 헤더 구조 개선 (로고, 메뉴 2단 배치, 그룹 제목 추가), 관리자 메뉴 구조 개선"
+      },
+      "daily_log_file": "work_log_260108.md"
+    },
+    {
+      "timestamp": "2026-01-09T00:19:00.147448",
+      "date": "2026-01-09",
+      "time": "00:19:00",
+      "action": "system",
+      "description": "Phase 7.9: GPT4All 추론적 답변 개선 및 시스템 상태 모니터링 강화",
+      "files": [
+        "backend/routers/ai.py",
+        "backend/services/system_service.py",
+        "web/src/pages/ask.html",
+        "web/src/pages/dashboard.html",
+        "scripts/start_server.py"
+      ],
+      "metadata": {
+        "phase": 7.9,
+        "status": "completed",
+        "type": "feature",
+        "details": "GPT4All 모델 싱글톤 패턴 구현, 추론적 답변을 위한 프롬프트 개선, max_tokens/temperature 파라미터 추가, 대시보드에 DB/Venv/GPT4All 상태 표시 추가, 서버 시작 시 가상환경 확인 로직 개선"
+      },
+      "daily_log_file": "work_log_260109.md"
+    },
+    {
+      "timestamp": "2026-01-09T10:19:00",
+      "date": "2026-01-09",
+      "time": "10:19:00",
+      "action": "feature",
+      "description": "Phase 7.9.5: Chunk 제목 필드 추가 및 의미 단위 분할 개선",
+      "files": [
+        "backend/models/models.py",
+        "backend/routers/knowledge.py",
+        "scripts/embed_and_store.py",
+        "scripts/migrate_phase7_upgrade.py",
+        "web/src/pages/knowledge-detail.html",
+        "web/src/pages/knowledge.html",
+        "web/public/css/knowledge-detail.css"
+      ],
+      "metadata": {
+        "phase": "7.9.5",
+        "status": "completed",
+        "type": "feature",
+        "details": "KnowledgeChunk 모델에 title, title_source 필드 추가, 마크다운 헤딩 기반 제목 추출 및 의미 단위 분할 구현, AI 기반 제목 추출 기능 추가 (선택적), 프론트엔드 제목 표시 업데이트, 마이그레이션 스크립트 실행 완료"
+      },
+      "daily_log_file": "work_log_260109.md"
+    },
+    {
+      "timestamp": "2026-01-09T11:00:00",
+      "date": "2026-01-09",
+      "time": "11:00:00",
+      "action": "system",
+      "description": "Phase 7.9.6: GPT4All 모델 업그레이드 - Meta Llama 3 8B로 변경",
+      "files": [
+        "backend/routers/ai.py",
+        "backend/services/system_service.py",
+        "scripts/embed_and_store.py",
+        "scripts/extract_keywords_and_labels.py",
+        "scripts/search_and_query.py",
+        "scripts/check_gpt4all_model.py",
+        "scripts/check_model_download.py",
+        "docs/dev/phase7-9-6-gpt4all-model-upgrade.md",
+        "docs/dev/phase7-9-6-gpt4all-model-selection-guide.md",
+        "docs/dev/phase7-9-6-macbook-model-compatibility-check.md",
+        "docs/dev/phase7-9-6-gpt4all-model-installation.md"
+      ],
+      "metadata": {
+        "phase": "7.9.6",
+        "status": "in_progress",
+        "type": "system",
+        "details": "GPT4All 모델을 orca-mini-3b-gguf2-q4_0.gguf (3B)에서 Meta-Llama-3-8B-Instruct.Q4_0.gguf (8B)로 업그레이드, 모든 코드 파일에서 모델 이름 변경 (6개 파일), 모델 선택 가이드 및 호환성 체크 문서 작성, 모델 다운로드 진행 중",
+        "model_change": {
+          "from": "orca-mini-3b-gguf2-q4_0.gguf",
+          "to": "Meta-Llama-3-8B-Instruct.Q4_0.gguf",
+          "parameters": "3B → 8B",
+          "file_size": "1.98 GB → 4.66 GB",
+          "ram_required": "4 GB → 8 GB"
+        }
+      },
+      "daily_log_file": "work_log_260109.md"
+    },
+    {
+      "timestamp": "2026-01-10T11:50:31.297001",
+      "date": "2026-01-10",
+      "time": "11:50:31",
+      "action": "refactor",
+      "description": "Phase 7.9.7: 스크립트 분리 작업 완료 - 모든 HTML 파일의 인라인 스크립트를 외부 JS 파일로 분리",
+      "files": [
+        "web/src/pages/knowledge.html",
+        "web/src/pages/dashboard.html",
+        "web/src/pages/document.html",
+        "web/src/pages/search.html",
+        "web/src/pages/ask.html",
+        "web/src/pages/reason.html",
+        "web/src/pages/logs.html",
+        "web/src/pages/knowledge-detail.html",
+        "web/src/pages/knowledge-label-matching.html",
+        "web/src/pages/knowledge-relation-matching.html",
+        "web/src/pages/knowledge-admin.html",
+        "web/src/pages/admin/labels.html",
+        "web/src/pages/admin/approval.html",
+        "web/src/pages/admin/groups.html",
+        "web/public/js/knowledge.js",
+        "web/public/js/dashboard.js",
+        "web/public/js/document.js",
+        "web/public/js/search.js",
+        "web/public/js/ask.js",
+        "web/public/js/reason.js",
+        "web/public/js/logs.js",
+        "web/public/js/knowledge-detail.js",
+        "web/public/js/knowledge-label-matching.js",
+        "web/public/js/knowledge-relation-matching.js",
+        "web/public/js/knowledge-admin.js",
+        "web/public/js/admin-labels.js",
+        "web/public/js/admin-approval.js",
+        "web/public/js/admin-groups.js",
+        "docs/dev/phase7-9-7-script-separation-test-results.md"
+      ],
+      "metadata": {
+        "phase": "7.9.7",
+        "status": "completed",
+        "type": "refactor",
+        "details": "총 14개 HTML 파일의 인라인 스크립트를 19개 외부 JavaScript 파일로 분리, 모든 파일 테스트 완료 (문법 검사, HTTP 접근성 확인)"
+      },
+      "daily_log_file": "work_log_260110.md"
+    },
+    {
+      "timestamp": "2026-01-10T11:50:31.297001",
+      "date": "2026-01-10",
+      "time": "11:50:31",
+      "action": "refactor",
+      "description": "Phase 7.9.8: CSS 분리 작업 - knowledge-admin.html의 인라인 CSS 제거",
+      "files": [
+        "web/src/pages/knowledge-admin.html",
+        "web/public/css/knowledge-admin.css"
+      ],
+      "metadata": {
+        "phase": "7.9.8",
+        "status": "completed",
+        "type": "refactor",
+        "details": "knowledge-admin.html의 600줄 인라인 CSS를 제거하고 외부 CSS 파일만 사용하도록 변경"
+      },
+      "daily_log_file": "work_log_260110.md"
+    },
+    {
+      "timestamp": "2026-01-10T11:50:31.297001",
+      "date": "2026-01-10",
+      "time": "11:50:31",
+      "action": "feature",
+      "description": "Phase 7.9.9: AI 질의 기능 개선 - 프롬프트 개선 및 컨텍스트 윈도우 초과 문제 해결",
+      "files": [
+        "backend/routers/ai.py"
+      ],
+      "metadata": {
+        "phase": "7.9.9",
+        "status": "completed",
+        "type": "feature",
+        "details": "한국어 답변 강제, 컨텍스트 길이 제한 (1200자), 불필요한 패턴 제거 로직 추가, repeat_penalty 증가 (1.1→1.2)"
+      },
+      "daily_log_file": "work_log_260110.md"
+    },
+    {
+      "timestamp": "2026-01-10T12:00:00.000000",
+      "date": "2026-01-10",
+      "time": "12:00:00",
+      "action": "optimization",
+      "description": "Phase 8.0.0: 검색 성능 최적화 - Qdrant 쿼리 최적화, 인덱싱 전략 개선, 캐싱 메커니즘 도입, 페이징 최적화",
+      "files": [
+        "backend/services/search_service.py",
+        "backend/routers/search.py",
+        "scripts/benchmark_search.py",
+        "docs/dev/phase8-0-0-0-search-performance-optimization-test-report.md",
+        "docs/dev/phase8-0-0-0-search-performance-optimization-change-report.md"
+      ],
+      "metadata": {
+        "phase": "8.0.1",
+        "status": "completed",
+        "type": "optimization",
+        "details": "검색 캐싱 메커니즘 도입, Qdrant 필터링 및 페이징 최적화, HNSW 인덱싱 개선"
+      }
+    },
+    {
+      "timestamp": "2026-01-10T12:30:00.000000",
+      "date": "2026-01-10",
+      "time": "12:30:00",
+      "action": "optimization",
+      "description": "Phase 8.0.0: 임베딩 성능 최적화 - 배치 처리 최적화, 병렬 처리 개선",
+      "files": [
+        "scripts/embed_and_store.py",
+        "requirements.txt",
+        "docs/dev/phase8-0-0-7-embedding-performance-optimization-test-report.md",
+        "docs/dev/phase8-0-0-7-embedding-performance-optimization-change-report.md"
+      ],
+      "metadata": {
+        "phase": "8.0.2",
+        "status": "completed",
+        "type": "optimization",
+        "details": "배치 임베딩 생성 (배치 크기 32), tqdm을 사용한 진행률 표시"
+      }
+    },
+    {
+      "timestamp": "2026-01-10T13:00:00.000000",
+      "date": "2026-01-10",
+      "time": "13:00:00",
+      "action": "optimization",
+      "description": "Phase 8.0.0: 데이터베이스 쿼리 최적화 - 인덱스 추가, N+1 쿼리 해결, 쿼리 실행 계획 분석",
+      "files": [
+        "backend/models/models.py",
+        "backend/models/database.py",
+        "backend/routers/knowledge.py",
+        "backend/routers/reason.py",
+        "scripts/analyze_slow_queries.py",
+        "docs/dev/phase8-0-0-1-database-query-optimization-test-report.md",
+        "docs/dev/phase8-0-0-1-database-query-optimization-change-report.md"
+      ],
+      "metadata": {
+        "phase": "8.0.3",
+        "status": "completed",
+        "type": "optimization",
+        "details": "주요 필드에 인덱스 추가, N+1 쿼리 해결 (eager loading), 연결 풀 최적화"
+      }
+    },
+    {
+      "timestamp": "2026-01-10T13:30:00.000000",
+      "date": "2026-01-10",
+      "time": "13:30:00",
+      "action": "feature",
+      "description": "Phase 8.0.0: 맥락 이해 및 연결 강화 - 의미적 유사도 계산, 시간적 맥락 추적, 주제별 클러스터링",
+      "files": [
+        "backend/services/context_service.py",
+        "backend/routers/context.py",
+        "requirements.txt",
+        "docs/dev/phase8-0-0-2-context-understanding-enhancement-test-report.md",
+        "docs/dev/phase8-0-0-2-context-understanding-enhancement-change-report.md"
+      ],
+      "metadata": {
+        "phase": "8.0.4",
+        "status": "completed",
+        "type": "feature",
+        "details": "의미적 유사도 계산, 시간적 맥락 추적, K-means 클러스터링, 계층 구조 추론, 참조 감지"
+      }
+    },
+    {
+      "timestamp": "2026-01-10T14:00:00.000000",
+      "date": "2026-01-10",
+      "time": "14:00:00",
+      "action": "feature",
+      "description": "Phase 8.0.0: 기억 시스템 구축 - 장기/단기/작업 기억 시스템 구현",
+      "files": [
+        "backend/models/models.py",
+        "backend/services/memory_service.py",
+        "backend/routers/memory.py",
+        "docs/dev/phase8-0-0-3-memory-system-test-report.md",
+        "docs/dev/phase8-0-0-3-memory-system-change-report.md"
+      ],
+      "metadata": {
+        "phase": "8.0.5",
+        "status": "completed",
+        "type": "feature",
+        "details": "Memory 모델 추가, 장기/단기/작업 기억 시스템, 중요도 점수, 만료 시간 관리"
+      }
+    },
+    {
+      "timestamp": "2026-01-10T14:30:00.000000",
+      "date": "2026-01-10",
+      "time": "14:30:00",
+      "action": "feature",
+      "description": "Phase 8.0.0: 페이징 기능 추가 - 주요 페이지에 페이징 구현",
+      "files": [
+        "web/public/js/pagination-component.js",
+        "backend/routers/knowledge.py",
+        "backend/routers/approval.py",
+        "backend/routers/logs.py",
+        "docs/dev/phase8-0-0-4-pagination-feature-test-report.md",
+        "docs/dev/phase8-0-0-4-pagination-feature-change-report.md"
+      ],
+      "metadata": {
+        "phase": "8.0.11",
+        "status": "completed",
+        "type": "feature",
+        "details": "페이징 기능 이미 구현 완료 확인 - 공통 컴포넌트 및 API 지원"
+      }
+    },
+    {
+      "timestamp": "2026-01-10T15:00:00.000000",
+      "date": "2026-01-10",
+      "time": "15:00:00",
+      "action": "feature",
+      "description": "Phase 8.0.0: 백업 및 복원 시스템 - 자동 백업 스케줄링, 증분 백업, 복원 기능",
+      "files": [
+        "scripts/backup_system.py",
+        "backend/routers/backup.py",
+        "docs/dev/phase8-0-0-5-backup-restore-system-test-report.md",
+        "docs/dev/phase8-0-0-5-backup-restore-system-change-report.md"
+      ],
+      "metadata": {
+        "phase": "8.0.16",
+        "status": "completed",
+        "type": "feature",
+        "details": "PostgreSQL 백업 (pg_dump), Qdrant 백업 (tar.gz), 메타데이터 백업, 복원 및 검증 기능"
+      }
+    },
+    {
+      "timestamp": "2026-01-10T15:30:00.000000",
+      "date": "2026-01-10",
+      "time": "15:30:00",
+      "action": "feature",
+      "description": "Phase 8.0.0: 데이터 무결성 보장 - Qdrant-PostgreSQL 동기화 개선, 데이터 검증 강화",
+      "files": [
+        "backend/services/integrity_service.py",
+        "backend/routers/integrity.py",
+        "docs/dev/phase8-0-0-6-data-integrity-test-report.md",
+        "docs/dev/phase8-0-0-6-data-integrity-change-report.md"
+      ],
+      "metadata": {
+        "phase": "8.0.17",
+        "status": "completed",
+        "type": "feature",
+        "details": "Qdrant-PostgreSQL 동기화 체크, 데이터 일관성 검증, 고아 레코드 자동 수정"
+      }
+    },
+    {
+      "timestamp": "2026-01-10T16:00:00.000000",
+      "date": "2026-01-10",
+      "time": "16:00:00",
+      "action": "feature",
+      "description": "Phase 8.0.0: 대화 기록 영구 저장 - 서버에 대화 기록 저장, 검색 기능",
+      "files": [
+        "backend/models/models.py",
+        "backend/routers/conversations.py",
+        "web/public/js/ask.js",
+        "docs/dev/phase8-0-0-9-conversation-persistent-storage-test-report.md",
+        "docs/dev/phase8-0-0-9-conversation-persistent-storage-change-report.md"
+      ],
+      "metadata": {
+        "phase": "8.0.13",
+        "status": "completed",
+        "type": "feature",
+        "details": "Conversation 모델 추가, 대화 기록 저장/조회/검색 API, 세션 ID 관리"
+      }
+    },
+    {
+      "timestamp": "2026-01-10T16:30:00.000000",
+      "date": "2026-01-10",
+      "time": "16:30:00",
+      "action": "feature",
+      "description": "Phase 8.0.0: 고급 검색 기능 - 복합 검색, 날짜 범위 검색, 필터링",
+      "files": [
+        "backend/routers/search.py",
+        "docs/dev/phase8-0-0-10-advanced-search-feature-test-report.md",
+        "docs/dev/phase8-0-0-10-advanced-search-feature-change-report.md"
+      ],
+      "metadata": {
+        "phase": "8.0.14",
+        "status": "completed",
+        "type": "feature",
+        "details": "복합 검색 기본 구조, 날짜 범위 검색, 파일 형식/프로젝트/라벨 필터링"
+      }
+    },
+    {
+      "timestamp": "2026-01-10T17:00:00.000000",
+      "date": "2026-01-10",
+      "time": "17:00:00",
+      "action": "feature",
+      "description": "Phase 8.0.0: 정렬 옵션 추가 - 주요 페이지에 정렬 옵션 추가",
+      "files": [
+        "backend/routers/knowledge.py",
+        "backend/routers/approval.py",
+        "backend/routers/logs.py",
+        "backend/routers/search.py",
+        "docs/dev/phase8-0-0-14-sorting-options-test-report.md",
+        "docs/dev/phase8-0-0-14-sorting-options-change-report.md"
+      ],
+      "metadata": {
+        "phase": "8.0.14-1",
+        "status": "completed",
+        "type": "feature",
+        "details": "청크 목록 정렬 (날짜, 인덱스, 제목), 승인 대기 청크 정렬, 로그 정렬, 검색 결과 정렬"
+      }
+    },
+    {
+      "timestamp": "2026-01-10T17:05:33.049911",
+      "date": "2026-01-10",
+      "time": "17:05:33",
+      "action": "refactoring",
+      "description": "Phase 7.9.8: keyword-group-manager.js 기능별 파일 분기 완료 (6개 모듈로 분리)",
+      "files": [
+        "web/public/js/keyword-group-manager.js",
+        "web/public/js/keyword-group-crud.js",
+        "web/public/js/keyword-group-matching.js",
+        "web/public/js/keyword-group-ui.js",
+        "web/public/js/keyword-group-suggestion.js",
+        "web/public/js/keyword-group-search.js"
+      ],
+      "metadata": {
+        "phase": "7.9.8",
+        "type": "refactoring",
+        "status": "completed",
+        "lines_before": 1108,
+        "lines_after": 1285,
+        "modules": 6
+      },
+      "daily_log_file": "work_log_260110.md"
+    },
+    {
+      "timestamp": "2026-01-10T17:05:33.049911",
+      "date": "2026-01-10",
+      "time": "17:05:33",
+      "action": "bugfix",
+      "description": "Phase 7.9.8: 키워드 추천 기능 개선 (안내 문구 제거, 블릿 텍스트 제거, 유사도 표시)",
+      "files": [
+        "web/public/js/keyword-group-suggestion.js",
+        "web/public/js/keyword-group-crud.js",
+        "backend/routers/labels.py"
+      ],
+      "metadata": {
+        "phase": "7.9.8",
+        "type": "bugfix",
+        "status": "completed",
+        "fixes": [
+          "키워드 추출 개선",
+          "저장 시 키워드 등록",
+          "유사도 표시"
+        ]
+      },
+      "daily_log_file": "work_log_260110.md"
+    },
+    {
+      "timestamp": "2026-01-10T17:05:33.049911",
+      "date": "2026-01-10",
+      "time": "17:05:33",
+      "action": "documentation",
+      "description": "Phase 7.9.8: 문서 정리 (35개 .md 파일 제목 및 파일명 통일)",
+      "files": [
+        "docs/dev/phase7-9-8-*.md (35개 파일)"
+      ],
+      "metadata": {
+        "phase": "7.9.8",
+        "type": "documentation",
+        "status": "completed",
+        "files_renamed": 35,
+        "titles_updated": 35
+      },
+      "daily_log_file": "work_log_260110.md"
+    },
+    {
+      "timestamp": "2026-01-10T17:30:00.000000",
+      "date": "2026-01-10",
+      "time": "17:30:00",
+      "action": "feature",
+      "description": "Phase 8.0.0: 일괄 작업 기능 - 관리자 페이지에 일괄 작업 기능 추가",
+      "files": [
+        "backend/routers/approval.py",
+        "docs/dev/phase8-0-0-15-batch-operations-test-report.md",
+        "docs/dev/phase8-0-0-15-batch-operations-change-report.md"
+      ],
+      "metadata": {
+        "phase": "8.0.15-1",
+        "status": "completed",
+        "type": "feature",
+        "details": "일괄 승인 API, 일괄 거절 API"
+      }
+    },
+    {
+      "timestamp": "2026-01-10T18:00:00.000000",
+      "date": "2026-01-10",
+      "time": "18:00:00",
+      "action": "feature",
+      "description": "Phase 8.0.0: 답변 스트리밍 - 실시간으로 답변 표시",
+      "files": [
+        "backend/routers/ai.py",
+        "docs/dev/phase8-0-0-16-answer-streaming-test-report.md",
+        "docs/dev/phase8-0-0-16-answer-streaming-change-report.md"
+      ],
+      "metadata": {
+        "phase": "8.0.15-3",
+        "status": "completed",
+        "type": "feature",
+        "details": "스트리밍 API (SSE), 실시간 답변 전송"
+      }
+    },
+    {
+      "timestamp": "2026-01-10T18:30:00.000000",
+      "date": "2026-01-10",
+      "time": "18:30:00",
+      "action": "feature",
+      "description": "Phase 8.0.0: 결과 저장/공유 - Reasoning 결과 및 AI 답변 저장 및 공유",
+      "files": [
+        "backend/models/models.py",
+        "backend/routers/reasoning_results.py",
+        "docs/dev/phase8-0-0-17-result-save-share-test-report.md",
+        "docs/dev/phase8-0-0-17-result-save-share-change-report.md"
+      ],
+      "metadata": {
+        "phase": "8.0.15-4",
+        "status": "completed",
+        "type": "feature",
+        "details": "ReasoningResult 모델 추가, 결과 저장/조회/삭제 API"
+      }
+    },
+    {
+      "timestamp": "2026-01-10T19:00:00.000000",
+      "date": "2026-01-10",
+      "time": "19:00:00",
+      "action": "improvement",
+      "description": "Phase 8.0.0: 에러 처리 및 로깅 개선 - 구조화된 로깅, 에러 추적 시스템",
+      "files": [
+        "backend/services/logging_service.py",
+        "backend/routers/error_logs.py",
+        "docs/dev/phase8-0-0-11-error-handling-logging-test-report.md",
+        "docs/dev/phase8-0-0-11-error-handling-logging-change-report.md"
+      ],
+      "metadata": {
+        "phase": "8.0.18",
+        "status": "completed",
+        "type": "improvement",
+        "details": "구조화된 로깅 (JSON 형식), 에러 추적 시스템, 에러 통계 API"
+      }
+    },
+    {
+      "timestamp": "2026-01-10T19:30:00.000000",
+      "date": "2026-01-10",
+      "time": "19:30:00",
+      "action": "security",
+      "description": "Phase 8.0.0: 보안 취약점 점검 및 수정 - 의존성 취약점 스캔, 입력 검증 강화",
+      "files": [
+        "scripts/security_scan.py",
+        "backend/middleware/security.py",
+        "backend/utils/validation.py",
+        "docs/dev/phase8-0-0-12-security-vulnerability-check-test-report.md",
+        "docs/dev/phase8-0-0-12-security-vulnerability-check-change-report.md"
+      ],
+      "metadata": {
+        "phase": "8.0.19",
+        "status": "completed",
+        "type": "security",
+        "details": "보안 스캔 스크립트, 보안 헤더 미들웨어, 입력 검증 유틸리티"
+      }
+    },
+    {
+      "timestamp": "2026-01-10T20:00:00.000000",
+      "date": "2026-01-10",
+      "time": "20:00:00",
+      "action": "documentation",
+      "description": "Phase 8.0.0: API 문서화 개선 - OpenAPI 스펙 완성, API 예제 추가",
+      "files": [
+        "backend/main.py",
+        "backend/routers/knowledge.py",
+        "docs/dev/phase8-0-0-13-api-documentation-improvement-test-report.md",
+        "docs/dev/phase8-0-0-13-api-documentation-improvement-change-report.md"
+      ],
+      "metadata": {
+        "phase": "8.0.20",
+        "status": "completed",
+        "type": "documentation",
+        "details": "OpenAPI 스펙 개선, API 설명 및 예제 추가"
+      }
+    },
+    {
+      "timestamp": "2026-01-10T20:30:00.000000",
+      "date": "2026-01-10",
+      "time": "20:30:00",
+      "action": "test",
+      "description": "Phase 8.0.0: 테스트 커버리지 향상 - 단위/통합/E2E 테스트 추가",
+      "files": [
+        "tests/__init__.py",
+        "tests/conftest.py",
+        "tests/test_search_service.py",
+        "tests/test_models.py",
+        "tests/test_api_routers.py",
+        "pytest.ini",
+        "requirements.txt",
+        "docs/dev/phase8-0-0-18-test-coverage-test-report.md",
+        "docs/dev/phase8-0-0-18-test-coverage-change-report.md"
+      ],
+      "metadata": {
+        "phase": "8.0.21",
+        "status": "completed",
+        "type": "test",
+        "details": "pytest 설정, 단위 테스트, 통합 테스트 구조 생성"
+      }
+    },
+    {
+      "timestamp": "2026-01-10T21:00:00.000000",
+      "date": "2026-01-10",
+      "time": "21:00:00",
+      "action": "feature",
+      "description": "Phase 8.0.0: 자동화 강화 - 스마트 라벨링, 자동 관계 추론, 스케줄링 기능",
+      "files": [
+        "backend/services/automation_service.py",
+        "backend/routers/automation.py",
+        "docs/dev/phase8-0-0-19-automation-enhancement-test-report.md",
+        "docs/dev/phase8-0-0-19-automation-enhancement-change-report.md"
+      ],
+      "metadata": {
+        "phase": "8.0.15",
+        "status": "completed",
+        "type": "feature",
+        "details": "자동 라벨링, 배치 자동 라벨링, 자동 관계 추론 API"
+      }
+    },
+    {
+      "timestamp": "2026-01-10T21:30:00.000000",
+      "date": "2026-01-10",
+      "time": "21:30:00",
+      "action": "feature",
+      "description": "Phase 8.0.0: 학습 및 적응 시스템 - 사용자 패턴 학습, 피드백 기반 개선",
+      "files": [
+        "backend/services/learning_service.py",
+        "backend/routers/learning.py",
+        "docs/dev/phase8-0-0-20-learning-adaptation-test-report.md",
+        "docs/dev/phase8-0-0-20-learning-adaptation-change-report.md"
+      ],
+      "metadata": {
+        "phase": "8.0.6",
+        "status": "completed",
+        "type": "feature",
+        "details": "사용자 패턴 학습, 피드백 시스템, 피드백 기반 개선"
+      }
+    },
+    {
+      "timestamp": "2026-01-10T22:00:00.000000",
+      "date": "2026-01-10",
+      "time": "22:00:00",
+      "action": "feature",
+      "description": "Phase 8.0.0: 일관성 있는 인격 유지 - 인격 프로필 정의, 모순 감지 메커니즘",
+      "files": [
+        "backend/services/personality_service.py",
+        "backend/routers/personality.py",
+        "docs/dev/phase8-0-0-21-personality-consistency-test-report.md",
+        "docs/dev/phase8-0-0-21-personality-consistency-change-report.md"
+      ],
+      "metadata": {
+        "phase": "8.0.7",
+        "status": "completed",
+        "type": "feature",
+        "details": "인격 프로필 정의, 모순 감지, 모순 해결 프로세스"
+      }
+    },
+    {
+      "timestamp": "2026-01-10T22:30:00.000000",
+      "date": "2026-01-10",
+      "time": "22:30:00",
+      "action": "feature",
+      "description": "Phase 8.0.0: 자기 인식 및 메타 인지 - 지식 불확실성 표시, 신뢰도 점수 계산",
+      "files": [
+        "backend/services/metacognition_service.py",
+        "backend/routers/metacognition.py",
+        "docs/dev/phase8-0-0-22-metacognition-test-report.md",
+        "docs/dev/phase8-0-0-22-metacognition-change-report.md"
+      ],
+      "metadata": {
+        "phase": "8.0.8",
+        "status": "completed",
+        "type": "feature",
+        "details": "신뢰도 점수 계산, 지식 불확실성 표시, 불확실성 맵"
+      }
+    },
+    {
+      "timestamp": "2026-01-10T23:00:00.000000",
+      "date": "2026-01-10",
+      "time": "23:00:00",
+      "action": "refactor",
+      "description": "Phase 7.9.9: 코드 개선 작업 완료 - 보안 취약점 수정, 리팩토링, 중복 코드 제거, 에러 처리 개선, 주석 추가",
+      "files": [
+        "web/public/js/dashboard.js",
+        "web/public/js/search.js",
+        "web/public/js/knowledge.js",
+        "web/public/js/reason.js",
+        "web/public/js/ask.js",
+        "web/public/js/logs.js",
+        "web/src/pages/dashboard.html",
+        "web/src/pages/reason.html",
+        "web/src/pages/logs.html",
+        "web/public/js/label-manager.js",
+        "web/public/js/keyword-group-crud.js",
+        "web/public/js/chunk-approval-manager.js",
+        "backend/routers/reason.py",
+        "backend/routers/ai.py",
+        "docs/dev/phase7-9-9-review-report.md",
+        "docs/dev/phase7-9-9-0-todo-list.md",
+        "docs/dev/phase7-9-9-37-final-summary-report.md"
+      ],
+      "metadata": {
+        "phase": "7.9.9",
+        "status": "completed",
+        "type": "refactor",
+        "details": "총 38개 작업 항목 완료 - 보안 취약점 수정 (6개), 리팩토링 (8개), 공통 모듈 활용 (6개), 중복 코드 제거 (6개), 에러 처리 개선 (3개), 매직 넘버 상수화 (1개), 주석 추가 (8개)",
+        "tasks_completed": 38,
+        "files_modified": 20,
+        "reports_generated": 77
+      },
+      "daily_log_file": "work_log_260110.md"
+    },
+    {
+      "timestamp": "2026-01-10T23:30:00.000000",
+      "date": "2026-01-10",
+      "time": "23:30:00",
+      "action": "feature",
+      "description": "Phase 8.0.0: 지식 통합 및 세계관 구성 - 지식 통합 알고리즘, 모순 해결 전략",
+      "files": [
+        "backend/services/knowledge_integration_service.py",
+        "backend/routers/knowledge_integration.py",
+        "docs/dev/phase8-0-0-24-knowledge-integration-test-report.md",
+        "docs/dev/phase8-0-0-24-knowledge-integration-change-report.md"
+      ],
+      "metadata": {
+        "phase": "8.0.10",
+        "status": "completed",
+        "type": "feature",
+        "details": "지식 통합 알고리즘, 모순 해결 전략, 세계관 구성"
+      }
+    },
+    {
+      "timestamp": "2026-01-11T00:00:00.000000",
+      "date": "2026-01-11",
+      "time": "00:00:00",
+      "action": "feature",
+      "description": "Phase 8.0.0: 파일 형식 지원 확장 - Excel, PowerPoint, 이미지 OCR, HWP 지원",
+      "files": [
+        "backend/services/file_parser_service.py",
+        "backend/routers/file_parser.py",
+        "requirements.txt",
+        "docs/dev/phase8-0-0-25-file-format-support-test-report.md",
+        "docs/dev/phase8-0-0-25-file-format-support-change-report.md"
+      ],
+      "metadata": {
+        "phase": "8.0.12",
+        "status": "completed",
+        "type": "feature",
+        "details": "Excel (.xlsx, .xls), PowerPoint (.pptx, .ppt), 이미지 OCR (.jpg, .jpeg, .png, .gif), HWP 기본 구조"
+      }
+    },
+    {
+      "timestamp": "2026-01-11T00:30:00.000000",
+      "date": "2026-01-11",
+      "time": "00:30:00",
+      "action": "system",
+      "description": "Phase 8.0.0: 전체 작업 완료 - 26개 작업 항목 모두 완료 (성능 최적화, 기능 확장, 안정성 강화, 인격체 모델 구축)",
+      "files": [
+        "docs/dev/phase8-0-0-final-summary-report.md",
+        "docs/dev/phase8-0-0-summary-report.md"
+      ],
+      "metadata": {
+        "phase": "8.0.0",
+        "status": "completed",
+        "type": "phase_completion",
+        "tasks_completed": 26,
+        "services_created": 11,
+        "routers_created": 14,
+        "scripts_created": 4,
+        "reports_generated": 52,
+        "details": "검색/임베딩/DB 성능 최적화, 맥락 이해/기억 시스템/자동화/학습 시스템 구축, 백업/무결성/에러 처리/보안 강화, 인격체 모델 기능 추가, 파일 형식 지원 확장"
+      }
+    }
+  ],
+  "last_update": "2026-01-10T22:48:06.273589"
+}

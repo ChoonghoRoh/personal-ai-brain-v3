@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/css/admin/admin-styles.css" />
+    <link rel="stylesheet" href="/static/css/admin/settings-common.css" />
+    <title>Personal AI Brain - Policy Set</title>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div id="header-placeholder"></div>
+
+      <div id="error-message" class="error" style="display: none"></div>
+      <div id="success-message" class="success" style="display: none"></div>
+
+      <!-- Policy Set List/Editor Layout -->
+      <div class="admin-container settings-layout">
+        <!-- Left: Policy List -->
+        <div class="settings-left">
+          <div class="admin-panel">
+            <div class="panel-header">
+              <h3>Policy Set List</h3>
+              <button type="button" id="create-policy-btn" class="btn btn-primary btn-small">
+                New Policy
+              </button>
+            </div>
+            <!-- Filters -->
+            <div class="settings-filters">
+              <div class="filter-row">
+                <select id="filter-active" class="filter-select">
+                  <option value="">All</option>
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
+                </select>
+                <input type="text" id="filter-search" class="filter-input" placeholder="Search by name..." />
+                <button type="button" id="filter-apply-btn" class="btn btn-secondary btn-small">Search</button>
+              </div>
+            </div>
+            <!-- Policy Table -->
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Priority</th>
+                  <th>Active</th>
+                  <th>Effective</th>
+                </tr>
+              </thead>
+              <tbody id="policy-table">
+                <tr>
+                  <td colspan="4" class="loading">Loading...</td>
+                </tr>
+              </tbody>
+            </table>
+            <!-- Pagination -->
+            <div id="pagination-controls" class="pagination-controls" style="display: none">
+              <span id="pagination-info" class="pagination-info"></span>
+              <div id="pagination-buttons" class="pagination-buttons"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Policy Editor -->
+        <div class="settings-right">
+          <div class="admin-panel">
+            <div class="panel-header">
+              <h3 id="editor-title">Policy Editor</h3>
+              <div class="editor-actions">
+                <button type="button" id="save-btn" class="btn btn-primary btn-small" disabled>
+                  Save
+                </button>
+                <button type="button" id="delete-btn" class="btn btn-danger btn-small" disabled>
+                  Delete
+                </button>
+              </div>
+            </div>
+            <form id="policy-form">
+              <div class="form-group">
+                <label for="policy-name">Name <span class="required">*</span></label>
+                <input type="text" id="policy-name" required placeholder="Policy name" />
+              </div>
+              <div class="form-group">
+                <label for="policy-description">Description</label>
+                <input type="text" id="policy-description" placeholder="Brief description" />
+              </div>
+              <fieldset class="form-fieldset">
+                <legend>Target Scope</legend>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="policy-project">Project (optional)</label>
+                    <select id="policy-project">
+                      <option value="">Global (all projects)</option>
+                      <!-- Projects will be loaded dynamically -->
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="policy-user-group">User Group (optional)</label>
+                    <input type="text" id="policy-user-group" placeholder="e.g., developers, analysts" />
+                  </div>
+                </div>
+              </fieldset>
+              <fieldset class="form-fieldset">
+                <legend>Linked Resources</legend>
+                <div class="form-group">
+                  <label for="policy-template">Template</label>
+                  <select id="policy-template">
+                    <option value="">Select template</option>
+                    <!-- Templates will be loaded dynamically -->
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="policy-preset">Prompt Preset</label>
+                  <select id="policy-preset">
+                    <option value="">Select preset</option>
+                    <!-- Presets will be loaded dynamically -->
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="policy-rag-profile">RAG Profile</label>
+                  <select id="policy-rag-profile">
+                    <option value="">Select RAG profile</option>
+                    <!-- RAG profiles will be loaded dynamically -->
+                  </select>
+                </div>
+              </fieldset>
+              <fieldset class="form-fieldset">
+                <legend>Priority & Validity</legend>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="policy-priority">Priority: <span id="priority-value">0</span></label>
+                    <input type="range" id="policy-priority" min="0" max="100" step="1" value="0" />
+                  </div>
+                  <div class="form-group checkbox-group">
+                    <label>
+                      <input type="checkbox" id="policy-active" checked />
+                      Active
+                    </label>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="policy-effective-from">Effective From</label>
+                    <input type="datetime-local" id="policy-effective-from" />
+                  </div>
+                  <div class="form-group">
+                    <label for="policy-effective-until">Effective Until</label>
+                    <input type="datetime-local" id="policy-effective-until" />
+                  </div>
+                </div>
+              </fieldset>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/js/components/layout-component.js"></script>
+    <script src="/static/js/components/header-component.js"></script>
+    <script src="/static/js/admin/admin-common.js"></script>
+    <script src="/static/js/components/utils.js"></script>
+    <script src="/static/js/components/pagination-component.js"></script>
+    <script src="/static/js/admin/settings/settings-common.js"></script>
+    <script src="/static/js/admin/settings/policy-sets.js"></script>
+  </body>
+</html>

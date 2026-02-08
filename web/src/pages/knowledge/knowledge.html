@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/css/knowledge/knowledge.css" />
+    <title>Personal AI Brain - Knowledge Studio</title>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header는 JavaScript로 동적 생성 -->
+
+      <div class="main-layout">
+        <div class="sidebar">
+          <h3>📋 라벨 종류</h3>
+          <ul class="label-list" id="label-list">
+            <li class="label-item active" data-label-id="">
+              <div class="label-name">전체</div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="content-area">
+          <div id="chunk-list" class="chunk-list" style="flex: 1; overflow-y: auto; padding-right: 5px; min-width: 0">
+            <div class="loading">로딩 중...</div>
+          </div>
+          <!-- 페이징 컨트롤 -->
+          <div id="pagination-controls" style="display: none; padding: 20px; border-top: 1px solid #e5e7eb; background: #f9fafb">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px">
+              <div style="display: flex; align-items: center; gap: 10px">
+                <label for="items-per-page" style="font-size: 14px; color: #6b7280">페이지당 항목:</label>
+                <select id="items-per-page" style="padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px">
+                  <option value="10">10</option>
+                  <option value="20" selected>20</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+              </div>
+              <div id="pagination-info" style="font-size: 14px; color: #6b7280"></div>
+              <div id="pagination-buttons" style="display: flex; gap: 5px; align-items: center"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/js/components/layout-component.js"></script>
+    <script src="/static/js/components/header-component.js"></script>
+    <script src="/static/js/components/utils.js"></script>
+    <script src="/static/js/components/document-utils.js"></script>
+    <script src="/static/js/components/pagination-component.js"></script>
+    <script src="/static/js/knowledge/knowledge.js"></script>
+  </body>
+</html>

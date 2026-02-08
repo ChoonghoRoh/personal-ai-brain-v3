@@ -1,0 +1,2333 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <title>Personal AI Brain - Knowledge Admin</title>
+    <style>
+      /* Layout 스타일은 layout-component.js에서 관리 */
+
+      /* Header 스타일은 header-component.js에서 관리 */
+
+      .admin-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+
+      .admin-panel {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .admin-panel h3 {
+        color: #2563eb;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e5e7eb;
+      }
+
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+        color: #333;
+        font-size: 14px;
+      }
+
+      .form-group input,
+      .form-group select,
+      .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid #e5e7eb;
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: inherit;
+      }
+
+      .form-group textarea {
+        resize: vertical;
+        min-height: 80px;
+      }
+
+      .form-group input:focus,
+      .form-group select:focus {
+        outline: none;
+        border-color: #2563eb;
+      }
+
+      .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 14px;
+        transition: all 0.2s;
+      }
+
+      .btn-primary {
+        background: #2563eb;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #1d4ed8;
+      }
+
+      .btn-danger {
+        background: #dc2626;
+        color: white;
+      }
+
+      .btn-danger:hover {
+        background: #b91c1c;
+      }
+
+      .btn-small {
+        padding: 5px 10px;
+        font-size: 12px;
+      }
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+      }
+
+      .table th,
+      .table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .table th {
+        background: #f9fafb;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .table tr:hover {
+        background: #f9fafb;
+      }
+
+      .label-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+        margin-right: 5px;
+      }
+
+      .label-badge.project_phase {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+
+      .label-badge.role {
+        background: #fce7f3;
+        color: #9f1239;
+      }
+
+      .label-badge.domain {
+        background: #dcfce7;
+        color: #166534;
+      }
+
+      .label-badge.importance {
+        background: #fef3c7;
+        color: #92400e;
+      }
+
+      .chunk-selector {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 2px solid #e5e7eb;
+      }
+
+      .chunk-selector h4 {
+        margin-bottom: 15px;
+        color: #333;
+      }
+
+      .chunk-list {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        padding: 10px;
+      }
+
+      .chunk-item-select {
+        padding: 10px;
+        margin-bottom: 8px;
+        background: #f9fafb;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .chunk-item-select:hover {
+        background: #e5e7eb;
+      }
+
+      .chunk-item-select.selected {
+        background: #dbeafe;
+        border: 2px solid #2563eb;
+      }
+
+      .chunk-item-select .chunk-preview {
+        font-size: 12px;
+        color: #666;
+        margin-top: 5px;
+      }
+
+      .chunk-labels {
+        margin-top: 15px;
+      }
+
+      .chunk-labels .current-labels {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-bottom: 10px;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+      }
+
+      .error {
+        background: #fee2e2;
+        color: #991b1b;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+      }
+
+      .success {
+        background: #d1fae5;
+        color: #065f46;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+      }
+
+      /* 탭 네비게이션 */
+      .tab-navigation {
+        background: white;
+        padding: 0 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-top: 20px;
+      }
+
+      .tab-nav-btn {
+        padding: 12px 24px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 16px;
+        color: #666;
+        border-bottom: 3px solid transparent;
+        margin-bottom: -2px;
+        transition: all 0.2s;
+      }
+
+      .tab-nav-btn:hover {
+        color: #2563eb;
+      }
+
+      .tab-nav-btn.active {
+        color: #2563eb;
+        border-bottom-color: #2563eb;
+      }
+
+      .tab-content {
+        display: block;
+      }
+
+      /* Phase 7.7: 키워드 그룹 관리 스타일 */
+      .group-card,
+      .keyword-card {
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 15px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .group-card:hover,
+      .keyword-card:hover {
+        border-color: #2563eb;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+      }
+
+      .group-card.selected,
+      .keyword-card.selected {
+        border-color: #2563eb;
+        background: #eff6ff;
+      }
+
+      .group-card {
+        border-left: 4px solid #4f46e5; /* 기본 색상 */
+      }
+
+      /* 그룹 색상이 있으면 border-left에 적용 */
+      .group-card[data-group-color] {
+        border-left-color: var(--group-color);
+      }
+
+      .keyword-card {
+        border-left: 4px solid #10b981;
+      }
+
+      .group-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .group-card-name {
+        font-weight: 600;
+        color: #1f2937;
+      }
+
+      .group-card-color {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+        border: 1px solid #e5e7eb;
+      }
+
+      .group-card-description {
+        font-size: 13px;
+        color: #6b7280;
+        margin-bottom: 8px;
+      }
+
+      .group-card-keywords-count {
+        font-size: 12px;
+        color: #9ca3af;
+      }
+
+      /* 키워드 배지 스타일 */
+      .keyword-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 2px solid transparent;
+        background: #f3f4f6;
+        color: #6b7280;
+      }
+
+      .keyword-badge:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      /* 활성화 상태 */
+      .keyword-badge.active {
+        background: #2563eb;
+        color: white;
+        border-color: #2563eb;
+      }
+
+      /* 비활성화 상태 */
+      .keyword-badge.inactive {
+        background: #f3f4f6;
+        color: #6b7280;
+        border-color: #e5e7eb;
+      }
+
+      /* 선택된 상태 (매칭 모드) */
+      .keyword-badge.selected {
+        background: #eff6ff;
+        color: #2563eb;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+      }
+
+      .keyword-card-name {
+        font-weight: 500;
+        color: #1f2937;
+        margin-bottom: 5px;
+      }
+
+      .keyword-card-group {
+        font-size: 12px;
+        color: #6b7280;
+      }
+
+      .keyword-card-count {
+        font-size: 11px;
+        color: #9ca3af;
+        margin-top: 5px;
+      }
+
+      /* 승인 센터 스타일 */
+      .status-filter-btn {
+        padding: 8px 16px;
+        border: 2px solid #e5e7eb;
+        background: white;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 14px;
+        transition: all 0.2s;
+      }
+
+      .status-filter-btn:hover {
+        border-color: #2563eb;
+        color: #2563eb;
+      }
+
+      .status-filter-btn.active {
+        background: #2563eb;
+        color: white;
+        border-color: #2563eb;
+      }
+
+      .approval-chunk-list {
+        display: grid;
+        gap: 15px;
+      }
+
+      .approval-chunk-card {
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 20px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .approval-chunk-card:hover {
+        border-color: #2563eb;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+      }
+
+      .approval-chunk-card.draft {
+        border-left: 4px solid #f59e0b;
+      }
+
+      .approval-chunk-card.approved {
+        border-left: 4px solid #10b981;
+      }
+
+      .approval-chunk-card.rejected {
+        border-left: 4px solid #ef4444;
+      }
+
+      .chunk-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 10px;
+      }
+
+      .chunk-card-status {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .chunk-card-status.draft {
+        background: #fef3c7;
+        color: #92400e;
+      }
+
+      .chunk-card-status.approved {
+        background: #d1fae5;
+        color: #065f46;
+      }
+
+      .chunk-card-status.rejected {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+
+      .chunk-card-content {
+        color: #333;
+        line-height: 1.6;
+        margin-bottom: 15px;
+        max-height: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .chunk-card-meta {
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 10px;
+      }
+
+      .chunk-card-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .btn-success {
+        background: #10b981;
+        color: white;
+      }
+
+      .btn-success:hover {
+        background: #059669;
+      }
+
+      /* 모달 스타일 */
+      .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal-content {
+        background: white;
+        border-radius: 8px;
+        max-width: 900px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        border-bottom: 2px solid #e5e7eb;
+      }
+
+      .modal-header h3 {
+        margin: 0;
+        color: #2563eb;
+      }
+
+      .modal-close {
+        background: none;
+        border: none;
+        font-size: 28px;
+        cursor: pointer;
+        color: #666;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        line-height: 30px;
+      }
+
+      .modal-close:hover {
+        color: #2563eb;
+      }
+
+      .modal-body {
+        padding: 20px;
+      }
+
+      .chunk-detail-section {
+        margin-bottom: 25px;
+      }
+
+      .chunk-detail-section h4 {
+        color: #2563eb;
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .suggestion-block {
+        background: #f9fafb;
+        border-left: 3px solid #2563eb;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 15px;
+      }
+
+      .suggestion-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        background: white;
+        border-radius: 4px;
+        margin-bottom: 8px;
+      }
+
+      .suggestion-item:last-child {
+        margin-bottom: 0;
+      }
+
+      .suggestion-info {
+        flex: 1;
+      }
+
+      .suggestion-confidence {
+        font-size: 12px;
+        color: #666;
+        margin-left: 10px;
+      }
+
+      .similar-chunk-item {
+        padding: 12px;
+        background: white;
+        border-radius: 6px;
+        margin-bottom: 10px;
+        border-left: 3px solid #10b981;
+        cursor: pointer;
+      }
+
+      .similar-chunk-item:hover {
+        background: #f0fdf4;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header는 JavaScript로 동적 생성 -->
+      <div id="header-placeholder"></div>
+
+      <div id="error-message" class="error" style="display: none"></div>
+      <div id="success-message" class="success" style="display: none"></div>
+
+      <!-- 탭 네비게이션 -->
+      <div class="tab-navigation" style="margin-bottom: 20px; border-bottom: 2px solid #e5e7eb">
+        <button class="tab-nav-btn active" onclick="switchTab('labels')" id="tab-labels">🏷️ 라벨 관리</button>
+        <button class="tab-nav-btn" onclick="switchTab('groups')" id="tab-groups">📦 키워드 그룹</button>
+        <button class="tab-nav-btn" onclick="switchTab('approval')" id="tab-approval">✅ 청크 승인 센터</button>
+      </div>
+
+      <!-- 라벨 관리 탭 -->
+      <div id="tab-content-labels" class="tab-content">
+        <div class="admin-container">
+          <!-- 라벨 관리 패널 -->
+          <div class="admin-panel">
+            <h3>🏷️ 라벨 관리</h3>
+
+            <!-- 라벨 생성 폼 -->
+            <form id="label-form" onsubmit="createLabel(event)">
+              <div class="form-group">
+                <label>라벨 이름</label>
+                <input type="text" id="label-name" required placeholder="예: ai, architecture" />
+              </div>
+              <div class="form-group">
+                <label>라벨 타입</label>
+                <select id="label-type" required>
+                  <option value="project_phase">프로젝트 단계 (project_phase)</option>
+                  <option value="role">역할 (role)</option>
+                  <option value="domain">도메인 (domain)</option>
+                  <option value="importance">중요도 (importance)</option>
+                  <option value="keyword">키워드 (keyword)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>설명 (선택사항)</label>
+                <input type="text" id="label-description" placeholder="라벨에 대한 설명" />
+              </div>
+              <button type="submit" class="btn btn-primary">라벨 생성</button>
+            </form>
+
+            <!-- 라벨 목록 -->
+            <div style="margin-top: 30px">
+              <h4>현재 라벨 목록</h4>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>이름</th>
+                    <th>타입</th>
+                    <th>설명</th>
+                    <th>작업</th>
+                  </tr>
+                </thead>
+                <tbody id="labels-table">
+                  <tr>
+                    <td colspan="4" class="loading">라벨 목록을 불러오는 중...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 청크 라벨 관리 패널 -->
+          <div class="admin-panel">
+            <h3>📝 청크 라벨 관리</h3>
+
+            <div class="chunk-selector">
+              <h4>청크 선택</h4>
+              <div class="form-group">
+                <input type="text" id="chunk-search" placeholder="청크 검색..." onkeyup="searchChunks()" />
+              </div>
+              <div class="chunk-list" id="chunk-list">
+                <div class="loading">청크 목록을 불러오는 중...</div>
+              </div>
+            </div>
+
+            <div class="chunk-labels" id="chunk-labels-section" style="display: none">
+              <h4>선택된 청크의 라벨</h4>
+              <div id="current-chunk-info" style="margin-bottom: 15px; padding: 10px; background: #f9fafb; border-radius: 4px; font-size: 12px; color: #666"></div>
+              <div class="current-labels" id="current-labels">
+                <!-- 현재 라벨들이 여기에 표시됨 -->
+              </div>
+              <div class="form-group">
+                <label>라벨 추가</label>
+                <select id="add-label-select">
+                  <option value="">라벨 선택...</option>
+                </select>
+              </div>
+              <button type="button" class="btn btn-primary" onclick="addLabelToChunk()">라벨 추가</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 7.7: 키워드 그룹 관리 탭 -->
+      <div id="tab-content-groups" class="tab-content" style="display: none">
+        <div class="admin-panel">
+          <h3>📦 키워드 그룹 관리</h3>
+
+          <!-- 상단 바: 검색 -->
+          <div style="display: flex; gap: 15px; margin-bottom: 20px; align-items: center">
+            <input
+              type="text"
+              id="group-search-input"
+              placeholder="그룹/키워드 검색..."
+              style="flex: 1; padding: 10px; border: 2px solid #e5e7eb; border-radius: 6px"
+              onkeyup="searchGroupsAndKeywords()"
+            />
+          </div>
+
+          <!-- 좌우 컬럼 레이아웃 -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px">
+            <!-- 좌측: 키워드 그룹 카드 리스트 -->
+            <div>
+              <h4 style="margin-bottom: 15px; color: #2563eb">키워드 그룹</h4>
+              <div style="display: flex; gap: 10px; margin-bottom: 15px">
+                <button class="btn btn-primary btn-small" onclick="showCreateGroupModal()">+ 새 그룹</button>
+              </div>
+              <div id="groups-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 500px; overflow-y: auto">
+                <div class="loading">그룹 목록을 불러오는 중...</div>
+              </div>
+            </div>
+
+            <!-- 우측: 키워드 목록 -->
+            <div>
+              <h4 style="margin-bottom: 15px; color: #2563eb">키워드 목록</h4>
+              <div id="keywords-list" style="display: flex; flex-wrap: wrap; gap: 8px; max-height: 500px; overflow-y: auto; padding: 10px">
+                <div class="loading">키워드 목록을 불러오는 중...</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 하단 고정 바: 선택 요약 + 일괄 적용 버튼 -->
+          <div
+            id="matching-summary-bar"
+            style="display: none; position: sticky; bottom: 0; background: white; padding: 15px; border-top: 2px solid #e5e7eb; border-radius: 8px; margin-top: 20px"
+          >
+            <div style="display: flex; justify-content: space-between; align-items: center">
+              <div id="selection-summary" style="font-weight: 500; color: #333"></div>
+              <div style="display: flex; gap: 10px">
+                <button class="btn btn-primary" onclick="applyGroupKeywords()">이 그룹에 연결</button>
+                <button class="btn" style="background: #e5e7eb; color: #333" onclick="clearSelection()">선택 취소</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 청크 승인 센터 탭 -->
+      <div id="tab-content-approval" class="tab-content" style="display: none">
+        <div class="admin-panel">
+          <h3>✅ 청크 승인 센터</h3>
+
+          <!-- 상태 필터 -->
+          <div style="margin-bottom: 20px">
+            <div style="display: flex; gap: 10px; margin-bottom: 15px">
+              <button class="status-filter-btn active" onclick="filterByStatus('draft')" data-status="draft">📝 대기 중 (Draft)</button>
+              <button class="status-filter-btn" onclick="filterByStatus('approved')" data-status="approved">✅ 승인됨 (Approved)</button>
+              <button class="status-filter-btn" onclick="filterByStatus('rejected')" data-status="rejected">❌ 거절됨 (Rejected)</button>
+            </div>
+          </div>
+
+          <!-- 청크 목록 -->
+          <div id="approval-chunk-list" class="approval-chunk-list">
+            <div class="loading">청크 목록을 불러오는 중...</div>
+          </div>
+
+          <!-- 청크 상세 모달 -->
+          <div id="chunk-detail-modal" class="modal" style="display: none">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3>청크 상세</h3>
+                <button class="modal-close" onclick="closeChunkDetail()">×</button>
+              </div>
+              <div id="chunk-detail-body" class="modal-body">
+                <!-- 청크 상세 내용이 여기에 표시됨 -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 그룹 생성 모달 -->
+      <div id="create-group-modal" class="modal" style="display: none">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 id="group-modal-title">새 키워드 그룹 생성</h3>
+            <button class="modal-close" onclick="closeCreateGroupModal()">×</button>
+          </div>
+          <div class="modal-body">
+            <form id="create-group-form" onsubmit="handleCreateGroup(event)">
+              <div class="form-group">
+                <label>그룹 이름 *</label>
+                <input type="text" id="group-name-input" required placeholder="예: AI 인프라" />
+              </div>
+              <div class="form-group">
+                <label>설명</label>
+                <textarea id="group-description-input" rows="3" placeholder="그룹에 대한 설명을 입력하세요"></textarea>
+                <!-- 에러/성공 메시지 표시 영역 (시나리오 2 개선) -->
+                <div
+                  id="keyword-suggestion-error"
+                  class="error"
+                  style="
+                    display: none;
+                    margin-top: 8px;
+                    margin-bottom: 8px;
+                    padding: 10px;
+                    font-size: 12px;
+                    background: #fee2e2;
+                    color: #991b1b;
+                    border-radius: 6px;
+                    border: 1px solid #fecaca;
+                  "
+                ></div>
+                <div
+                  id="keyword-suggestion-success"
+                  class="success"
+                  style="
+                    display: none;
+                    margin-top: 8px;
+                    margin-bottom: 8px;
+                    padding: 10px;
+                    font-size: 12px;
+                    background: #d1fae5;
+                    color: #065f46;
+                    border-radius: 6px;
+                    border: 1px solid #a7f3d0;
+                  "
+                ></div>
+                <button
+                  type="button"
+                  class="btn btn-small"
+                  style="margin-top: 8px; background: #f3f4f6; color: #333"
+                  onclick="suggestKeywordsFromDescription()"
+                  id="suggest-keywords-btn"
+                >
+                  💡 설명 기반 키워드 추천
+                </button>
+                <div id="suggested-keywords-container" style="display: none; margin-top: 10px; padding: 10px; background: #f9fafb; border-radius: 6px; border: 1px solid #e5e7eb">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px">
+                    <div style="font-size: 12px; color: #666; font-weight: 500">추천 키워드:</div>
+                    <button type="button" class="btn btn-small" style="padding: 4px 8px; font-size: 11px; background: #fee2e2; color: #991b1b" onclick="clearSuggestedKeywords()">
+                      전체삭제
+                    </button>
+                  </div>
+                  <div id="suggested-keywords-list" style="display: flex; flex-wrap: wrap; gap: 6px"></div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>색상 코드</label>
+                <input type="text" id="group-color-input" placeholder="#4F46E5" pattern="^#[0-9A-Fa-f]{6}$" />
+                <small style="color: #666; font-size: 12px; display: block; margin-top: 5px">16진수 색상 코드 (예: #4F46E5)</small>
+              </div>
+              <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px">
+                <button type="button" class="btn" style="background: #e5e7eb; color: #333" onclick="closeCreateGroupModal()">취소</button>
+                <button type="submit" class="btn btn-primary" id="group-submit-btn">생성</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/js/layout-component.js"></script>
+    <script src="/static/js/header-component.js"></script>
+    <script>
+      let allLabels = [];
+      let allChunks = [];
+      let selectedChunkId = null;
+      let currentStatusFilter = "draft";
+      let pendingChunks = [];
+
+      // 스크립트 로드 확인 후 초기화
+      function initializePage() {
+        // Layout 초기화
+        if (typeof initLayout === "function") {
+          initLayout();
+        } else {
+          console.error("initLayout 함수를 찾을 수 없습니다. layout-component.js가 로드되었는지 확인하세요.");
+        }
+
+        // Header 렌더링 - 스크립트 로드 확인
+        const headerPlaceholder = document.getElementById("header-placeholder");
+        const container = document.querySelector(".container");
+
+        // renderHeader 함수가 로드될 때까지 대기
+        function tryRenderHeader(attempts = 0) {
+          if (typeof renderHeader === "function" || typeof window.renderHeader === "function") {
+            const renderFn = renderHeader || window.renderHeader;
+
+            // header-placeholder 제거
+            if (headerPlaceholder) {
+              headerPlaceholder.remove();
+            }
+
+            // Header 렌더링
+            renderFn({
+              title: "⚙️ Knowledge Admin",
+              subtitle: "지식 구조 관리",
+              currentPath: "/knowledge-admin",
+              containerSelector: ".container",
+              insertPosition: "afterbegin",
+            });
+          } else if (attempts < 10) {
+            // 최대 10번까지 재시도 (1초)
+            setTimeout(() => tryRenderHeader(attempts + 1), 100);
+          } else {
+            console.error("renderHeader 함수를 찾을 수 없습니다. header-component.js가 로드되었는지 확인하세요.");
+            // 폴백: 간단한 header 표시
+            if (headerPlaceholder) {
+              headerPlaceholder.innerHTML = `
+                <header>
+                  <h1>⚙️ Knowledge Admin</h1>
+                  <p>지식 구조 관리</p>
+                  <nav>
+                    <a href="/dashboard">대시보드</a>
+                    <a href="/knowledge">Knowledge Studio</a>
+                    <a href="/reason">Reasoning Lab</a>
+                    <a href="/knowledge-admin">지식 관리</a>
+                  </nav>
+                </header>
+              `;
+            }
+          }
+        }
+
+        tryRenderHeader();
+
+        // 초기 데이터 로드
+        loadLabels();
+        loadChunks();
+        loadPendingChunks();
+      }
+
+      // DOMContentLoaded 또는 스크립트 로드 완료 후 초기화
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", function () {
+          // 스크립트가 로드될 때까지 대기
+          setTimeout(initializePage, 200);
+        });
+      } else {
+        // 이미 로드된 경우
+        setTimeout(initializePage, 200);
+      }
+
+      // 탭 전환
+      function switchTab(tab) {
+        // 탭 버튼 활성화
+        document.querySelectorAll(".tab-nav-btn").forEach((btn) => btn.classList.remove("active"));
+        document.getElementById(`tab-${tab}`).classList.add("active");
+
+        // 탭 컨텐츠 표시/숨김
+        document.querySelectorAll(".tab-content").forEach((content) => {
+          content.style.display = "none";
+        });
+        const tabContent = document.getElementById(`tab-content-${tab}`);
+        if (tabContent) {
+          tabContent.style.display = "block";
+        }
+
+        // 키워드 그룹 탭으로 전환 시 데이터 로드
+        if (tab === "groups") {
+          loadGroups();
+          loadKeywords();
+        }
+
+        // 탭 콘텐츠 표시
+        document.querySelectorAll(".tab-content").forEach((content) => (content.style.display = "none"));
+        document.getElementById(`tab-content-${tab}`).style.display = "block";
+      }
+
+      // 상태 필터
+      function filterByStatus(status) {
+        currentStatusFilter = status;
+
+        // 필터 버튼 활성화
+        document.querySelectorAll(".status-filter-btn").forEach((btn) => {
+          btn.classList.remove("active");
+          if (btn.dataset.status === status) {
+            btn.classList.add("active");
+          }
+        });
+
+        loadPendingChunks();
+      }
+
+      // 승인 대기 청크 로드
+      async function loadPendingChunks() {
+        const chunkList = document.getElementById("approval-chunk-list");
+        chunkList.innerHTML = '<div class="loading">청크 목록을 불러오는 중...</div>';
+
+        try {
+          const response = await fetch(`/api/approval/chunks/pending?status=${currentStatusFilter}&limit=50`);
+          if (!response.ok) {
+            throw new Error("청크 목록을 불러올 수 없습니다.");
+          }
+
+          pendingChunks = await response.json();
+          displayPendingChunks();
+        } catch (error) {
+          console.error("승인 대기 청크 로드 실패:", error);
+          chunkList.innerHTML = '<div class="error">청크 목록을 불러올 수 없습니다.</div>';
+        }
+      }
+
+      // 승인 대기 청크 표시
+      function displayPendingChunks() {
+        const chunkList = document.getElementById("approval-chunk-list");
+
+        if (pendingChunks.length === 0) {
+          chunkList.innerHTML = '<div class="loading">해당 상태의 청크가 없습니다.</div>';
+          return;
+        }
+
+        chunkList.innerHTML = pendingChunks
+          .map((chunk) => {
+            const statusClass = chunk.status || "draft";
+            const statusText =
+              {
+                draft: "📝 대기 중",
+                approved: "✅ 승인됨",
+                rejected: "❌ 거절됨",
+              }[statusClass] || "📝 대기 중";
+
+            return `
+            <div class="approval-chunk-card ${statusClass}" onclick="showChunkDetail(${chunk.id})">
+              <div class="chunk-card-header">
+                <div>
+                  <div class="chunk-card-meta">
+                    청크 ID: ${chunk.id} | 문서 ID: ${chunk.document_id} | 인덱스: ${chunk.chunk_index}
+                  </div>
+                  <div class="chunk-card-content">${chunk.content}</div>
+                </div>
+                <span class="chunk-card-status ${statusClass}">${statusText}</span>
+              </div>
+              <div class="chunk-card-actions">
+                ${
+                  statusClass === "draft"
+                    ? `
+                  <button class="btn btn-success btn-small" onclick="event.stopPropagation(); approveChunk(${chunk.id})">✅ 승인</button>
+                  <button class="btn btn-danger btn-small" onclick="event.stopPropagation(); rejectChunk(${chunk.id})">❌ 거절</button>
+                `
+                    : ""
+                }
+                <button class="btn btn-primary btn-small" onclick="event.stopPropagation(); showChunkDetail(${chunk.id})">상세 보기</button>
+              </div>
+            </div>
+          `;
+          })
+          .join("");
+      }
+
+      // 청크 승인
+      async function approveChunk(chunkId) {
+        if (!confirm("이 청크를 승인하시겠습니까?")) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/approval/chunks/${chunkId}/approve`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              approved_by: "admin",
+            }),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || "청크 승인 실패");
+          }
+
+          showSuccess("청크가 승인되었습니다.");
+          loadPendingChunks();
+        } catch (error) {
+          console.error("청크 승인 실패:", error);
+          showError(error.message || "청크 승인 중 오류가 발생했습니다.");
+        }
+      }
+
+      // 청크 거절
+      async function rejectChunk(chunkId) {
+        const reason = prompt("거절 사유를 입력하세요 (선택사항):");
+
+        if (reason === null) {
+          return; // 취소
+        }
+
+        try {
+          const response = await fetch(`/api/approval/chunks/${chunkId}/reject`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              reason: reason || null,
+            }),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || "청크 거절 실패");
+          }
+
+          showSuccess("청크가 거절되었습니다.");
+          loadPendingChunks();
+        } catch (error) {
+          console.error("청크 거절 실패:", error);
+          showError(error.message || "청크 거절 중 오류가 발생했습니다.");
+        }
+      }
+
+      // 청크 상세 보기
+      async function showChunkDetail(chunkId) {
+        const modal = document.getElementById("chunk-detail-modal");
+        const body = document.getElementById("chunk-detail-body");
+
+        body.innerHTML = '<div class="loading">청크 정보를 불러오는 중...</div>';
+        modal.style.display = "flex";
+
+        try {
+          // 청크 상세 정보 로드
+          const chunkResponse = await fetch(`/api/knowledge/chunks/${chunkId}`);
+          if (!chunkResponse.ok) {
+            throw new Error("청크 정보를 불러올 수 없습니다.");
+          }
+          const chunk = await chunkResponse.json();
+
+          // AI 라벨 추천 로드
+          let labelSuggestions = [];
+          try {
+            const labelResponse = await fetch(`/api/knowledge/labels/suggest?chunk_id=${chunkId}`);
+            if (labelResponse.ok) {
+              const labelData = await labelResponse.json();
+              labelSuggestions = labelData.suggestions || [];
+            }
+          } catch (e) {
+            console.error("라벨 추천 로드 실패:", e);
+          }
+
+          // AI 관계 추천 로드
+          let relationSuggestions = [];
+          try {
+            const relationResponse = await fetch(`/api/knowledge/relations/suggest?chunk_id=${chunkId}&limit=5`);
+            if (relationResponse.ok) {
+              const relationData = await relationResponse.json();
+              relationSuggestions = relationData.suggestions || [];
+            }
+          } catch (e) {
+            console.error("관계 추천 로드 실패:", e);
+          }
+
+          // 상세 정보 표시
+          body.innerHTML = `
+            <div class="chunk-detail-section">
+              <h4>청크 내용</h4>
+              <div style="background: #f9fafb; padding: 15px; border-radius: 6px; white-space: pre-wrap;">${chunk.content || "내용 없음"}</div>
+            </div>
+            
+            <div class="chunk-detail-section">
+              <h4>현재 라벨</h4>
+              <div class="current-labels">
+                ${
+                  chunk.labels && chunk.labels.length > 0
+                    ? chunk.labels
+                        .map(
+                          (label) => `
+                      <span class="label-badge ${label.label_type || "default"}">${label.name}</span>
+                    `
+                        )
+                        .join("")
+                    : '<p style="color: #999;">라벨이 없습니다.</p>'
+                }
+              </div>
+            </div>
+            
+            ${
+              labelSuggestions.length > 0
+                ? `
+            <div class="chunk-detail-section">
+              <h4>🤖 AI 라벨 추천</h4>
+              <div class="suggestion-block">
+                ${labelSuggestions
+                  .map(
+                    (suggestion) => `
+                  <div class="suggestion-item">
+                    <div class="suggestion-info">
+                      <span class="label-badge ${suggestion.label_type || "default"}">${suggestion.label_name}</span>
+                      <span class="suggestion-confidence">신뢰도: ${(suggestion.confidence * 100).toFixed(0)}%</span>
+                    </div>
+                    <button class="btn btn-primary btn-small" onclick="applyLabelSuggestion(${chunkId}, ${suggestion.label_id}, ${suggestion.confidence})">적용</button>
+                  </div>
+                `
+                  )
+                  .join("")}
+              </div>
+            </div>
+            `
+                : ""
+            }
+            
+            ${
+              relationSuggestions.length > 0
+                ? `
+            <div class="chunk-detail-section">
+              <h4>🔗 AI 유사 청크 추천</h4>
+              <div class="suggestion-block">
+                ${relationSuggestions
+                  .map(
+                    (suggestion) => `
+                  <div class="similar-chunk-item" onclick="showChunkDetail(${suggestion.target_chunk_id})">
+                    <div style="font-weight: 600; margin-bottom: 5px;">청크 ID: ${suggestion.target_chunk_id}</div>
+                    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">${suggestion.target_content_preview}</div>
+                    <div style="font-size: 11px; color: #999;">유사도: ${(suggestion.score * 100).toFixed(0)}%</div>
+                  </div>
+                `
+                  )
+                  .join("")}
+              </div>
+            </div>
+            `
+                : ""
+            }
+            
+            <div class="chunk-detail-section">
+              <h4>작업</h4>
+              <div style="display: flex; gap: 10px;">
+                ${
+                  chunk.status === "draft"
+                    ? `
+                  <button class="btn btn-success" onclick="approveChunk(${chunkId}); closeChunkDetail();">✅ 승인</button>
+                  <button class="btn btn-danger" onclick="rejectChunk(${chunkId}); closeChunkDetail();">❌ 거절</button>
+                `
+                    : ""
+                }
+                <button class="btn btn-secondary" onclick="closeChunkDetail()">닫기</button>
+              </div>
+            </div>
+          `;
+        } catch (error) {
+          console.error("청크 상세 로드 실패:", error);
+          body.innerHTML = '<div class="error">청크 정보를 불러올 수 없습니다.</div>';
+        }
+      }
+
+      // 청크 상세 닫기
+      function closeChunkDetail() {
+        document.getElementById("chunk-detail-modal").style.display = "none";
+      }
+
+      // 라벨 추천 적용
+      async function applyLabelSuggestion(chunkId, labelId, confidence) {
+        try {
+          const response = await fetch(`/api/knowledge/labels/suggest/${chunkId}/apply/${labelId}?confidence=${confidence}`, {
+            method: "POST",
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || "라벨 적용 실패");
+          }
+
+          showSuccess("라벨이 적용되었습니다.");
+          showChunkDetail(chunkId); // 상세 정보 새로고침
+        } catch (error) {
+          console.error("라벨 적용 실패:", error);
+          showError(error.message || "라벨 적용 중 오류가 발생했습니다.");
+        }
+      }
+
+      // 라벨 목록 로드
+      async function loadLabels() {
+        try {
+          const response = await fetch("/api/labels");
+          allLabels = await response.json();
+          displayLabels();
+          updateLabelSelect();
+        } catch (error) {
+          console.error("라벨 로드 실패:", error);
+          showError("라벨 목록을 불러올 수 없습니다.");
+        }
+      }
+
+      // 라벨 표시
+      function displayLabels() {
+        const tbody = document.getElementById("labels-table");
+        if (allLabels.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #999;">등록된 라벨이 없습니다.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = allLabels
+          .map((label) => {
+            const typeClass = label.label_type || "default";
+            return `
+            <tr>
+              <td><span class="label-badge ${typeClass}">${label.name}</span></td>
+              <td>${label.label_type || "N/A"}</td>
+              <td>${label.description || "-"}</td>
+              <td>
+                <button class="btn btn-danger btn-small" onclick="deleteLabel(${label.id})">삭제</button>
+              </td>
+            </tr>
+          `;
+          })
+          .join("");
+      }
+
+      // 라벨 생성
+      async function createLabel(event) {
+        event.preventDefault();
+
+        const name = document.getElementById("label-name").value.trim();
+        const labelType = document.getElementById("label-type").value;
+        const description = document.getElementById("label-description").value.trim();
+
+        try {
+          const response = await fetch("/api/labels", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              name: name,
+              label_type: labelType,
+              description: description || null,
+            }),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || "라벨 생성 실패");
+          }
+
+          showSuccess("라벨이 생성되었습니다.");
+          document.getElementById("label-form").reset();
+          loadLabels();
+        } catch (error) {
+          console.error("라벨 생성 실패:", error);
+          showError(error.message || "라벨 생성 중 오류가 발생했습니다.");
+        }
+      }
+
+      // 라벨 삭제
+      async function deleteLabel(labelId) {
+        if (!confirm("이 라벨을 삭제하시겠습니까?")) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/labels/${labelId}`, {
+            method: "DELETE",
+          });
+
+          if (!response.ok) {
+            throw new Error("라벨 삭제 실패");
+          }
+
+          showSuccess("라벨이 삭제되었습니다.");
+          loadLabels();
+        } catch (error) {
+          console.error("라벨 삭제 실패:", error);
+          showError("라벨 삭제 중 오류가 발생했습니다.");
+        }
+      }
+
+      // 청크 목록 로드
+      async function loadChunks() {
+        try {
+          const response = await fetch("/api/knowledge/chunks?limit=100");
+          const data = await response.json();
+          // API는 배열을 직접 반환하므로 배열인지 확인
+          allChunks = Array.isArray(data) ? data : data.chunks || [];
+          displayChunks();
+        } catch (error) {
+          console.error("청크 로드 실패:", error);
+          showError("청크 목록을 불러올 수 없습니다.");
+        }
+      }
+
+      // 청크 표시
+      function displayChunks(filteredChunks = null) {
+        const chunks = filteredChunks || allChunks;
+        const chunkList = document.getElementById("chunk-list");
+
+        if (chunks.length === 0) {
+          chunkList.innerHTML = '<div class="loading">청크가 없습니다.</div>';
+          return;
+        }
+
+        chunkList.innerHTML = chunks
+          .map((chunk) => {
+            const isSelected = selectedChunkId === chunk.id;
+            return `
+            <div class="chunk-item-select ${isSelected ? "selected" : ""}" onclick="selectChunk(${chunk.id})">
+              <div><strong>ID: ${chunk.id}</strong></div>
+              <div class="chunk-preview">${(chunk.content || "").substring(0, 100)}...</div>
+            </div>
+          `;
+          })
+          .join("");
+      }
+
+      // 청크 검색
+      function searchChunks() {
+        const searchTerm = document.getElementById("chunk-search").value.toLowerCase();
+        if (!searchTerm) {
+          displayChunks();
+          return;
+        }
+
+        const filtered = allChunks.filter((chunk) => {
+          const content = (chunk.content || "").toLowerCase();
+          return content.includes(searchTerm);
+        });
+        displayChunks(filtered);
+      }
+
+      // 청크 선택
+      async function selectChunk(chunkId) {
+        selectedChunkId = chunkId;
+        displayChunks();
+
+        // 선택된 청크 정보 표시
+        const chunk = allChunks.find((c) => c.id === chunkId);
+        if (chunk) {
+          document.getElementById("current-chunk-info").textContent = `청크 ID: ${chunk.id} | ${(chunk.content || "").substring(0, 150)}...`;
+        }
+
+        // 청크의 현재 라벨 로드
+        await loadChunkLabels(chunkId);
+
+        // 라벨 관리 섹션 표시
+        document.getElementById("chunk-labels-section").style.display = "block";
+      }
+
+      // 청크의 라벨 로드
+      async function loadChunkLabels(chunkId) {
+        try {
+          const response = await fetch(`/api/labels/chunks/${chunkId}/labels`);
+          const chunkLabels = await response.json();
+
+          const currentLabelsDiv = document.getElementById("current-labels");
+          if (chunkLabels.length === 0) {
+            currentLabelsDiv.innerHTML = '<p style="color: #999; font-size: 12px;">라벨이 없습니다.</p>';
+          } else {
+            currentLabelsDiv.innerHTML = chunkLabels
+              .map((label) => {
+                const typeClass = label.label_type || "default";
+                return `
+                <span class="label-badge ${typeClass}">
+                  ${label.name}
+                  <button onclick="removeLabelFromChunk(${label.id})" style="margin-left: 5px; background: none; border: none; color: inherit; cursor: pointer; font-weight: bold;">×</button>
+                </span>
+              `;
+              })
+              .join("");
+          }
+        } catch (error) {
+          console.error("청크 라벨 로드 실패:", error);
+        }
+      }
+
+      // 라벨 선택 드롭다운 업데이트
+      function updateLabelSelect() {
+        const select = document.getElementById("add-label-select");
+        select.innerHTML = '<option value="">라벨 선택...</option>' + allLabels.map((label) => `<option value="${label.id}">${label.name} (${label.label_type})</option>`).join("");
+      }
+
+      // 청크에 라벨 추가
+      async function addLabelToChunk() {
+        if (!selectedChunkId) {
+          showError("먼저 청크를 선택하세요.");
+          return;
+        }
+
+        const labelId = parseInt(document.getElementById("add-label-select").value);
+        if (!labelId) {
+          showError("라벨을 선택하세요.");
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/labels/chunks/${selectedChunkId}/labels/${labelId}`, {
+            method: "POST",
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || "라벨 추가 실패");
+          }
+
+          showSuccess("라벨이 추가되었습니다.");
+          loadChunkLabels(selectedChunkId);
+          document.getElementById("add-label-select").value = "";
+        } catch (error) {
+          console.error("라벨 추가 실패:", error);
+          showError(error.message || "라벨 추가 중 오류가 발생했습니다.");
+        }
+      }
+
+      // 청크에서 라벨 제거
+      async function removeLabelFromChunk(labelId) {
+        if (!selectedChunkId) {
+          return;
+        }
+
+        if (!confirm("이 라벨을 제거하시겠습니까?")) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/labels/chunks/${selectedChunkId}/labels/${labelId}`, {
+            method: "DELETE",
+          });
+
+          if (!response.ok) {
+            throw new Error("라벨 제거 실패");
+          }
+
+          showSuccess("라벨이 제거되었습니다.");
+          loadChunkLabels(selectedChunkId);
+        } catch (error) {
+          console.error("라벨 제거 실패:", error);
+          showError("라벨 제거 중 오류가 발생했습니다.");
+        }
+      }
+
+      // 메시지 표시 함수
+      function showError(message) {
+        const errorDiv = document.getElementById("error-message");
+        errorDiv.textContent = message;
+        errorDiv.style.display = "block";
+        setTimeout(() => {
+          errorDiv.style.display = "none";
+        }, 5000);
+      }
+
+      function showSuccess(message) {
+        const successDiv = document.getElementById("success-message");
+        successDiv.textContent = message;
+        successDiv.style.display = "block";
+        setTimeout(() => {
+          successDiv.style.display = "none";
+        }, 3000);
+      }
+
+      // ========== Phase 7.7: 키워드 그룹 관리 함수 ==========
+
+      let matchingMode = true; // 매칭 모드 상시 활성화
+      let selectedGroupId = null;
+      let selectedKeywordIds = new Set();
+
+      async function loadGroups() {
+        try {
+          const response = await fetch("/api/labels/groups");
+          const groups = await response.json();
+
+          const groupsList = document.getElementById("groups-list");
+          if (!groupsList) return;
+          groupsList.innerHTML = "";
+
+          groups.forEach((group) => {
+            const card = document.createElement("div");
+            card.className = "group-card";
+            card.dataset.groupId = group.id;
+            // 그룹 색상을 border-left에 적용 (시나리오 1 개선)
+            if (group.color) {
+              card.style.borderLeftColor = group.color;
+            }
+            card.onclick = () => selectGroup(group.id);
+
+            const colorStyle = group.color ? `background: ${group.color};` : "";
+
+            card.innerHTML = `
+              <div class="group-card-header">
+                <span class="group-card-name">${group.name}</span>
+                <div style="display: flex; gap: 5px; align-items: center">
+                  ${group.color ? `<div class="group-card-color" style="${colorStyle}"></div>` : ""}
+                  <button class="btn btn-small" style="padding: 4px 8px; font-size: 11px; background: #f3f4f6; color: #333" onclick="event.stopPropagation(); showEditGroupModal(${
+                    group.id
+                  })" title="수정">
+                    ✏️
+                  </button>
+                  <button class="btn btn-small" style="padding: 4px 8px; font-size: 11px; background: #fee2e2; color: #991b1b" onclick="event.stopPropagation(); deleteGroup(${
+                    group.id
+                  })" title="삭제">
+                    🗑️
+                  </button>
+                </div>
+              </div>
+              ${group.description ? `<div class="group-card-description">${group.description}</div>` : ""}
+              <div class="group-card-keywords-count">키워드: <span id="group-${group.id}-count">0</span>개</div>
+            `;
+
+            groupsList.appendChild(card);
+            loadGroupKeywordsCount(group.id);
+          });
+        } catch (error) {
+          console.error("그룹 로드 실패:", error);
+          showError("그룹 목록을 불러오는 중 오류가 발생했습니다.");
+        }
+      }
+
+      async function loadGroupKeywordsCount(groupId) {
+        try {
+          const response = await fetch(`/api/labels/groups/${groupId}/keywords`);
+          const keywords = await response.json();
+          const countElement = document.getElementById(`group-${groupId}-count`);
+          if (countElement) {
+            countElement.textContent = keywords.length;
+          }
+        } catch (error) {
+          console.error("그룹 키워드 수 로드 실패:", error);
+        }
+      }
+
+      async function loadKeywords() {
+        try {
+          // 키워드와 그룹 목록을 동시에 로드
+          const [keywordsResponse, groupsResponse] = await Promise.all([fetch("/api/labels?label_type=keyword"), fetch("/api/labels/groups")]);
+
+          const keywords = await keywordsResponse.json();
+          const groups = await groupsResponse.json();
+
+          // 그룹 ID -> 그룹 이름 매핑 생성
+          const groupMap = new Map();
+          groups.forEach((group) => {
+            groupMap.set(group.id, group.name);
+          });
+
+          const keywordsList = document.getElementById("keywords-list");
+          if (!keywordsList) return;
+          keywordsList.innerHTML = "";
+
+          // 그룹이 선택된 경우 키워드를 분류
+          let groupKeywords = [];
+          let otherKeywords = [];
+
+          if (selectedGroupId) {
+            keywords.forEach((keyword) => {
+              if (keyword.parent_label_id === selectedGroupId) {
+                groupKeywords.push(keyword);
+              } else {
+                otherKeywords.push(keyword);
+              }
+            });
+
+            // 그룹 키워드 섹션
+            if (groupKeywords.length > 0) {
+              const sectionTitle = document.createElement("div");
+              sectionTitle.style.cssText = "width: 100%; font-weight: 600; color: #2563eb; margin-bottom: 8px; margin-top: 10px; font-size: 14px";
+              sectionTitle.textContent = "그룹 키워드";
+              keywordsList.appendChild(sectionTitle);
+            }
+
+            groupKeywords.forEach((keyword) => {
+              const badge = createKeywordBadge(keyword, true);
+              keywordsList.appendChild(badge);
+            });
+
+            // 그룹 외 키워드 섹션
+            if (otherKeywords.length > 0) {
+              const sectionTitle = document.createElement("div");
+              sectionTitle.style.cssText = "width: 100%; font-weight: 600; color: #6b7280; margin-bottom: 8px; margin-top: 15px; font-size: 14px";
+              sectionTitle.textContent = "그룹 외 키워드";
+              keywordsList.appendChild(sectionTitle);
+            }
+
+            otherKeywords.forEach((keyword) => {
+              const badge = createKeywordBadge(keyword, false);
+              keywordsList.appendChild(badge);
+            });
+          } else {
+            // 그룹이 선택되지 않은 경우 모든 키워드를 비활성화 상태로 표시
+            keywords.forEach((keyword) => {
+              const badge = createKeywordBadge(keyword, false);
+              keywordsList.appendChild(badge);
+            });
+          }
+        } catch (error) {
+          console.error("키워드 로드 실패:", error);
+          showError("키워드 목록을 불러오는 중 오류가 발생했습니다.");
+        }
+      }
+
+      function createKeywordBadge(keyword, isInGroup) {
+        const badge = document.createElement("span");
+        badge.className = isInGroup ? "keyword-badge active" : "keyword-badge inactive";
+        badge.dataset.keywordId = keyword.id;
+        badge.textContent = keyword.name;
+        badge.style.cursor = "pointer";
+
+        badge.onclick = () => {
+          if (selectedGroupId) {
+            toggleKeywordSelection(keyword.id);
+          }
+        };
+
+        return badge;
+      }
+
+      // 매칭 모드는 상시 활성화이므로 이 함수는 더 이상 사용되지 않음
+      // function toggleMatchingMode() { ... } 제거됨
+
+      function updateKeywordCardsInteraction() {
+        // 모든 키워드 배지의 상호작용 상태 업데이트 (매칭 모드는 상시 활성화)
+        document.querySelectorAll(".keyword-badge").forEach((badge) => {
+          badge.style.cursor = selectedGroupId ? "pointer" : "default";
+          badge.style.opacity = selectedGroupId ? "1" : "0.6";
+        });
+      }
+
+      function selectGroup(groupId) {
+        selectedGroupId = selectedGroupId === groupId ? null : groupId;
+        if (selectedGroupId) {
+          // 그룹 선택 시 키워드 선택 초기화
+          selectedKeywordIds.clear();
+        }
+        // 키워드 목록을 다시 로드하여 그룹별로 분류 표시
+        loadKeywords();
+        updateMatchingUI();
+      }
+
+      function toggleKeywordSelection(keywordId) {
+        if (!selectedGroupId) {
+          showError("먼저 좌측에서 그룹을 선택해주세요.");
+          return;
+        }
+        if (selectedKeywordIds.has(keywordId)) {
+          selectedKeywordIds.delete(keywordId);
+        } else {
+          selectedKeywordIds.add(keywordId);
+        }
+        updateMatchingUI();
+      }
+
+      function updateMatchingUI() {
+        document.querySelectorAll(".group-card").forEach((card) => {
+          if (card.dataset.groupId == selectedGroupId) {
+            card.classList.add("selected");
+          } else {
+            card.classList.remove("selected");
+          }
+        });
+
+        document.querySelectorAll(".keyword-badge").forEach((badge) => {
+          const keywordId = parseInt(badge.dataset.keywordId);
+          if (selectedKeywordIds.has(keywordId)) {
+            badge.classList.add("selected");
+            badge.classList.remove("active", "inactive");
+          } else {
+            badge.classList.remove("selected");
+            // 기본 상태로 복원 (활성화/비활성화는 추후 그룹 선택 시 결정)
+            if (!badge.classList.contains("active") && !badge.classList.contains("inactive")) {
+              badge.classList.add("inactive");
+            }
+          }
+        });
+
+        const summaryBar = document.getElementById("matching-summary-bar");
+        const summaryText = document.getElementById("selection-summary");
+
+        if (summaryBar && summaryText) {
+          // 그룹이 선택되면 요약 바 표시 (매칭 모드는 상시 활성화)
+          if (selectedGroupId) {
+            summaryBar.style.display = "block";
+            // 그룹 이름 가져오기
+            const selectedGroupCard = document.querySelector(`.group-card[data-group-id="${selectedGroupId}"]`);
+            const groupName = selectedGroupCard ? selectedGroupCard.querySelector(".group-card-name")?.textContent : `그룹 #${selectedGroupId}`;
+
+            if (selectedKeywordIds.size > 0) {
+              summaryText.textContent = `선택된 그룹: ${groupName} · 선택된 키워드: ${selectedKeywordIds.size}개`;
+            } else {
+              summaryText.textContent = `선택된 그룹: ${groupName} · 우측에서 키워드를 선택하세요`;
+            }
+          } else {
+            summaryBar.style.display = "none";
+          }
+        }
+      }
+
+      function clearSelection() {
+        selectedGroupId = null;
+        selectedKeywordIds.clear();
+        updateMatchingUI();
+      }
+
+      async function applyGroupKeywords() {
+        if (!selectedGroupId || selectedKeywordIds.size === 0) {
+          showError("그룹과 키워드를 선택해주세요.");
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/labels/groups/${selectedGroupId}/keywords`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              keyword_ids: Array.from(selectedKeywordIds),
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error("키워드 연결 실패");
+          }
+
+          showSuccess(`${selectedKeywordIds.size}개의 키워드가 그룹에 연결되었습니다.`);
+          clearSelection();
+          loadGroups();
+          loadKeywords();
+        } catch (error) {
+          console.error("키워드 연결 실패:", error);
+          showError("키워드 연결 중 오류가 발생했습니다.");
+        }
+      }
+
+      function searchGroupsAndKeywords() {
+        const searchTerm = document.getElementById("group-search-input")?.value.toLowerCase() || "";
+        document.querySelectorAll(".group-card, .keyword-badge").forEach((card) => {
+          const text = card.textContent.toLowerCase();
+          card.style.display = text.includes(searchTerm) ? "inline-flex" : "none";
+        });
+      }
+
+      let editingGroupId = null;
+
+      function showCreateGroupModal() {
+        editingGroupId = null;
+        const modal = document.getElementById("create-group-modal");
+        const title = document.getElementById("group-modal-title");
+        const submitBtn = document.getElementById("group-submit-btn");
+
+        if (modal) {
+          modal.style.display = "flex";
+          title.textContent = "새 키워드 그룹 생성";
+          submitBtn.textContent = "생성";
+
+          // 폼 초기화
+          document.getElementById("create-group-form").reset();
+          document.getElementById("suggested-keywords-container").style.display = "none";
+          selectedSuggestedKeywords.clear();
+          // 에러/성공 메시지 초기화 (시나리오 2 개선)
+          const errorDiv = document.getElementById("keyword-suggestion-error");
+          const successDiv = document.getElementById("keyword-suggestion-success");
+          if (errorDiv) {
+            errorDiv.style.display = "none";
+            errorDiv.textContent = "";
+          }
+          if (successDiv) {
+            successDiv.style.display = "none";
+            successDiv.textContent = "";
+          }
+          document.getElementById("group-name-input").focus();
+
+          // 모달 외부 클릭 시 닫기
+          modal.onclick = (e) => {
+            if (e.target === modal) {
+              closeCreateGroupModal();
+            }
+          };
+        }
+      }
+
+      async function showEditGroupModal(groupId) {
+        try {
+          const response = await fetch(`/api/labels/groups/${groupId}`);
+          if (!response.ok) throw new Error("그룹 정보를 불러올 수 없습니다");
+
+          const group = await response.json();
+          editingGroupId = groupId;
+
+          const modal = document.getElementById("create-group-modal");
+          const title = document.getElementById("group-modal-title");
+          const submitBtn = document.getElementById("group-submit-btn");
+
+          modal.style.display = "flex";
+          title.textContent = "키워드 그룹 수정";
+          submitBtn.textContent = "수정";
+
+          // 폼에 기존 값 채우기
+          document.getElementById("group-name-input").value = group.name || "";
+          document.getElementById("group-description-input").value = group.description || "";
+          document.getElementById("group-color-input").value = group.color || "";
+          document.getElementById("suggested-keywords-container").style.display = "none";
+          selectedSuggestedKeywords.clear();
+          // 에러/성공 메시지 초기화 (시나리오 2 개선)
+          const errorDiv = document.getElementById("keyword-suggestion-error");
+          const successDiv = document.getElementById("keyword-suggestion-success");
+          if (errorDiv) {
+            errorDiv.style.display = "none";
+            errorDiv.textContent = "";
+          }
+          if (successDiv) {
+            successDiv.style.display = "none";
+            successDiv.textContent = "";
+          }
+
+          modal.onclick = (e) => {
+            if (e.target === modal) {
+              closeCreateGroupModal();
+            }
+          };
+        } catch (error) {
+          console.error("그룹 정보 로드 실패:", error);
+          showError("그룹 정보를 불러오는 중 오류가 발생했습니다.");
+        }
+      }
+
+      function closeCreateGroupModal() {
+        const modal = document.getElementById("create-group-modal");
+        if (modal) {
+          modal.style.display = "none";
+        }
+      }
+
+      async function handleCreateGroup(event) {
+        event.preventDefault();
+
+        const name = document.getElementById("group-name-input").value.trim();
+        const description = document.getElementById("group-description-input").value.trim();
+        const color = document.getElementById("group-color-input").value.trim();
+
+        if (!name) {
+          showError("그룹 이름을 입력해주세요.");
+          return;
+        }
+
+        // 색상 코드 유효성 검사
+        let validColor = null;
+        if (color) {
+          if (!/^#[0-9A-Fa-f]{6}$/.test(color)) {
+            showError("올바른 색상 코드 형식이 아닙니다. (예: #4F46E5)");
+            return;
+          }
+          validColor = color;
+        }
+
+        if (editingGroupId) {
+          await updateGroup(editingGroupId, name, description || null, validColor);
+        } else {
+          await createGroup(name, description || null, validColor);
+        }
+        closeCreateGroupModal();
+      }
+
+      async function createGroup(name, description, color) {
+        try {
+          const payload = {
+            name: name,
+            description: description || null,
+            color: color || null,
+          };
+
+          const response = await fetch("/api/labels/groups", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.detail || "그룹 생성 실패");
+          }
+
+          const result = await response.json();
+
+          // 추천된 키워드가 있으면 그룹에 자동 연결
+          const suggestedKeywords = Array.from(selectedSuggestedKeywords);
+          console.log("그룹 생성 완료, 추천 키워드 연결 시도:", {
+            groupId: result.id,
+            suggestedKeywords: suggestedKeywords,
+            count: suggestedKeywords.length,
+          });
+
+          if (suggestedKeywords.length > 0 && result.id) {
+            try {
+              await addKeywordsToGroup(result.id, suggestedKeywords);
+              showSuccess(`그룹이 생성되었고 ${suggestedKeywords.length}개의 키워드가 자동으로 연결되었습니다.`);
+            } catch (keywordError) {
+              console.error("키워드 자동 연결 실패:", keywordError);
+              showSuccess("그룹이 생성되었습니다. (키워드 자동 연결 실패)");
+            }
+          } else {
+            showSuccess("그룹이 생성되었습니다.");
+          }
+
+          loadGroups();
+          loadKeywords();
+        } catch (error) {
+          console.error("그룹 생성 실패:", error);
+          showError(error.message || "그룹 생성 중 오류가 발생했습니다.");
+        }
+      }
+
+      async function updateGroup(groupId, name, description, color) {
+        try {
+          const payload = {
+            name: name,
+            description: description || null,
+            color: color || null,
+          };
+
+          const response = await fetch(`/api/labels/groups/${groupId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.detail || "그룹 수정 실패");
+          }
+
+          showSuccess("그룹이 수정되었습니다.");
+          loadGroups();
+        } catch (error) {
+          console.error("그룹 수정 실패:", error);
+          showError(error.message || "그룹 수정 중 오류가 발생했습니다.");
+        }
+      }
+
+      async function deleteGroup(groupId) {
+        if (!confirm("이 그룹을 삭제하시겠습니까? 그룹에 속한 키워드는 그룹에서 해제됩니다.")) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/labels/groups/${groupId}`, {
+            method: "DELETE",
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.detail || "그룹 삭제 실패");
+          }
+
+          showSuccess("그룹이 삭제되었습니다.");
+          loadGroups();
+          loadKeywords();
+        } catch (error) {
+          console.error("그룹 삭제 실패:", error);
+          showError(error.message || "그룹 삭제 중 오류가 발생했습니다.");
+        }
+      }
+
+      function clearSuggestedKeywords() {
+        const container = document.getElementById("suggested-keywords-container");
+        const keywordsList = document.getElementById("suggested-keywords-list");
+
+        container.style.display = "none";
+        keywordsList.innerHTML = "";
+        selectedSuggestedKeywords.clear();
+      }
+
+      let selectedSuggestedKeywords = new Set();
+
+      async function suggestKeywordsFromDescription() {
+        const description = document.getElementById("group-description-input").value.trim();
+        const errorDiv = document.getElementById("keyword-suggestion-error");
+        const successDiv = document.getElementById("keyword-suggestion-success");
+
+        // 에러/성공 메시지 초기화
+        if (errorDiv) {
+          errorDiv.style.display = "none";
+          errorDiv.textContent = "";
+        }
+        if (successDiv) {
+          successDiv.style.display = "none";
+          successDiv.textContent = "";
+        }
+
+        if (!description) {
+          // 모달 내부에 에러 표시 (시나리오 2 개선)
+          if (errorDiv) {
+            errorDiv.textContent = "설명을 먼저 입력해주세요.";
+            errorDiv.style.display = "block";
+            // 스크롤하여 에러 메시지가 보이도록
+            setTimeout(() => {
+              errorDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            }, 100);
+          } else {
+            showError("설명을 먼저 입력해주세요.");
+          }
+          return;
+        }
+
+        const btn = document.getElementById("suggest-keywords-btn");
+        const container = document.getElementById("suggested-keywords-container");
+        const keywordsList = document.getElementById("suggested-keywords-list");
+
+        btn.disabled = true;
+        btn.textContent = "⏳ 추천 중...";
+        container.style.display = "none";
+        keywordsList.innerHTML = "";
+
+        try {
+          const response = await fetch("/api/labels/groups/suggest-keywords", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ description: description }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            const errorMessage = errorData.detail || "키워드 추천 실패";
+            throw new Error(errorMessage);
+          }
+
+          const data = await response.json();
+          const keywords = data.keywords || [];
+          const llmKeywords = data.llm_keywords || [];
+          const similarKeywords = data.similar_keywords || [];
+
+          if (keywords.length === 0) {
+            // 모달 내부에 에러 표시 (시나리오 2 개선)
+            const errorDiv = document.getElementById("keyword-suggestion-error");
+            if (errorDiv) {
+              errorDiv.textContent = "추천할 키워드를 찾을 수 없습니다.";
+              errorDiv.style.display = "block";
+              // 스크롤하여 에러 메시지가 보이도록
+              setTimeout(() => {
+                errorDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
+              }, 100);
+            } else {
+              showError("추천할 키워드를 찾을 수 없습니다.");
+            }
+            return;
+          }
+
+          // 에러/성공 메시지 초기화
+          const errorDiv = document.getElementById("keyword-suggestion-error");
+          const successDiv = document.getElementById("keyword-suggestion-success");
+          if (errorDiv) {
+            errorDiv.style.display = "none";
+          }
+          if (successDiv) {
+            successDiv.style.display = "none";
+          }
+
+          // 키워드 목록 표시
+          keywordsList.innerHTML = "";
+          selectedSuggestedKeywords.clear();
+
+          keywords.forEach((keyword) => {
+            const chip = document.createElement("div");
+            chip.className = "keyword-chip";
+            chip.dataset.keyword = keyword;
+            chip.style.cssText =
+              "display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: white; border: 2px solid #e5e7eb; border-radius: 16px; cursor: pointer; font-size: 13px; transition: all 0.2s";
+
+            // 유사 키워드인지 확인하여 배지 표시
+            const isSimilar = similarKeywords.includes(keyword);
+            const badge = isSimilar
+              ? '<span style="font-size: 10px; background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 10px; margin-right: 4px">유사</span>'
+              : "";
+
+            const keywordText = document.createElement("span");
+            keywordText.innerHTML = badge + keyword;
+            keywordText.style.flex = "1";
+            keywordText.onclick = (e) => {
+              e.stopPropagation();
+              toggleSuggestedKeyword(keyword, chip);
+            };
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.innerHTML = "×";
+            deleteBtn.style.cssText =
+              "background: none; border: none; color: #666; cursor: pointer; font-size: 16px; line-height: 1; padding: 0; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s";
+            deleteBtn.onclick = (e) => {
+              e.stopPropagation();
+              removeSuggestedKeyword(keyword, chip);
+            };
+            deleteBtn.onmouseenter = () => {
+              deleteBtn.style.background = "#fee2e2";
+              deleteBtn.style.color = "#991b1b";
+            };
+            deleteBtn.onmouseleave = () => {
+              deleteBtn.style.background = "none";
+              deleteBtn.style.color = "#666";
+            };
+
+            chip.appendChild(keywordText);
+            chip.appendChild(deleteBtn);
+            keywordsList.appendChild(chip);
+          });
+
+          container.style.display = "block";
+
+          // LLM 키워드와 유사 키워드 구분 표시 - 모달 내부에 표시 (시나리오 2 개선)
+          let message = `${keywords.length}개의 키워드가 추천되었습니다.`;
+          if (llmKeywords.length > 0 && similarKeywords.length > 0) {
+            message += ` (LLM: ${llmKeywords.length}개, 유사 키워드: ${similarKeywords.length}개)`;
+          } else if (similarKeywords.length > 0) {
+            message += ` (유사 키워드: ${similarKeywords.length}개 포함)`;
+          } else if (llmKeywords.length > 0) {
+            message += ` (LLM: ${llmKeywords.length}개)`;
+          }
+
+          // 모달 내부에 성공 메시지 표시
+          const successMsgDiv = document.getElementById("keyword-suggestion-success");
+          if (successMsgDiv) {
+            successMsgDiv.textContent = message;
+            successMsgDiv.style.display = "block";
+            // 스크롤하여 성공 메시지가 보이도록
+            setTimeout(() => {
+              successMsgDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            }, 100);
+          } else {
+            // 폴백: 모달 외부에 표시
+            showSuccess(message);
+          }
+        } catch (error) {
+          console.error("키워드 추천 실패:", error);
+          // 모달 내부에 에러 표시 (시나리오 2 개선)
+          const errorDiv = document.getElementById("keyword-suggestion-error");
+          if (errorDiv) {
+            errorDiv.textContent = error.message || "키워드 추천 중 오류가 발생했습니다.";
+            errorDiv.style.display = "block";
+            // 스크롤하여 에러 메시지가 보이도록
+            setTimeout(() => {
+              errorDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            }, 100);
+          } else {
+            // 폴백: 모달 외부에 표시
+            showError(error.message || "키워드 추천 중 오류가 발생했습니다.");
+          }
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "💡 설명 기반 키워드 추천";
+        }
+      }
+
+      function toggleSuggestedKeyword(keyword, chip) {
+        if (selectedSuggestedKeywords.has(keyword)) {
+          selectedSuggestedKeywords.delete(keyword);
+          chip.style.background = "white";
+          chip.style.borderColor = "#e5e7eb";
+        } else {
+          selectedSuggestedKeywords.add(keyword);
+          chip.style.background = "#eff6ff";
+          chip.style.borderColor = "#2563eb";
+        }
+      }
+
+      function removeSuggestedKeyword(keyword, chip) {
+        // 선택 해제
+        selectedSuggestedKeywords.delete(keyword);
+
+        // DOM에서 제거
+        chip.remove();
+
+        // 모든 키워드가 제거되었으면 컨테이너 숨기기
+        const keywordsList = document.getElementById("suggested-keywords-list");
+        if (keywordsList && keywordsList.children.length === 0) {
+          document.getElementById("suggested-keywords-container").style.display = "none";
+        }
+      }
+
+      async function addKeywordsToGroup(groupId, keywordNames) {
+        try {
+          // 키워드 이름 배열 정리 (공백 제거, 빈 값 제거, 중복 제거)
+          const cleanedKeywords = Array.from(
+            new Set(
+              Array.from(keywordNames)
+                .map((k) => (typeof k === "string" ? k.trim() : String(k).trim()))
+                .filter((k) => k.length > 0)
+            )
+          );
+
+          if (cleanedKeywords.length === 0) {
+            showError("추가할 키워드가 없습니다.");
+            return;
+          }
+
+          const response = await fetch(`/api/labels/groups/${groupId}/keywords`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ keyword_names: cleanedKeywords }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.detail || "키워드 추가 실패");
+          }
+
+          const result = await response.json();
+
+          // 결과 메시지 구성
+          let message = `${result.added_count || cleanedKeywords.length}개의 키워드가 그룹에 추가되었습니다.`;
+          if (result.skipped_count > 0) {
+            message += ` (${result.skipped_count}개는 이미 그룹에 속함)`;
+          }
+
+          // 에러가 있으면 경고 표시
+          if (result.errors && result.errors.length > 0) {
+            console.warn("키워드 추가 경고:", result.errors);
+            showError(`일부 키워드 추가 실패 (${result.error_count}개): ${result.errors.slice(0, 3).join(", ")}${result.errors.length > 3 ? "..." : ""}`);
+          } else {
+            showSuccess(message);
+          }
+
+          // 목록 새로고침
+          loadGroups();
+          loadKeywords();
+        } catch (error) {
+          console.error("키워드 추가 실패:", error);
+          showError(error.message || "키워드 추가 중 오류가 발생했습니다.");
+        }
+      }
+    </script>
+  </body>
+</html>

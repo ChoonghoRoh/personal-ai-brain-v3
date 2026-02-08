@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/css/ask.css" />
+    <title>Personal AI Brain - AI Ask</title>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header는 JavaScript로 동적 생성 -->
+
+      <div class="ask-panel">
+        <div class="input-group">
+          <input type="text" id="question-input" class="question-input" placeholder="질문을 입력하세요..." onkeypress="if(event.key === 'Enter') askQuestion()" />
+          <button class="ask-button" onclick="askQuestion()" id="ask-button">질문하기</button>
+        </div>
+        <div class="options">
+          <label class="option-label">
+            <input type="checkbox" id="context-enabled" checked />
+            컨텍스트 사용
+          </label>
+        </div>
+      </div>
+
+      <div class="response-panel" id="response-panel" style="display: none">
+        <div class="response-section">
+          <h2>답변</h2>
+          <div class="answer-box" id="answer-box"></div>
+        </div>
+        <div class="response-section">
+          <h2>참고 문서</h2>
+          <ul class="sources-list" id="sources-list"></ul>
+        </div>
+      </div>
+
+      <div class="chat-history" id="chat-history" style="display: none">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <h2 style="margin: 0;">대화 기록</h2>
+          <div style="display: flex; gap: 10px;">
+            <button onclick="exportChatHistory('json')" style="padding: 6px 12px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">📥 JSON 내보내기</button>
+            <button onclick="exportChatHistory('markdown')" style="padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">📥 Markdown 내보내기</button>
+            <button onclick="clearChatHistory()" style="padding: 6px 12px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">🗑️ 삭제</button>
+          </div>
+        </div>
+        <div id="chat-items"></div>
+      </div>
+    </div>
+
+    <script src="/static/js/components/layout-component.js"></script>
+    <script src="/static/js/components/header-component.js"></script>
+    <script src="/static/js/components/utils.js"></script>
+    <script src="/static/js/ask/ask.js"></script>
+  </body>
+</html>

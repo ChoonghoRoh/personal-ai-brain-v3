@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/css/admin/admin-styles.css" />
+    <link rel="stylesheet" href="/static/css/admin/settings-common.css" />
+    <title>Personal AI Brain - RAG Profile</title>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div id="header-placeholder"></div>
+
+      <div id="error-message" class="error" style="display: none"></div>
+      <div id="success-message" class="success" style="display: none"></div>
+
+      <!-- RAG Profile List/Editor Layout -->
+      <div class="admin-container settings-layout">
+        <!-- Left: Profile List -->
+        <div class="settings-left">
+          <div class="admin-panel">
+            <div class="panel-header">
+              <h3>RAG Profile List</h3>
+              <button type="button" id="create-profile-btn" class="btn btn-primary btn-small">
+                New Profile
+              </button>
+            </div>
+            <!-- Filters -->
+            <div class="settings-filters">
+              <div class="filter-row">
+                <select id="filter-status" class="filter-select">
+                  <option value="">All Status</option>
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                </select>
+                <input type="text" id="filter-search" class="filter-input" placeholder="Search by name..." />
+                <button type="button" id="filter-apply-btn" class="btn btn-secondary btn-small">Search</button>
+              </div>
+            </div>
+            <!-- Profile Table -->
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Chunk Size</th>
+                  <th>Top-K</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="profile-table">
+                <tr>
+                  <td colspan="4" class="loading">Loading...</td>
+                </tr>
+              </tbody>
+            </table>
+            <!-- Pagination -->
+            <div id="pagination-controls" class="pagination-controls" style="display: none">
+              <span id="pagination-info" class="pagination-info"></span>
+              <div id="pagination-buttons" class="pagination-buttons"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Profile Editor -->
+        <div class="settings-right">
+          <div class="admin-panel">
+            <div class="panel-header">
+              <h3 id="editor-title">RAG Profile Editor</h3>
+              <div class="editor-actions">
+                <button type="button" id="save-draft-btn" class="btn btn-secondary btn-small" disabled>
+                  Save Draft
+                </button>
+                <button type="button" id="publish-btn" class="btn btn-success btn-small" disabled>
+                  Publish
+                </button>
+                <button type="button" id="delete-btn" class="btn btn-danger btn-small" disabled>
+                  Delete
+                </button>
+              </div>
+            </div>
+            <form id="profile-form">
+              <div class="form-group">
+                <label for="profile-name">Name <span class="required">*</span></label>
+                <input type="text" id="profile-name" required placeholder="Profile name" />
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="profile-status">Status</label>
+                  <input type="text" id="profile-status" readonly value="draft" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="profile-description">Description</label>
+                <input type="text" id="profile-description" placeholder="Brief description" />
+              </div>
+              <fieldset class="form-fieldset">
+                <legend>Chunking Settings</legend>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="profile-chunk-size">Chunk Size: <span id="chunk-size-value">1000</span></label>
+                    <input type="range" id="profile-chunk-size" min="200" max="4000" step="100" value="1000" />
+                  </div>
+                  <div class="form-group">
+                    <label for="profile-chunk-overlap">Chunk Overlap: <span id="chunk-overlap-value">200</span></label>
+                    <input type="range" id="profile-chunk-overlap" min="0" max="500" step="50" value="200" />
+                  </div>
+                </div>
+              </fieldset>
+              <fieldset class="form-fieldset">
+                <legend>Retrieval Settings</legend>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="profile-top-k">Top-K: <span id="top-k-value">5</span></label>
+                    <input type="range" id="profile-top-k" min="1" max="20" step="1" value="5" />
+                  </div>
+                  <div class="form-group">
+                    <label for="profile-score-threshold">Score Threshold: <span id="score-value">0.7</span></label>
+                    <input type="range" id="profile-score-threshold" min="0" max="1" step="0.05" value="0.7" />
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group checkbox-group">
+                    <label>
+                      <input type="checkbox" id="profile-rerank-enabled" />
+                      Enable Reranking
+                    </label>
+                  </div>
+                  <div class="form-group">
+                    <label for="profile-rerank-top-n">Rerank Top-N</label>
+                    <input type="number" id="profile-rerank-top-n" min="1" max="10" value="3" />
+                  </div>
+                </div>
+              </fieldset>
+              <div class="form-group">
+                <label for="profile-filter-priority">Filter Priority (JSON)</label>
+                <textarea id="profile-filter-priority" rows="4" placeholder='{"labels": ["important"], "date_range": "recent"}'></textarea>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/js/components/layout-component.js"></script>
+    <script src="/static/js/components/header-component.js"></script>
+    <script src="/static/js/admin/admin-common.js"></script>
+    <script src="/static/js/components/utils.js"></script>
+    <script src="/static/js/components/pagination-component.js"></script>
+    <script src="/static/js/admin/settings/settings-common.js"></script>
+    <script src="/static/js/admin/settings/rag-profiles.js"></script>
+  </body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/css/admin/admin-styles.css" />
+    <link rel="stylesheet" href="/static/css/admin/admin-approval.css" />
+    <title>Personal AI Brain - 청크 승인 센터</title>
+  </head>
+  <body>
+    <div class="container">
+      <div id="header-placeholder"></div>
+
+      <div id="error-message" class="error" style="display: none"></div>
+      <div id="success-message" class="success" style="display: none"></div>
+
+      <!-- 청크 승인: 좌(목록+페이징) / 우(청크 상세) — 청크 관리·청크 생성 UI 참고 -->
+      <div class="admin-container approval-layout">
+        <!-- 좌측: 청크 목록 + 상태 필터 + 페이징 -->
+        <div class="approval-left">
+          <div class="admin-panel">
+            <h3>✅ 청크 승인 센터</h3>
+            <div class="approval-toolbar">
+              <div class="approval-status-filters">
+                <button class="status-filter-btn active" onclick="filterByStatus('draft')" data-status="draft">📝 대기 중</button>
+                <button class="status-filter-btn" onclick="filterByStatus('approved')" data-status="approved">✅ 승인됨</button>
+                <button class="status-filter-btn" onclick="filterByStatus('rejected')" data-status="rejected">❌ 거절됨</button>
+              </div>
+              <button type="button" class="btn btn-success btn-small" id="btn-approve-all">✅ 전체 승인</button>
+            </div>
+            <p class="approval-hint">전체 승인: 현재 목록에 보이는 대기 중 청크를 한 번에 승인합니다.</p>
+            <div id="approval-chunk-list" class="approval-chunk-list">
+              <div class="loading">청크 목록을 불러오는 중...</div>
+            </div>
+            <div id="pagination-controls" class="approval-pagination" style="display: none">
+              <div class="approval-pagination-inner">
+                <div class="approval-per-page-row">
+                  <label for="items-per-page" class="approval-per-page-label">페이지당 항목:</label>
+                  <select id="items-per-page" class="approval-per-page-select">
+                    <option value="10">10</option>
+                    <option value="20" selected>20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                  </select>
+                </div>
+                <div id="pagination-info" class="approval-pagination-info"></div>
+                <div id="pagination-buttons" class="approval-pagination-buttons"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 우측: 청크 상세 (선택 시 표시) -->
+        <div class="approval-right">
+          <div class="admin-panel approval-detail-panel" id="approval-detail-panel">
+            <h3>📄 청크 상세</h3>
+            <div id="approval-detail-body" class="approval-detail-body" aria-hidden="true">
+              <div class="approval-detail-placeholder" id="approval-detail-placeholder">청크를 선택하면 상세 내용, 현재 라벨, AI 라벨 추천이 여기에 표시됩니다.</div>
+              <div id="approval-detail-content" class="approval-detail-content" style="display: none"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/js/components/layout-component.js"></script>
+    <script src="/static/js/components/header-component.js"></script>
+    <script src="/static/js/admin/admin-common.js"></script>
+    <script src="/static/js/components/utils.js"></script>
+    <script src="/static/js/components/pagination-component.js"></script>
+    <script src="/static/js/admin/chunk-approval-manager.js"></script>
+    <script src="/static/js/admin/admin-approval.js"></script>
+  </body>
+</html>

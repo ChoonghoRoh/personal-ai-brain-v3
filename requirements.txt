@@ -1,0 +1,62 @@
+# Personal AI Brain - Backend 의존성
+# 실행: Docker (docker-compose up -d backend) 또는 로컬 (scripts/backend/start_server.py)
+# 설정: backend/config.py — 환경 변수 DATABASE_URL, QDRANT_HOST, QDRANT_PORT, OLLAMA_BASE_URL, OLLAMA_MODEL, API_HOST, API_PORT 로 오버라이드
+# 아키텍처: backend/routers, backend/services 용도별 하위 패키지 (search, system, ai, knowledge, reasoning, cognitive, automation, ingest)
+# LLM: Ollama (HTTP API, 별도 컨테이너). gpt4all은 로컬/CLI·레거시 스크립트용 선택.
+
+# FastAPI 및 웹 서버
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+jinja2>=3.1.2
+
+# 벡터 데이터베이스
+qdrant-client>=1.7.0
+
+# 임베딩 모델
+sentence-transformers>=2.2.2
+torch>=2.0.0
+
+# 데이터베이스
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.9
+alembic>=1.12.0
+
+# 파일 감시
+watchdog>=3.0.0
+
+# 문서 처리
+pypdf>=3.17.0
+python-docx>=1.1.0
+openpyxl>=3.1.0  # Excel 파일 지원
+python-pptx>=0.6.21  # PowerPoint 파일 지원
+olefile>=0.46  # HWP 파일 지원 (Phase 9-4-1)
+Pillow>=10.0.0  # 이미지 처리
+pytesseract>=0.3.10  # OCR 지원
+
+# AI · LLM (Ollama는 HTTP API로 연동, 별도 패키지 없음)
+anthropic>=0.39.0  # Phase 8-2-7 Task 실행 (Claude API)
+openai>=1.0.0  # OpenAI API 사용 시 (선택)
+gpt4all>=2.5.0  # 선택: 로컬 CLI(search_and_query --gpt4all), embed_and_store 제목 생성 등 레거시
+
+# 유틸리티
+pydantic>=2.5.0
+python-multipart>=0.0.6
+python-dotenv>=1.0.0  # 환경변수 로딩
+
+# 보안 (Phase 9-1)
+python-jose[cryptography]>=3.3.0  # JWT 토큰
+slowapi>=0.1.9  # Rate Limiting
+
+# 머신러닝 (맥락 이해)
+scikit-learn>=1.3.0
+numpy>=1.24.0
+
+# 진행 상황 표시
+tqdm>=4.66.0
+
+# 테스트
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+httpx>=0.24.0
+
+

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/css/knowledge/knowledge-detail.css" />
+    <title>Personal AI Brain - 관계 매칭</title>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header는 JavaScript로 동적 생성 -->
+
+      <div class="main-layout">
+        <div class="chunk-detail">
+          <div class="chunk-detail-header">
+            <h3>🔗 관계 매칭</h3>
+            <div>
+              <button class="btn btn-secondary" onclick="goBackToDetail()">← 상세로</button>
+            </div>
+          </div>
+          <div id="relation-matching-content-wrapper" class="chunk-detail-content">
+            <div class="loading">⏳ 청크 정보를 불러오는 중...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/js/components/layout-component.js"></script>
+    <script src="/static/js/components/header-component.js"></script>
+    <script src="/static/js/components/document-utils.js"></script>
+    <script src="/static/js/components/text-formatter.js"></script>
+    <script src="/static/js/knowledge/knowledge-relation-matching.js"></script>
+  </body>
+</html>

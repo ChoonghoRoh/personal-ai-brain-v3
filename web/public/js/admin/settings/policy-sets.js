@@ -1,0 +1,296 @@
+/**
+ * Policy Set Management Page JS (Phase 11-3)
+ */
+
+// State
+let currentPage = 1;
+let itemsPerPage = 20;
+let totalItems = 0;
+let selectedPolicyId = null;
+let isNewPolicy = false;
+
+// Cached dropdown options
+let templatesCache = [];
+let presetsCache = [];
+let ragProfilesCache = [];
+
+// DOM Ready
+document.addEventListener('DOMContentLoaded', () => {
+  initHeader();
+  initEventListeners();
+  loadDropdownOptions();
+  loadPolicies();
+});
+
+function initHeader() {
+  if (typeof renderHeader === 'function') {
+    renderHeader({
+      subtitle: 'Admin Policy Set Manager',
+      currentPath: '/admin/settings/policy-sets'
+    });
+  }
+}
+
+function initEventListeners() {
+  // Filter apply
+  document.getElementById('filter-apply-btn')?.addEventListener('click', () => {
+    currentPage = 1;
+    loadPolicies();
+  });
+
+  // Create new policy
+  document.getElementById('create-policy-btn')?.addEventListener('click', createNewPolicy);
+
+  // Save
+  document.getElementById('save-btn')?.addEventListener('click', savePolicy);
+
+  // Delete
+  document.getElementById('delete-btn')?.addEventListener('click', deletePolicy);
+
+  // Priority slider
+  document.getElementById('policy-priority')?.addEventListener('input', (e) => {
+    document.getElementById('priority-value').textContent = e.target.value;
+  });
+
+  // Enter key in search
+  document.getElementById('filter-search')?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      currentPage = 1;
+      loadPolicies();
+    }
+  });
+}
+
+async function loadDropdownOptions() {
+  try {
+    // Load templates, presets, and RAG profiles for dropdowns
+    const [templatesData, presetsData, ragProfilesData] = await Promise.all([
+      adminApiCall('/templates?status=published&limit=100'),
+      adminApiCall('/presets?status=published&limit=100'),
+      adminApiCall('/rag-profiles?status=published&limit=100'),
+    ]);
+
+    templatesCache = templatesData.items || [];
+    presetsCache = presetsData.items || [];
+    ragProfilesCache = ragProfilesData.items || [];
+
+    populateDropdowns();
+  } catch (error) {
+    console.error('Failed to load dropdown options:', error);
+  }
+}
+
+function populateDropdowns() {
+  // Templates dropdown
+  const templateSelect = document.getElementById('policy-template');
+  if (templateSelect) {
+    templateSelect.innerHTML = '<option value="">Select template</option>' +
+      templatesCache.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+  }
+
+  // Presets dropdown
+  const presetSelect = document.getElementById('policy-preset');
+  if (presetSelect) {
+    presetSelect.innerHTML = '<option value="">Select preset</option>' +
+      presetsCache.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  }
+
+  // RAG Profiles dropdown
+  const ragProfileSelect = document.getElementById('policy-rag-profile');
+  if (ragProfileSelect) {
+    ragProfileSelect.innerHTML = '<option value="">Select RAG profile</option>' +
+      ragProfilesCache.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+  }
+}
+
+async function loadPolicies() {
+  const tableBody = document.getElementById('policy-table');
+  if (!tableBody) return;
+
+  tableBody.innerHTML = '<tr><td colspan="4" class="loading">Loading...</td></tr>';
+
+  try {
+    const params = {
+      limit: itemsPerPage,
+      offset: (currentPage - 1) * itemsPerPage,
+      is_active: document.getElementById('filter-active')?.value || '',
+      search: document.getElementById('filter-search')?.value || '',
+    };
+
+    const queryString = buildQueryString(params);
+    const data = await adminApiCall(`/policy-sets${queryString}`);
+
+    totalItems = data.total || 0;
+    const policies = data.items || [];
+
+    if (policies.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="4" class="loading">No policies found</td></tr>';
+      return;
+    }
+
+    tableBody.innerHTML = policies.map(p => {
+      const effectiveStr = p.effective_from || p.effective_until
+        ? `${formatDate(p.effective_from) || 'N/A'} - ${formatDate(p.effective_until) || 'N/A'}`
+        : 'Always';
+      return `
+        <tr data-id="${p.id}" class="${p.id === selectedPolicyId ? 'selected' : ''}" onclick="selectPolicy('${p.id}')">
+          <td>${truncateText(p.name, 30)}</td>
+          <td>${p.priority}</td>
+          <td>${createActiveBadge(p.is_active)}</td>
+          <td>${truncateText(effectiveStr, 25)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    // Update pagination
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    updatePaginationInfo('pagination-info', currentPage, itemsPerPage, totalItems);
+    renderPagination('pagination-buttons', currentPage, totalPages, (page) => {
+      currentPage = page;
+      loadPolicies();
+    });
+
+  } catch (error) {
+    tableBody.innerHTML = '<tr><td colspan="4" class="loading">Error loading policies</td></tr>';
+    showError('Failed to load policies: ' + error.message);
+  }
+}
+
+async function selectPolicy(id) {
+  selectedPolicyId = id;
+  isNewPolicy = false;
+
+  // Update table selection
+  document.querySelectorAll('#policy-table tr').forEach(tr => {
+    tr.classList.toggle('selected', tr.dataset.id === id);
+  });
+
+  try {
+    const policy = await adminApiCall(`/policy-sets/${id}`);
+    populateForm(policy);
+    enableEditorButtons();
+    document.getElementById('editor-title').textContent = 'Edit Policy';
+  } catch (error) {
+    showError('Failed to load policy: ' + error.message);
+  }
+}
+
+function createNewPolicy() {
+  selectedPolicyId = null;
+  isNewPolicy = true;
+
+  // Clear selection
+  document.querySelectorAll('#policy-table tr').forEach(tr => {
+    tr.classList.remove('selected');
+  });
+
+  // Clear form
+  document.getElementById('policy-form')?.reset();
+  document.getElementById('policy-priority').value = 0;
+  document.getElementById('priority-value').textContent = '0';
+  document.getElementById('policy-active').checked = true;
+
+  // Enable save button
+  document.getElementById('save-btn').disabled = false;
+  document.getElementById('delete-btn').disabled = true;
+
+  document.getElementById('editor-title').textContent = 'New Policy';
+}
+
+function populateForm(policy) {
+  document.getElementById('policy-name').value = policy.name || '';
+  document.getElementById('policy-description').value = policy.description || '';
+  document.getElementById('policy-project').value = policy.project_id || '';
+  document.getElementById('policy-user-group').value = policy.user_group || '';
+  document.getElementById('policy-template').value = policy.template_id || '';
+  document.getElementById('policy-preset').value = policy.prompt_preset_id || '';
+  document.getElementById('policy-rag-profile').value = policy.rag_profile_id || '';
+  document.getElementById('policy-priority').value = policy.priority || 0;
+  document.getElementById('priority-value').textContent = policy.priority || 0;
+  document.getElementById('policy-active').checked = policy.is_active !== false;
+  document.getElementById('policy-effective-from').value = formatDateForInput(policy.effective_from);
+  document.getElementById('policy-effective-until').value = formatDateForInput(policy.effective_until);
+}
+
+function enableEditorButtons() {
+  document.getElementById('save-btn').disabled = false;
+  document.getElementById('delete-btn').disabled = false;
+}
+
+function getFormData() {
+  const effectiveFrom = document.getElementById('policy-effective-from')?.value;
+  const effectiveUntil = document.getElementById('policy-effective-until')?.value;
+
+  return {
+    name: document.getElementById('policy-name')?.value || '',
+    description: document.getElementById('policy-description')?.value || '',
+    project_id: document.getElementById('policy-project')?.value || null,
+    user_group: document.getElementById('policy-user-group')?.value || null,
+    template_id: document.getElementById('policy-template')?.value || null,
+    prompt_preset_id: document.getElementById('policy-preset')?.value || null,
+    rag_profile_id: document.getElementById('policy-rag-profile')?.value || null,
+    priority: parseInt(document.getElementById('policy-priority')?.value) || 0,
+    is_active: document.getElementById('policy-active')?.checked || false,
+    effective_from: effectiveFrom ? new Date(effectiveFrom).toISOString() : null,
+    effective_until: effectiveUntil ? new Date(effectiveUntil).toISOString() : null,
+  };
+}
+
+async function savePolicy() {
+  const data = getFormData();
+
+  if (!data.name) {
+    showError('Please fill in the policy name');
+    return;
+  }
+
+  try {
+    if (isNewPolicy) {
+      const created = await adminApiCall('/policy-sets', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      selectedPolicyId = created.id;
+      isNewPolicy = false;
+      showSuccess('Policy created successfully');
+    } else {
+      await adminApiCall(`/policy-sets/${selectedPolicyId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+      showSuccess('Policy saved successfully');
+    }
+
+    loadPolicies();
+    if (selectedPolicyId) {
+      selectPolicy(selectedPolicyId);
+    }
+  } catch (error) {
+    showError('Failed to save policy: ' + error.message);
+  }
+}
+
+async function deletePolicy() {
+  if (!selectedPolicyId) return;
+
+  if (!confirmAction('Are you sure you want to delete this policy?')) {
+    return;
+  }
+
+  try {
+    await adminApiCall(`/policy-sets/${selectedPolicyId}`, {
+      method: 'DELETE',
+    });
+    showSuccess('Policy deleted successfully');
+    selectedPolicyId = null;
+    createNewPolicy();
+    loadPolicies();
+  } catch (error) {
+    showError('Failed to delete policy: ' + error.message);
+  }
+}
+
+// Export for global use
+if (typeof window !== 'undefined') {
+  window.selectPolicy = selectPolicy;
+}

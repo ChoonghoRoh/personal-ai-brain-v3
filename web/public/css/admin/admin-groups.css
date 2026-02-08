@@ -1,0 +1,115 @@
+/* 키워드 그룹 관리 페이지 전용 스타일 */
+.group-card,
+.keyword-card {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.group-card:hover,
+.keyword-card:hover {
+  border-color: #2563eb;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+}
+
+.group-card.selected,
+.keyword-card.selected {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.group-card {
+  border-left: 4px solid #4f46e5; /* 기본 색상 */
+}
+
+/* 그룹 색상이 있으면 border-left에 적용 */
+.group-card[data-group-color] {
+  border-left-color: var(--group-color);
+}
+
+.keyword-card {
+  border-left: 4px solid #10b981;
+}
+
+.group-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.group-card-name {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.group-card-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+}
+
+.group-card-description {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.group-card-keywords-count {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* 키워드 배지 스타일 */
+.keyword-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.keyword-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 활성화 상태 */
+.keyword-badge.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+/* 비활성화 상태 */
+.keyword-badge.inactive {
+  background: #f3f4f6;
+  color: #6b7280;
+  border-color: #e5e7eb;
+}
+
+/* 선택된 상태 (매칭 모드) */
+.keyword-badge.selected {
+  background: #eff6ff;
+  color: #2563eb;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+/* 제외 선택된 상태 (그룹 키워드 제외용) */
+.keyword-badge.remove-selected {
+  background: #fee2e2;
+  color: #991b1b;
+  border-color: #dc2626;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+}

@@ -1,0 +1,161 @@
+/* Layout 스타일은 layout-component.js에서 관리 */
+/* Header 스타일은 header-component.js에서 관리 */
+
+.ask-panel {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.input-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.question-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.question-input:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+.ask-button {
+  padding: 12px 24px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.ask-button:hover {
+  background: #1d4ed8;
+}
+
+.ask-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.options {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.option-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+  color: #666;
+}
+
+.response-panel {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.response-section {
+  margin-bottom: 30px;
+}
+
+.response-section h2 {
+  color: #2563eb;
+  margin-bottom: 15px;
+  font-size: 20px;
+}
+
+.answer-box {
+  background: #f9fafb;
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 4px solid #2563eb;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+.sources-list {
+  list-style: none;
+}
+
+.source-item {
+  padding: 15px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  background: #f9fafb;
+}
+
+.source-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.source-file {
+  font-weight: 500;
+  color: #2563eb;
+  font-size: 14px;
+}
+
+.source-score {
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.source-snippet {
+  color: #666;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.chat-history {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+}
+
+.chat-item {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.chat-question {
+  font-weight: 500;
+  color: #2563eb;
+  margin-bottom: 10px;
+}
+
+.chat-answer {
+  color: #666;
+  line-height: 1.6;
+}

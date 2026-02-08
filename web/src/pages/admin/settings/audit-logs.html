@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/css/admin/admin-styles.css" />
+    <link rel="stylesheet" href="/static/css/admin/settings-common.css" />
+    <title>Personal AI Brain - Audit Log</title>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div id="header-placeholder"></div>
+
+      <div id="error-message" class="error" style="display: none"></div>
+      <div id="success-message" class="success" style="display: none"></div>
+
+      <!-- Audit Log Viewer -->
+      <div class="admin-container audit-layout">
+        <div class="admin-panel full-width">
+          <div class="panel-header">
+            <h3>Audit Log Viewer</h3>
+            <button type="button" id="refresh-btn" class="btn btn-secondary btn-small">
+              Refresh
+            </button>
+          </div>
+
+          <!-- Filters -->
+          <div class="settings-filters">
+            <div class="filter-row">
+              <select id="filter-table" class="filter-select">
+                <option value="">All Tables</option>
+                <option value="templates">Templates</option>
+                <option value="prompt_presets">Prompt Presets</option>
+                <option value="rag_profiles">RAG Profiles</option>
+                <option value="policy_sets">Policy Sets</option>
+                <option value="schemas">Schemas</option>
+              </select>
+              <select id="filter-action" class="filter-select">
+                <option value="">All Actions</option>
+                <option value="create">Create</option>
+                <option value="update">Update</option>
+                <option value="delete">Delete</option>
+                <option value="publish">Publish</option>
+                <option value="rollback">Rollback</option>
+              </select>
+              <input type="text" id="filter-changed-by" class="filter-input" placeholder="Changed by..." />
+            </div>
+            <div class="filter-row">
+              <label for="filter-from-date">From:</label>
+              <input type="date" id="filter-from-date" class="filter-date" />
+              <label for="filter-to-date">To:</label>
+              <input type="date" id="filter-to-date" class="filter-date" />
+              <button type="button" id="filter-apply-btn" class="btn btn-secondary btn-small">Apply Filter</button>
+              <button type="button" id="filter-clear-btn" class="btn btn-outline btn-small">Clear</button>
+            </div>
+          </div>
+
+          <!-- Audit Log Table -->
+          <table class="table audit-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Table</th>
+                <th>Action</th>
+                <th>Record ID</th>
+                <th>Changed By</th>
+                <th>Reason</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody id="audit-table">
+              <tr>
+                <td colspan="7" class="loading">Loading...</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Pagination -->
+          <div id="pagination-controls" class="pagination-controls" style="display: none">
+            <div class="pagination-row">
+              <span id="pagination-info" class="pagination-info"></span>
+              <label>
+                Items per page:
+                <select id="items-per-page" class="items-per-page">
+                  <option value="20">20</option>
+                  <option value="50" selected>50</option>
+                  <option value="100">100</option>
+                </select>
+              </label>
+            </div>
+            <div id="pagination-buttons" class="pagination-buttons"></div>
+          </div>
+        </div>
+
+        <!-- Detail Modal -->
+        <div id="detail-modal" class="modal" style="display: none">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>Change Details</h3>
+              <button type="button" class="modal-close" onclick="closeDetailModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div class="detail-section">
+                <h4>Basic Info</h4>
+                <div id="detail-basic"></div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-section">
+                  <h4>Before (Old Values)</h4>
+                  <pre id="detail-old-values" class="json-display"></pre>
+                </div>
+                <div class="detail-section">
+                  <h4>After (New Values)</h4>
+                  <pre id="detail-new-values" class="json-display"></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/js/components/layout-component.js"></script>
+    <script src="/static/js/components/header-component.js"></script>
+    <script src="/static/js/admin/admin-common.js"></script>
+    <script src="/static/js/components/utils.js"></script>
+    <script src="/static/js/components/pagination-component.js"></script>
+    <script src="/static/js/admin/settings/settings-common.js"></script>
+    <script src="/static/js/admin/settings/audit-logs.js"></script>
+  </body>
+</html>

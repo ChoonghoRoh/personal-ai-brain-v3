@@ -1,0 +1,1 @@
+{{"cd /workspace/docs/phases/" + $json.phaseDirId + " && ls -1 | grep -E '^" + $json.phaseFileBase + "(-[0-9]+)?-' || true"}}

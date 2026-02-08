@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/css/admin/admin-styles.css" />
+    <link rel="stylesheet" href="/static/css/admin/admin-chunk-create.css" />
+    <title>Personal AI Brain - 청크 생성</title>
+  </head>
+  <body>
+    <div class="container">
+      <div id="header-placeholder"></div>
+
+      <div id="error-message" class="error" style="display: none"></div>
+      <div id="success-message" class="success" style="display: none"></div>
+
+      <div class="admin-container chunk-create-flow">
+        <div class="admin-panel">
+          <h3>➕ 청크 생성</h3>
+          <p class="chunk-create-desc">문서 스토리지(brain/, docs/)의 마크다운 파일을 선택한 뒤 분할해 청크로 등록합니다.</p>
+
+          <!-- 상단: 단계 탭 -->
+          <nav class="chunk-create-tabs" role="tablist">
+            <button type="button" class="chunk-create-tab active" data-step="1" role="tab" aria-selected="true">1. 파일 선택</button>
+            <button type="button" class="chunk-create-tab" data-step="2" role="tab" aria-selected="false">2. 분할·선택</button>
+            <button type="button" class="chunk-create-tab" data-step="3" role="tab" aria-selected="false">3. 등록</button>
+          </nav>
+
+          <!-- 하단: 단계별 상세 (좌 / 우) -->
+          <div class="chunk-create-body">
+            <!-- 1단계 패널 -->
+            <div id="step1-panel" class="chunk-create-panel active" data-step="1">
+              <div class="chunk-create-row">
+                <aside class="chunk-create-left step1-left">
+                  <h4>스토리지 파일 목록</h4>
+                  <p class="form-hint">brain/, docs/ 내 .md 파일. 클릭 시 우측에 내용이 표시됩니다.</p>
+                  <div id="storage-file-list" class="chunk-create-file-list chunk-create-panel-area">
+                    <div class="loading">파일 목록을 불러오는 중...</div>
+                  </div>
+                  <div id="file-list-pagination" class="chunk-create-pagination" style="display: none">
+                    <button type="button" class="btn btn-small" id="btn-file-prev" disabled>이전</button>
+                    <span id="file-page-info" class="chunk-create-page-info">1 / 1</span>
+                    <button type="button" class="btn btn-small" id="btn-file-next" disabled>다음</button>
+                  </div>
+                </aside>
+                <main class="chunk-create-right step1-right">
+                  <h4>선택된 문서 · 분할 방식</h4>
+                  <div id="source-content-group" class="step1-doc-area chunk-create-panel-area" style="display: none">
+                    <div class="step1-split-row form-group">
+                      <label for="split-mode">분할 방식</label>
+                      <select id="split-mode">
+                        <option value="paragraph">문단 (빈 줄 기준)</option>
+                        <option value="line">한 줄씩</option>
+                        <option value="heading">헤딩 기준 (#)</option>
+                      </select>
+                      <button type="button" class="btn btn-primary" id="btn-run-split">자동 생성</button>
+                    </div>
+                    <div class="form-group">
+                      <label>문서 내용 (청크 분할 대상)</label>
+                      <div id="chunk-source-text" class="chunk-source-text" aria-label="문서 내용">파일을 선택하면 내용이 여기 표시됩니다.</div>
+                    </div>
+                  </div>
+                  <div id="step1-empty" class="chunk-create-empty step1-empty">왼쪽 목록에서 파일을 선택하세요.</div>
+                </main>
+              </div>
+            </div>
+
+            <!-- 2단계 패널 -->
+            <div id="step2-panel" class="chunk-create-panel" data-step="2" style="display: none">
+              <div class="chunk-create-row step2-row">
+                <aside class="chunk-create-left step2-left" id="step2-left">
+                  <div class="step2-controls chunk-create-panel-area">
+                    <h4>선택</h4>
+                    <div class="chunk-create-toolbar">
+                      <button type="button" class="btn btn-small" id="btn-select-all">전체 선택</button>
+                      <button type="button" class="btn btn-small" id="btn-select-none">전체 해제</button>
+                      <span id="temp-selected-count" class="chunk-create-count">0개 선택</span>
+                    </div>
+                    <h4>병합</h4>
+                    <div class="chunk-create-merge-toolbar">
+                      <button type="button" class="btn btn-small" id="btn-merge-selected">선택한 청크 병합</button>
+                    </div>
+                    <div class="chunk-create-merge-toolbar">
+                      <span class="chunk-create-merge-label">헤딩 레벨</span>
+                      <select id="merge-heading-level" class="chunk-create-merge-select">
+                        <option value="">선택...</option>
+                        <option value="1"># (H1)</option>
+                        <option value="2">## (H2)</option>
+                        <option value="3">### (H3)</option>
+                      </select>
+                      <button type="button" class="btn btn-small" id="btn-merge-by-heading">적용</button>
+                    </div>
+                    <h4>청크 목록</h4>
+                    <p class="form-hint">등록할 항목을 선택한 뒤 「3단계 이동」을 누르세요.</p>
+                  </div>
+                </aside>
+                <main class="chunk-create-right step2-right">
+                  <h4>분할된 청크 목록</h4>
+                  <div class="step2-list-header">
+                    <button type="button" class="btn btn-primary" id="btn-go-step3">선택한 청크로 3단계 이동</button>
+                  </div>
+                  <div class="chunk-create-temp-list chunk-create-panel-area" id="temp-chunk-list">
+                    <!-- 체크박스 + 미리보기 목록 -->
+                  </div>
+                  <div class="chunk-create-step-actions">
+                    <button type="button" class="btn btn-small" id="btn-back-to-step1">← 1단계로</button>
+                  </div>
+                </main>
+              </div>
+            </div>
+
+            <!-- 3단계 패널 -->
+            <div id="step3-panel" class="chunk-create-panel" data-step="3" style="display: none">
+              <div class="chunk-create-row">
+                <aside class="chunk-create-left step3-left">
+                  <h4>등록 방식</h4>
+                  <div class="chunk-create-panel-area">
+                    <div class="step3-segmented form-group" role="group" aria-label="등록 방식">
+                      <label class="step3-segmented-label">
+                        <input type="radio" name="doc-target" value="new" id="doc-target-new" checked />
+                        <span>새로운 청크로 등록</span>
+                      </label>
+                      <label class="step3-segmented-label">
+                        <input type="radio" name="doc-target" value="existing" id="doc-target-existing" />
+                        <span>기존 문서에 청크 추가</span>
+                      </label>
+                    </div>
+                    <div id="doc-target-new-fields" class="doc-target-fields">
+                      <p class="form-hint" id="new-doc-hint">입력한 경로·이름은 <strong>DB에서 문서를 구분하는 값</strong>입니다. 선택한 청크가 이 문서에 등록됩니다.</p>
+                      <p class="form-hint form-hint-warning">실제 brain/, docs/ 스토리지 파일은 수정·덮어쓰기되지 않습니다.</p>
+                    </div>
+                    <div id="doc-target-existing-fields" class="doc-target-fields" style="display: none">
+                      <div class="form-group">
+                        <label>등록할 문서 선택</label>
+                        <select id="existing-doc-select">
+                          <option value="">문서를 선택하세요...</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </aside>
+                <main class="chunk-create-right step3-right">
+                  <h4>문서 정보</h4>
+                  <div class="chunk-create-panel-area">
+                    <div class="form-group">
+                      <label>문서 경로 (DB용 file_path)</label>
+                      <input type="text" id="new-doc-file-path" placeholder="brain/projects/my-project/note.md" />
+                    </div>
+                    <div class="form-group">
+                      <label>문서 이름 (DB용 file_name)</label>
+                      <input type="text" id="new-doc-file-name" placeholder="note.md" />
+                    </div>
+                    <div class="chunk-create-step-actions">
+                      <button type="button" class="btn btn-small" id="btn-back-to-step2">← 2단계로</button>
+                      <button type="button" class="btn btn-primary" id="btn-register-chunks">선택한 청크 등록</button>
+                    </div>
+                  </div>
+                </main>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/js/components/layout-component.js"></script>
+    <script src="/static/js/components/header-component.js"></script>
+    <script src="/static/js/admin/admin-common.js"></script>
+    <script src="/static/js/components/utils.js"></script>
+    <script src="/static/js/admin/chunk-create.js"></script>
+  </body>
+</html>

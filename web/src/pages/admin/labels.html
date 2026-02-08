@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/css/admin/admin-styles.css" />
+    <link rel="stylesheet" href="/static/css/admin/admin-labels.css" />
+    <title>Personal AI Brain - 라벨 관리</title>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header는 JavaScript로 동적 생성 -->
+      <div id="header-placeholder"></div>
+
+      <div id="error-message" class="error" style="display: none"></div>
+      <div id="success-message" class="success" style="display: none"></div>
+
+      <!-- 라벨 관리: 좌(라벨 생성) / 우(라벨 목록 + 페이징) -->
+      <div class="admin-container labels-full-width labels-layout">
+        <!-- 좌측: 라벨 생성 -->
+        <div class="labels-left">
+          <div class="admin-panel">
+            <h3>🏷️ 라벨 생성</h3>
+            <form id="label-form" onsubmit="createLabel(event)">
+              <div class="form-group">
+                <label>라벨 이름</label>
+                <input type="text" id="label-name" required placeholder="예: ai, architecture" />
+              </div>
+              <div class="form-group">
+                <label>라벨 타입</label>
+                <select id="label-type" required>
+                  <option value="project_phase">프로젝트 단계 (project_phase)</option>
+                  <option value="role">역할 (role)</option>
+                  <option value="domain">도메인 (domain)</option>
+                  <option value="importance">중요도 (importance)</option>
+                  <option value="keyword">키워드 (keyword)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>설명 (선택사항)</label>
+                <input type="text" id="label-description" placeholder="라벨에 대한 설명" />
+              </div>
+              <button type="submit" class="btn btn-primary">라벨 생성</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- 우측: 라벨 목록 + 페이징 -->
+        <div class="labels-right">
+          <div class="admin-panel">
+            <h3>📋 라벨 목록</h3>
+            <!-- 타입 필터 + 이름 조회 -->
+            <div class="labels-list-filters">
+              <div class="labels-filter-row">
+                <label for="labels-filter-type">타입</label>
+                <select id="labels-filter-type" class="labels-filter-type">
+                  <option value="">전체</option>
+                  <option value="project_phase">프로젝트 단계</option>
+                  <option value="role">역할</option>
+                  <option value="domain">도메인</option>
+                  <option value="importance">중요도</option>
+                  <option value="keyword">키워드</option>
+                </select>
+                <label for="labels-filter-name">이름</label>
+                <input type="text" id="labels-filter-name" class="labels-filter-name" placeholder="이름으로 검색" />
+                <button type="button" id="labels-filter-apply" class="btn btn-primary btn-small">조회</button>
+              </div>
+            </div>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>이름</th>
+                  <th>타입</th>
+                  <th>설명</th>
+                  <th>작업</th>
+                </tr>
+              </thead>
+              <tbody id="labels-table">
+                <tr>
+                  <td colspan="4" class="loading">라벨 목록을 불러오는 중...</td>
+                </tr>
+              </tbody>
+            </table>
+            <!-- 라벨 목록 페이징 -->
+            <div id="labels-pagination-controls" class="labels-pagination-controls" style="display: none">
+              <div class="labels-pagination-row">
+                <span id="labels-pagination-info" class="labels-pagination-info"></span>
+                <label>
+                  페이지당
+                  <select id="labels-items-per-page" class="labels-items-per-page">
+                    <option value="10">10</option>
+                    <option value="20" selected>20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                  </select>
+                  개
+                </label>
+              </div>
+              <div id="labels-pagination-buttons" class="labels-pagination-buttons"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/js/components/layout-component.js"></script>
+    <script src="/static/js/components/header-component.js"></script>
+    <script src="/static/js/admin/admin-common.js"></script>
+    <script src="/static/js/components/utils.js"></script>
+    <script src="/static/js/components/pagination-component.js"></script>
+    <script src="/static/js/admin/label-manager.js"></script>
+    <script src="/static/js/admin/admin-labels.js"></script>
+  </body>
+</html>

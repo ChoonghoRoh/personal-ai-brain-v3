@@ -1,0 +1,208 @@
+/* 라벨 관리 페이지 전용 스타일 */
+
+/* 라벨 관리만 표시: 콘텐츠 영역 우측까지 확대 */
+.labels-full-width.admin-container {
+  grid-template-columns: 1fr;
+  max-width: none;
+}
+
+.labels-full-width .admin-panel {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* 라벨 관리 레이아웃: 좌측 생성 / 우측 목록 (좌우 나란히) */
+.labels-full-width.labels-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 768px) {
+  .labels-full-width.labels-layout {
+    grid-template-columns: 1fr;
+  }
+}
+.labels-left {
+  position: sticky;
+  top: 16px;
+}
+.labels-left .admin-panel {
+  max-width: 320px;
+}
+.labels-right .admin-panel {
+  min-width: 0;
+}
+.labels-right .table {
+  width: 100%;
+}
+
+/* 라벨 목록 상단 필터 (타입 + 이름 조회) */
+.labels-list-filters {
+  margin-bottom: 16px;
+}
+.labels-filter-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.labels-filter-row label {
+  margin: 0;
+  font-size: 13px;
+  color: #374151;
+}
+.labels-filter-type {
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+  min-width: 140px;
+}
+.labels-filter-name {
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+  min-width: 160px;
+}
+.labels-filter-name:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+/* 라벨 목록 페이징 */
+.labels-pagination-controls {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+.labels-pagination-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.labels-pagination-info {
+  font-size: 13px;
+  color: #6b7280;
+}
+.labels-items-per-page {
+  margin-left: 6px;
+  padding: 4px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 13px;
+}
+.labels-pagination-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.labels-pagination-buttons .btn {
+  min-width: 32px;
+}
+
+/* 라벨 이름 배지 - 타입별 색상 */
+.label-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+.label-badge.default {
+  background: #f3f4f6;
+  color: #374151;
+  border-color: #e5e7eb;
+}
+.label-badge.project_phase {
+  background: #dbeafe;
+  color: #1e40af;
+  border-color: #93c5fd;
+}
+.label-badge.role {
+  background: #d1fae5;
+  color: #065f46;
+  border-color: #6ee7b7;
+}
+.label-badge.domain {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fcd34d;
+}
+.label-badge.importance {
+  background: #fce7f3;
+  color: #9d174d;
+  border-color: #f9a8d4;
+}
+.label-badge.keyword {
+  background: #e0e7ff;
+  color: #3730a3;
+  border-color: #a5b4fc;
+}
+.label-badge.keyword_group {
+  background: #e5e7eb;
+  color: #4b5563;
+  border-color: #9ca3af;
+}
+
+.chunk-selector {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 2px solid #e5e7eb;
+}
+
+.chunk-selector h4 {
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.chunk-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.chunk-item-select {
+  padding: 10px;
+  margin-bottom: 8px;
+  background: #f9fafb;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chunk-item-select:hover {
+  background: #e5e7eb;
+}
+
+.chunk-item-select.selected {
+  background: #dbeafe;
+  border: 2px solid #2563eb;
+}
+
+.chunk-item-select .chunk-preview {
+  font-size: 12px;
+  color: #666;
+  margin-top: 5px;
+}
+
+.chunk-labels {
+  margin-top: 15px;
+}
+
+.chunk-labels .current-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 10px;
+}

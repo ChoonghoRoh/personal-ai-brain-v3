@@ -1,0 +1,450 @@
+/* 청크 생성 페이지 (/admin/chunk-create) - 상단 탭 + 단계별 좌/우 레이아웃 */
+/* 파일 선택(1단계) 기준으로 3단계 화면 디자인 통일 */
+
+/* 콘텐츠 영역 오른쪽까지 전체 확대 */
+.chunk-create-flow.admin-container {
+  grid-template-columns: 1fr;
+  max-width: none;
+}
+
+.chunk-create-flow .admin-panel {
+  grid-column: 1;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.chunk-create-desc {
+  color: #6b7280;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+/* 공통: 파일 선택 기준 패널/영역 스타일 */
+.chunk-create-left {
+  min-width: 0;
+}
+.chunk-create-right {
+  min-width: 0;
+}
+.chunk-create-left h4,
+.chunk-create-right h4 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  color: #374151;
+  font-size: 15px;
+  font-weight: 600;
+}
+.chunk-create-left .form-hint,
+.chunk-create-right .form-hint {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+/* 좌/우 패널 내 콘텐츠 영역 공통: 둥근 모서리, 연한 테두리·배경 */
+.chunk-create-panel-area {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fafafa;
+}
+/* 빈 상태/플레이스홀더 공통 */
+.chunk-create-empty {
+  color: #9ca3af;
+  font-size: 14px;
+  padding: 24px;
+  text-align: center;
+  border: 1px dashed #e5e7eb;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.form-hint {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+.form-hint-warning {
+  padding: 10px 12px;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 6px;
+  color: #92400e;
+  margin-top: 8px;
+  margin-bottom: 12px;
+}
+
+/* ── 상단 단계 탭 ── */
+.chunk-create-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 0;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.chunk-create-tab {
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  background: #f9fafb;
+  color: #6b7280;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.chunk-create-tab:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.chunk-create-tab.active {
+  background: #fff;
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+}
+
+/* ── 하단 단계별 영역 ── */
+.chunk-create-body {
+  padding: 20px 0;
+  min-height: 420px;
+}
+
+.chunk-create-panel {
+  display: none;
+}
+
+.chunk-create-panel.active {
+  display: block;
+}
+
+.chunk-create-row {
+  display: grid;
+  grid-template-columns: 450px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .chunk-create-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── 1단계: 좌(파일 목록 + 페이징) / 우(선택 문서 + 분할) ── */
+.step1-left {
+  min-width: 0;
+}
+
+.chunk-create-file-list {
+  margin-bottom: 12px;
+}
+
+.chunk-create-file-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: white;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.chunk-create-file-item:last-child {
+  margin-bottom: 0;
+}
+
+.chunk-create-file-item:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+}
+
+.chunk-create-file-item.selected {
+  background: #dbeafe;
+  border-color: #2563eb;
+}
+
+.chunk-create-file-item:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.chunk-create-pagination {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.chunk-create-page-info {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.step1-right .step1-doc-area.chunk-create-panel-area {
+  margin-top: 0;
+}
+
+/* 분할 방식 + [자동 생성] 한 줄: 셀렉트 우측 끝에 버튼 */
+.step1-split-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.step1-split-row label {
+  margin: 0;
+}
+.step1-split-row select {
+  flex: 0 1 auto;
+  min-width: 180px;
+}
+.step1-split-row .btn {
+  margin-left: auto;
+}
+
+/* 문서 내용: div 텍스트 출력 (읽기 전용) */
+.chunk-source-text {
+  width: 100%;
+  min-height: 280px;
+  /* max-height: 80vh;
+  overflow-y: auto; */
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #fafafa;
+  color: #374151;
+}
+
+.step1-empty {
+  margin-top: 0;
+}
+
+/* ── 2단계: 좌(컨트롤) / 우(청크 목록) ── 파일 선택과 동일 패널 스타일 */
+.step2-row {
+  position: relative;
+  align-items: start;
+}
+
+.step2-left {
+  min-width: 260px;
+  max-width: 320px;
+  position: sticky;
+  top: 16px;
+}
+
+.step2-controls.chunk-create-panel-area h4 {
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
+.step2-controls.chunk-create-panel-area h4:first-child {
+  margin-top: 0;
+}
+
+.chunk-create-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.chunk-create-count {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.chunk-create-merge-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.chunk-create-merge-label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.chunk-create-merge-select {
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.step2-right {
+  min-width: 0;
+}
+
+.step2-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.chunk-create-temp-list.chunk-create-panel-area {
+  margin-bottom: 16px;
+}
+
+.chunk-create-temp-list .chunk-create-empty {
+  margin: 0;
+}
+
+.chunk-create-temp-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+}
+
+.chunk-create-temp-item:last-child {
+  margin-bottom: 0;
+}
+
+.chunk-create-temp-item:hover {
+  border-color: #d1d5db;
+}
+
+.chunk-create-temp-item input.chunk-temp-check {
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.chunk-temp-preview {
+  flex: 1;
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── 3단계: 좌(등록방식+안내) / 우(문서경로·이름) ── 파일 선택과 동일 패널 스타일 */
+.step3-left .chunk-create-panel-area,
+.step3-right .chunk-create-panel-area {
+  background: #fff;
+}
+
+/* 등록 방식: 캡슐형 세그먼트 컨트롤 */
+.step3-segmented {
+  display: flex;
+  border: 1px solid #e5e7eb;
+  border-radius: 9999px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.step3-segmented-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+  padding: 10px 20px;
+  margin: 0;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  background: transparent;
+  border: none;
+  transition: background 0.2s, color 0.2s;
+}
+
+.step3-segmented-label:first-of-type {
+  border-radius: 9999px 0 0 9999px;
+}
+
+.step3-segmented-label:last-of-type {
+  border-radius: 0 9999px 9999px 0;
+}
+
+.step3-segmented-label:hover {
+  color: #374151;
+}
+
+.step3-segmented-label input[type="radio"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.step3-segmented-label:has(input:checked) {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.step3-left .doc-target-fields {
+  margin-top: 16px;
+  margin-bottom: 0;
+}
+
+.chunk-create-flow .form-group {
+  margin-bottom: 16px;
+}
+
+.chunk-create-flow .form-group label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.chunk-create-flow .form-group input[type="text"],
+.chunk-create-flow .form-group select {
+  width: 100%;
+  max-width: 480px;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.chunk-create-step-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.chunk-create-step-actions .btn-small {
+  margin-right: 8px;
+}

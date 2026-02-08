@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/css/knowledge/knowledge-detail.css" />
+    <title>Personal AI Brain - 청크 상세</title>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header는 JavaScript로 동적 생성 -->
+
+      <div class="main-layout">
+        <div class="chunk-detail">
+          <div class="chunk-detail-header">
+            <h3 id="chunk-title">청크 상세</h3>
+            <div style="display: flex; gap: 10px; align-items: center">
+              <button class="btn btn-primary" id="btn-label-matching" style="display: none">💡 라벨 매칭</button>
+              <button class="btn btn-primary" id="btn-relation-matching" style="display: none">🔗 관계 매칭</button>
+              <button class="btn btn-primary" id="btn-reasoning" style="display: none">🧠 Reasoning 시작</button>
+              <button class="btn btn-secondary" onclick="window.location.href='/knowledge'">← 목록으로</button>
+            </div>
+          </div>
+          <div id="chunk-detail-content" class="chunk-detail-content">
+            <div class="loading">⏳ 청크 정보를 불러오는 중...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/js/components/layout-component.js"></script>
+    <script src="/static/js/components/header-component.js"></script>
+    <script src="/static/js/components/document-utils.js"></script>
+    <script src="/static/js/components/text-formatter.js"></script>
+    <script src="/static/js/knowledge/knowledge-detail.js"></script>
+  </body>
+</html>

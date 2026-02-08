@@ -1,0 +1,435 @@
+{
+  "name": "Task Plan Generation v2 (phase-folder)",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -496,
+        3328
+      ],
+      "id": "3a79c16a-28d4-4e4f-ae9b-2f6696ccf5ef",
+      "name": "Trigger_Manual",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-phase-dir",
+              "name": "phase_dir_id",
+              "value": "Testphase1-1",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -288,
+        3328
+      ],
+      "id": "b9c16ed9-a230-43eb-9500-bf3065ae6ec7",
+      "name": "SET_PhaseContext"
+    },
+    {
+      "parameters": {
+        "command": "=cat /workspace/docs/phases/{{ $json.phase_dir_id }}/phase{{ $json.phase_slug }}-todo-list.md"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        192,
+        3328
+      ],
+      "id": "97c9b178-0dd1-4798-aca4-a22df55c5005",
+      "name": "CMD_ReadTodoList"
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        672,
+        3328
+      ],
+      "id": "810457e8-d6e0-4ad6-ab21-0dd7f47edf22",
+      "name": "LOOP_TodoItems"
+    },
+    {
+      "parameters": {
+        "command": "=mkdir -p /workspace/{{ $json.task_dir_path }} 2>/dev/null; echo '{{ $json.plan_b64 }}' | base64 -d > /workspace/{{ $json.task_dir_path }}/{{ $json.plan_filename }}; echo OK"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1152,
+        3728
+      ],
+      "id": "154d064c-a828-4fd6-a066-d115e3563b4f",
+      "name": "CMD_WriteTaskFiles"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_tasks (task_num, phase_slug, task_name, status, plan_doc, test_plan_doc, plan_md_path, phase_id, created_at) VALUES ($1, $2, $3, 'pending', $4, $5, '', NULL, NOW()) RETURNING id",
+        "options": {
+          "queryReplacement": "={{ $json.task_num }},={{ $json.phase_slug }},={{ $json.task_name }},={{ $json.plan_doc }},={{ $json.test_plan_doc || '' }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1600,
+        3728
+      ],
+      "id": "c4f39e00-1e8a-4a69-9211-13870039019a",
+      "name": "DB_InsertWorkflowTask",
+      "credentials": {
+        "postgres": {
+          "id": "tbx7tKTwKOdsxhQc",
+          "name": "PostgreSQL - PAB Knowledge"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// INSERT는 5개 파라미터만 사용. plan_md_path는 이 노드에서 UPDATE용으로 전달.\nconst insertOut = $input.first().json;\nconst planData = $('JS_PassPlanToDb1').item.json;\nreturn [{ json: { id: insertOut.id, plan_md_path: planData.plan_md_path } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1824,
+        3728
+      ],
+      "id": "dd512213-e314-4ce8-89cc-3888a1386235",
+      "name": "JS_MergeIdAndPlanMdPath"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE workflow_tasks SET plan_md_path = $1 WHERE id = $2",
+        "options": {
+          "queryReplacement": "={{ $json.plan_md_path }},={{ $json.id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2016,
+        3728
+      ],
+      "id": "a5f64fe0-8b3f-492e-93ec-65c9ad68ae5b",
+      "name": "DB_UpdatePlanMdPath",
+      "credentials": {
+        "postgres": {
+          "id": "tbx7tKTwKOdsxhQc",
+          "name": "PostgreSQL - PAB Knowledge"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// phase_dir_id → phase_slug (phase-8-0 → 8-0), todo-list 파일 경로 계산\nconst item = $input.first().json;\nconst phase_dir_id = String(item.phase_dir_id || 'phase-8-0').trim();\nconst phase_slug = phase_dir_id.replace(/^phase-/, '');\nreturn [{ json: { phase_dir_id, phase_id: item.phase_id ?? 1, phase_slug } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        3328
+      ],
+      "id": "93c61745-2b8e-4456-a31d-0aeaa87e200f",
+      "name": "JS_PhaseContext1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// phase todo-list 파싱: ### X-Y-N: Title 형식. task_num(1-1-1)과 제목을 헤더에서 추출.\nconst item = $input.first().json;\nlet raw = item.stdout ?? item.text ?? item.output ?? item.result ?? item.body ?? '';\nif (typeof raw !== 'string') raw = String(raw);\nconst stdout = raw.replace(/\\r\\n/g, '\\n').replace(/\\r/g, '\\n').trim();\nconst phaseCtx = $node['JS_PhaseContext1'].json;\nconst phase_id = phaseCtx.phase_id ?? 1;\nconst phase_dir_id = phaseCtx.phase_dir_id || 'phase-8-0';\nconst phase_slug = phaseCtx.phase_slug || '8-0';\nif (!stdout || stdout.includes('No such file') || stdout.includes('cannot open')) {\n  return [{ json: { index: 0, task_num: null, content: '(todo-list 없음)', phase_id, phase_dir_id, phase_slug } }];\n}\nconst re = /###\\s+(\\d+-\\d+-\\d+):\\s*([^\\n\\r]+)/g;\nconst items = [];\nlet m;\nlet idx = 0;\nwhile ((m = re.exec(stdout)) !== null) {\n  idx++;\n  items.push({ index: idx, task_num: m[1].trim(), content: m[2].trim(), phase_id, phase_dir_id, phase_slug });\n}\nif (items.length === 0) {\n  const fallback = /^-\\s*\\[\\s*[x ]?\\]\\s*([^\\n\\r]+)/gm;\n  let fm;\n  while ((fm = fallback.exec(stdout)) !== null) {\n    idx++;\n    items.push({ index: idx, task_num: phase_slug + '-' + idx, content: fm[1].trim(), phase_id, phase_dir_id, phase_slug });\n  }\n}\nif (items.length === 0) {\n  return [{ json: { index: 1, task_num: phase_slug + '-1', content: '(파싱된 항목 없음)', phase_id, phase_dir_id, phase_slug } }];\n}\nreturn items.map((it) => ({ json: it }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        3328
+      ],
+      "id": "69a3676c-b9e5-4edf-bc02-d421825496d0",
+      "name": "JS_ParseTodoList1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL || 'http://backend:8000' }}/api/workflow/generate-task-plan",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ task_num: $json.task_num, task_title: $json.content || $json.task_name || '', phase_slug: 'phase-' + ($json.phase_slug || ''), context_hint: $json.context_hint || '' }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        752,
+        3728
+      ],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "HTTP_GenerateTaskPlan"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Backend API 응답(task_plan만) + 루프 항목 합쳐서 plan_doc/plan_md_path 등 산출. test_plan 미사용.\nconst resp = $input.first().json;\nconst loopItem = $('LOOP_TodoItems').item.json;\nconst index = loopItem.index;\nconst task_num = String(loopItem.task_num || loopItem.phase_slug + '-' + index).trim();\nconst content = loopItem.content || '';\nconst phaseId = loopItem.phase_id ?? 1;\nconst phaseDirId = String(loopItem.phase_dir_id || 'phase-8-0').trim();\nconst phaseSlug = String(loopItem.phase_slug || phaseDirId.replace(/^phase-/, '')).trim();\nconst taskPlan = (resp.task_plan || '').trim() || '# Task Plan: ' + content + '\\n\\n(API 미반환)';\nconst b64 = (s) => Buffer.from(s, 'utf8').toString('base64');\nconst taskDirPath = `docs/phases/${phaseDirId}/tasks`;\nconst planFilename = `phase${task_num}-plan.md`;\nconst planMdPath = `${taskDirPath}/${planFilename}`;\nreturn [{\n  json: {\n    index,\n    content,\n    phase_id: phaseId,\n    phase_dir_id: phaseDirId,\n    phase_slug: phaseSlug,\n    task_num,\n    task_name: content.trim().substring(0, 80),\n    plan_doc: taskPlan,\n    test_plan_doc: '',\n    plan_md_path: planMdPath,\n    task_dir_path: taskDirPath,\n    plan_filename: planFilename,\n    plan_b64: b64(taskPlan)\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        3728
+      ],
+      "id": "71e2c5f0-e99e-4516-81db-c409255b30d8",
+      "name": "JS_PrepareTaskOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Plan 데이터는 JS_PrepareTaskOutput 출력에서 가져옴 (Task Plan만, test_plan_doc 빈 문자열).\nlet planData;\ntry { planData = { ...$('JS_PrepareTaskOutput').item.json }; } catch (_) { planData = {}; }\nconst loopItem = (() => { try { return $('LOOP_TodoItems').item?.json || {}; } catch (_) { return {}; } })();\nif (!planData.task_num) planData.task_num = loopItem.task_num || (planData.phase_slug ? planData.phase_slug + '-' + (planData.index || 1) : '1-1-1');\nif (!planData.phase_slug) planData.phase_slug = loopItem.phase_slug || (planData.phase_dir_id || '').replace(/^phase-/, '') || '1-1';\nif (planData.test_plan_doc === undefined) planData.test_plan_doc = '';\nreturn [{ json: planData }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        3728
+      ],
+      "id": "674c0576-a32c-41e2-8c68-0a4f62570556",
+      "name": "JS_PassPlanToDb1"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1465585145368018988",
+          "mode": "list",
+          "cachedResultName": "Ai-Personal-Brain-Bot",
+          "cachedResultUrl": "https://discord.com/channels/1465585145368018988"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1465608311813701692",
+          "mode": "list",
+          "cachedResultName": "ai-workflow",
+          "cachedResultUrl": "https://discord.com/channels/1465585145368018988/1465608311813701692"
+        },
+        "content": "=📋 Task Plan 생성 완료 (phase-folder)\n\n**{{ $json.total_items }}개** Task Plan 생성됨\nphase_dir_id: {{ $json.phase_dir_id }}\n저장 경로: docs/phases/{{ $json.phase_dir_id }}/tasks/\n생성된 Task는 workflow_tasks에서 확인하세요.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        3312
+      ],
+      "id": "afe9068a-5956-499c-9596-5285ca553f8a",
+      "name": "Send a message",
+      "webhookId": "be72357d-7eb0-4c4f-968a-cc1d7b8b809e",
+      "credentials": {
+        "discordBotApi": {
+          "id": "pT4DLXfrV4QLk8Aj",
+          "name": "Discord Bot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// done 출력: 루프 항목 수를 저장해 1개 요약 항목만 Discord로 전달 (메시지 1번만 전송)\nconst items = $input.all();\nconst total_items = items.length;\nlet phase_dir_id = 'phase-folder';\ntry { phase_dir_id = $('SET_PhaseContext1').first().json.phase_dir_id || phase_dir_id; } catch (_) { try { phase_dir_id = $('SET_PhaseContext2').first().json.phase_dir_id || phase_dir_id; } catch (__) {} }\nreturn [{ json: { total_items, phase_dir_id } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        928,
+        3312
+      ],
+      "id": "e9473c5a-d544-4875-a964-b3314fae9161",
+      "name": "JS_OnceForDiscord1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Trigger_Manual": {
+      "main": [
+        [
+          {
+            "node": "SET_PhaseContext",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SET_PhaseContext": {
+      "main": [
+        [
+          {
+            "node": "JS_PhaseContext1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CMD_ReadTodoList": {
+      "main": [
+        [
+          {
+            "node": "JS_ParseTodoList1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LOOP_TodoItems": {
+      "main": [
+        [
+          {
+            "node": "JS_OnceForDiscord1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP_GenerateTaskPlan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP_GenerateTaskPlan": {
+      "main": [
+        [
+          {
+            "node": "JS_PrepareTaskOutput",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JS_PrepareTaskOutput": {
+      "main": [
+        [
+          {
+            "node": "CMD_WriteTaskFiles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CMD_WriteTaskFiles": {
+      "main": [
+        [
+          {
+            "node": "JS_PassPlanToDb1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DB_InsertWorkflowTask": {
+      "main": [
+        [
+          {
+            "node": "JS_MergeIdAndPlanMdPath",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JS_MergeIdAndPlanMdPath": {
+      "main": [
+        [
+          {
+            "node": "DB_UpdatePlanMdPath",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DB_UpdatePlanMdPath": {
+      "main": [
+        [
+          {
+            "node": "LOOP_TodoItems",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JS_PhaseContext1": {
+      "main": [
+        [
+          {
+            "node": "CMD_ReadTodoList",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JS_ParseTodoList1": {
+      "main": [
+        [
+          {
+            "node": "LOOP_TodoItems",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JS_PassPlanToDb1": {
+      "main": [
+        [
+          {
+            "node": "DB_InsertWorkflowTask",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JS_OnceForDiscord1": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "d73097b2-c583-4b2b-b81d-112e8a9b16a3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ed06bbf2aa09f554ed7e8c76b92a7efe2c99d006253d946ef141c545bbf8fafb"
+  },
+  "id": "AwSn_Gl9pcPWFc2JoSqX8",
+  "tags": []
+}

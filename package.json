@@ -1,0 +1,30 @@
+{
+  "name": "personal-ai-brain-v2",
+  "version": "1.0.0",
+  "description": "로컬에서 실행하는 개인 AI 브레인: Markdown/PDF/DOCX를 벡터 DB에 저장하고, 의미 검색·AI 응답·지식 구조화·Reasoning을 제공합니다. (n8n 워크플로우는 Phase 8 보류로 Docker에서 주석 처리됨.)",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "webtest:start": "python3 scripts/webtest.py"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChoonghoRoh/personal-ai-brain.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ChoonghoRoh/personal-ai-brain/issues"
+  },
+  "homepage": "https://github.com/ChoonghoRoh/personal-ai-brain#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.58.1"
+  }
+}

@@ -1,0 +1,345 @@
+{
+  "name": "Task Execution v1",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        816,
+        992
+      ],
+      "id": "d4aa3f51-76c9-4e1b-bc68-076b1adff68f",
+      "name": "Trigger_Manual",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM workflow_tasks WHERE status = 'pending' ORDER BY id LIMIT 1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        976,
+        992
+      ],
+      "id": "bb0e5de0-70e4-413c-8614-0029d9ebd327",
+      "name": "DB_SelectPendingTask2",
+      "credentials": {
+        "postgres": {
+          "id": "tbx7tKTwKOdsxhQc",
+          "name": "PostgreSQL - PAB Knowledge"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalize: 0 or 1 row from DB into single item with hasTask flag\nconst items = $input.all();\nif (items.length === 0) {\n  return [{ json: { hasTask: false } }];\n}\nconst row = items[0].json;\nreturn [{ json: { ...row, hasTask: true } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1184,
+        992
+      ],
+      "id": "cb00cf1c-9c1d-4e20-9edd-92b03e14f5e4",
+      "name": "JS_NormalizePendingTaskResult2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d4e5f6a7-b8c9-7d8e-1f2a-3b4c5d6e7f8a",
+              "leftValue": "={{ $json.hasTask }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1376,
+        992
+      ],
+      "id": "c453fdf6-92c0-4c4e-ac4c-187450d13443",
+      "name": "IF_HasPendingTask2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare payload for HTTP_RunTaskExecution: task_id, workspace root\nconst item = $input.first().json;\nconst taskId = item.id;\nconst workspaceRoot =  '/workspace';\nreturn [{\n  json: {\n    id: taskId,\n    task_name: item.task_name,\n    plan_doc: item.plan_doc,\n    workspace_root: workspaceRoot\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1616,
+        912
+      ],
+      "id": "da129992-3397-4085-9059-30f6c34528ad",
+      "name": "JS_PrepareTaskPayload2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:8000/api/workflow/run-task",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"task_id\": {{ $json.id }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1856,
+        912
+      ],
+      "id": "748f2a9a-b99f-42a1-a51f-9cf0ecc8b03a",
+      "name": "HTTP_RunTaskExecution2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Derive status from HTTP response; pass task id for DB_UpdateTaskStatus\nconst taskId = $node[\"JS_PrepareTaskPayload2\"].json.id;\nconst res = $input.first().json;\nconst statusCode = res.statusCode ?? res.status ?? 0;\nconst body = res.body ?? res;\nconst success = (body && body.success === true) || (statusCode >= 200 && statusCode < 300 && body && body.success !== false);\nconst status = success ? 'completed' : 'failed';\nreturn [{ json: { id: taskId, status } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2096,
+        912
+      ],
+      "id": "389d8b04-e82a-4ff5-bd66-989b89fb49bd",
+      "name": "JS_SetTaskStatusFromResponse1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE workflow_tasks SET status = $1, completed_at = NOW() WHERE id = $2",
+        "options": {
+          "queryReplacement": "=[\n  \"={{ $json.status }}\",\n  \"={{ $json.id }}\"\n]"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2336,
+        912
+      ],
+      "id": "e5bf8866-937c-4499-b8ca-7f88f2ef0b54",
+      "name": "DB_UpdateTaskStatus2",
+      "credentials": {
+        "postgres": {
+          "id": "tbx7tKTwKOdsxhQc",
+          "name": "PostgreSQL - PAB Knowledge"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pass through for next workflow (8-2-8) or re-trigger for next Task\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2816,
+        912
+      ],
+      "id": "c64a815a-dc6d-4739-a227-89983275717e",
+      "name": "LOOP_NextTaskOrTrigger2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e1f2a3b4-c5d6-4e5f-8a9b-0c1d2e3f4a5b",
+              "name": "message",
+              "value": "No pending task. Trigger 8-2-8 or end.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1616,
+        1072
+      ],
+      "id": "895761b2-cb7f-4985-be71-2583ee62c6f1",
+      "name": "SET_NoPendingTask2"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1465585145368018988",
+          "mode": "list",
+          "cachedResultName": "Ai-Personal-Brain-Bot",
+          "cachedResultUrl": "https://discord.com/channels/1465585145368018988"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1465608311813701692",
+          "mode": "list",
+          "cachedResultName": "ai-workflow",
+          "cachedResultUrl": "https://discord.com/channels/1465585145368018988/1465608311813701692"
+        },
+        "content": "=Task 실행 완료\nTask ID: {{ $node[\"JS_PrepareTaskPayload2\"].json.id }}\nStatus: {{ $node[\"JS_SetTaskStatusFromResponse1\"].json.status }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        2560,
+        912
+      ],
+      "id": "11170642-f19c-42fc-88f1-4a12d984f35a",
+      "name": "Send a message1",
+      "webhookId": "3334b923-3b26-430d-8d61-5b729364be99",
+      "credentials": {
+        "discordBotApi": {
+          "id": "pT4DLXfrV4QLk8Aj",
+          "name": "Discord Bot account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Trigger_Manual": {
+      "main": [
+        [
+          {
+            "node": "DB_SelectPendingTask2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DB_SelectPendingTask2": {
+      "main": [
+        [
+          {
+            "node": "JS_NormalizePendingTaskResult2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JS_NormalizePendingTaskResult2": {
+      "main": [
+        [
+          {
+            "node": "IF_HasPendingTask2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF_HasPendingTask2": {
+      "main": [
+        [
+          {
+            "node": "JS_PrepareTaskPayload2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SET_NoPendingTask2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JS_PrepareTaskPayload2": {
+      "main": [
+        [
+          {
+            "node": "HTTP_RunTaskExecution2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP_RunTaskExecution2": {
+      "main": [
+        [
+          {
+            "node": "JS_SetTaskStatusFromResponse1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JS_SetTaskStatusFromResponse1": {
+      "main": [
+        [
+          {
+            "node": "DB_UpdateTaskStatus2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DB_UpdateTaskStatus2": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        [
+          {
+            "node": "LOOP_NextTaskOrTrigger2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "37b3cd89-4bc8-491e-abec-94d277b4006a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ed06bbf2aa09f554ed7e8c76b92a7efe2c99d006253d946ef141c545bbf8fafb"
+  },
+  "id": "YI8VlGp40RSF1Ya19VtcV",
+  "tags": []
+}

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/css/admin/admin-styles.css" />
+    <link rel="stylesheet" href="/static/css/admin/settings-common.css" />
+    <title>Personal AI Brain - Template</title>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div id="header-placeholder"></div>
+
+      <div id="error-message" class="error" style="display: none"></div>
+      <div id="success-message" class="success" style="display: none"></div>
+
+      <!-- Template List/Editor Layout -->
+      <div class="admin-container settings-layout">
+        <!-- Left: Template List -->
+        <div class="settings-left">
+          <div class="admin-panel">
+            <div class="panel-header">
+              <h3>Template List</h3>
+              <button type="button" id="create-template-btn" class="btn btn-primary btn-small">
+                New Template
+              </button>
+            </div>
+            <!-- Filters -->
+            <div class="settings-filters">
+              <div class="filter-row">
+                <select id="filter-type" class="filter-select">
+                  <option value="">All Types</option>
+                  <option value="system_prompt">System Prompt</option>
+                  <option value="decision_view">Decision View</option>
+                  <option value="reasoning_chain">Reasoning Chain</option>
+                </select>
+                <select id="filter-status" class="filter-select">
+                  <option value="">All Status</option>
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                </select>
+                <input type="text" id="filter-search" class="filter-input" placeholder="Search by name..." />
+                <button type="button" id="filter-apply-btn" class="btn btn-secondary btn-small">Search</button>
+              </div>
+            </div>
+            <!-- Template Table -->
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>Updated</th>
+                </tr>
+              </thead>
+              <tbody id="template-table">
+                <tr>
+                  <td colspan="4" class="loading">Loading...</td>
+                </tr>
+              </tbody>
+            </table>
+            <!-- Pagination -->
+            <div id="pagination-controls" class="pagination-controls" style="display: none">
+              <span id="pagination-info" class="pagination-info"></span>
+              <div id="pagination-buttons" class="pagination-buttons"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Template Editor -->
+        <div class="settings-right">
+          <div class="admin-panel">
+            <div class="panel-header">
+              <h3 id="editor-title">Template Editor</h3>
+              <div class="editor-actions">
+                <button type="button" id="save-draft-btn" class="btn btn-secondary btn-small" disabled>
+                  Save Draft
+                </button>
+                <button type="button" id="publish-btn" class="btn btn-success btn-small" disabled>
+                  Publish
+                </button>
+                <button type="button" id="delete-btn" class="btn btn-danger btn-small" disabled>
+                  Delete
+                </button>
+              </div>
+            </div>
+            <form id="template-form">
+              <div class="form-group">
+                <label for="template-name">Name <span class="required">*</span></label>
+                <input type="text" id="template-name" required placeholder="Template name" />
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="template-type">Type <span class="required">*</span></label>
+                  <select id="template-type" required>
+                    <option value="">Select type</option>
+                    <option value="system_prompt">System Prompt</option>
+                    <option value="decision_view">Decision View</option>
+                    <option value="reasoning_chain">Reasoning Chain</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="template-status">Status</label>
+                  <input type="text" id="template-status" readonly value="draft" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="template-description">Description</label>
+                <input type="text" id="template-description" placeholder="Brief description" />
+              </div>
+              <div class="form-group">
+                <label for="template-content">Content <span class="required">*</span></label>
+                <textarea id="template-content" rows="15" required placeholder="Template content (Markdown supported)"></textarea>
+              </div>
+              <div class="form-group">
+                <label>Variables</label>
+                <div id="template-variables" class="variables-display">
+                  <span class="hint">Variables will be detected from content: {{variable_name}}</span>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/js/components/layout-component.js"></script>
+    <script src="/static/js/components/header-component.js"></script>
+    <script src="/static/js/admin/admin-common.js"></script>
+    <script src="/static/js/components/utils.js"></script>
+    <script src="/static/js/components/pagination-component.js"></script>
+    <script src="/static/js/admin/settings/settings-common.js"></script>
+    <script src="/static/js/admin/settings/templates.js"></script>
+  </body>
+</html>

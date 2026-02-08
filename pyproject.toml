@@ -1,0 +1,30 @@
+# Personal AI Brain - 프로젝트 메타데이터 및 도구 설정 (Phase 9-5)
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "personal-ai-brain"
+version = "1.0.0"
+description = "Personal AI Brain Backend API"
+readme = "README.md"
+requires-python = ">=3.11"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+warn_unused_ignores = true
+exclude = [
+    "tests/",
+    "scripts/",
+    "e2e/",
+]
+
+[tool.ruff]
+line-length = 120
+select = ["E", "F", "I", "N", "W"]
+ignore = ["E501"]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
