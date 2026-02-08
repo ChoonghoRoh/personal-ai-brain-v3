@@ -237,6 +237,7 @@ ver2에서 브랜치로 ver3 분기 후 재병합을 위해 사용하던 **main 
 | 4. DB 백업 | 폴더 복사만으로는 불완전 → **현재 기준 백업 1회 실행 권장** |
 | 5. ver3 Docker 분리 | PostgreSQL 5433, postgres_data_ver3 / Qdrant 6343·6344, qdrant-data-ver3 적용 (§4 체크리스트) |
 | 6. ver2 복구 | ver3를 별도 포트·볼륨으로 두면 ver2 설정 변경 없이 이어서 작업 가능 |
+| 7. 첫 Git 커밋·푸시 | **PBA-ver3 리팩토링 환경 세팅 완료** (2026-02-08, origin/main) |
 
 ---
 

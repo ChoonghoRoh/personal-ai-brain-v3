@@ -75,7 +75,7 @@
     "**/node_modules": true,
     "**/.venv": true,
     "postgres-data": true,
-    "qdrant-data": true,
+    "qdrant-data-ver3": true,
     ".git": true
   },
   "files.trimTrailingWhitespace": true,
