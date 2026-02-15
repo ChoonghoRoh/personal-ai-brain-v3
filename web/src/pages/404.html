@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/css/admin/admin-styles.css" />
+    <title>Personal AI Brain - 페이지를 찾을 수 없습니다</title>
+    <style>
+      .not-found-container {
+        text-align: center;
+        padding: 80px 20px;
+      }
+      .not-found-code {
+        font-size: 96px;
+        font-weight: 700;
+        color: #d1d5db;
+        margin-bottom: 16px;
+      }
+      .not-found-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+      }
+      .not-found-desc {
+        color: #6b7280;
+        margin-bottom: 32px;
+      }
+      .not-found-link {
+        display: inline-block;
+        padding: 10px 24px;
+        background: #2563eb;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: background 0.2s;
+      }
+      .not-found-link:hover {
+        background: #1d4ed8;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div id="header-placeholder"></div>
+
+      <div class="not-found-container">
+        <div class="not-found-code">404</div>
+        <div class="not-found-title">페이지를 찾을 수 없습니다</div>
+        <p class="not-found-desc">요청하신 페이지가 존재하지 않거나 이동되었습니다.</p>
+        <a href="/dashboard" class="not-found-link">대시보드로 이동</a>
+      </div>
+    </div>
+
+    <script src="/static/js/components/layout-component.js"></script>
+    <script src="/static/js/components/header-component.js"></script>
+    <script src="/static/js/admin/admin-common.js"></script>
+  </body>
+</html>

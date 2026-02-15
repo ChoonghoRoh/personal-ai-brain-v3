@@ -2,31 +2,28 @@
 
 **Phase**: 13-2
 **작성일**: 2026-02-16
+**완료일**: 2026-02-16
 
 ---
 
 ## Task 13-2-1 [BE] HTML 라우트 목록 문서화·메뉴 path 1:1 대응 검증
 
-- [ ] main.py에서 HTML 라우트 전수 추출
-- [ ] 메뉴 path 17개 목록 작성:
-  - [ ] USER_MENU: /, /dashboard, /search, /knowledge, /reason, /ask, /logs
-  - [ ] ADMIN_MENU: /admin/groups, /admin/labels, /admin/chunk-create, /admin/approval, /admin/chunk-labels, /admin/statistics
-  - [ ] SETTINGS_MENU: /admin/settings/templates, /admin/settings/presets, /admin/settings/rag-profiles, /admin/settings/policy-sets, /admin/settings/audit-logs
-- [ ] 라우트↔메뉴 1:1 대응 표 작성 (route-menu-mapping.md)
-- [ ] 누락 라우트 발견 시 main.py에 추가
-- [ ] Base URL(8001) 일치 확인
-- [ ] curl 검증: 17개 path 모두 200 OK
+- [x] main.py에서 HTML 라우트 전수 추출
+- [x] 메뉴 path 17개 + 추가 라우트 6개 목록 작성
+- [x] 라우트↔메뉴 1:1 대응 표 작성 (route-menu-mapping.md)
+- [x] Base URL(8001) 일치 확인
+- [x] curl 검증: 17개 path 모두 200 OK
 
-## Task 13-2-2 [BE] (선택) HTML 404 전용 응답
+## Task 13-2-2 [BE] HTML 404 전용 응답
 
-- [ ] FastAPI 예외 핸들러에서 Accept: text/html 판별
-- [ ] HTML 요청 시 404.html 템플릿 반환 로직 구현
-- [ ] API 요청(Accept: application/json) 시 기존 JSON 404 유지
-- [ ] /admin/unknown, /admin/settings/unknown 테스트
+- [x] FastAPI 예외 핸들러에서 Accept: text/html 판별
+- [x] HTML 요청 시 404.html 템플릿 반환 로직 구현
+- [x] API 요청(Accept: application/json) 시 기존 JSON 404 유지
+- [x] /admin/nonexistent → 404 HTML, /api/nonexistent → 404 JSON 테스트 통과
 
-## Task 13-2-3 [BE] (선택) 라우트 일괄 등록 리팩터링
+## Task 13-2-3 [BE] 라우트 일괄 등록 리팩터링
 
-- [ ] 현재 main.py HTML 라우트 등록 패턴 분석
-- [ ] 라우트 리스트 + 루프 패턴 설계
-- [ ] 리팩터링 적용
-- [ ] 기존 17개 라우트 정상 동작 회귀 확인
+- [x] 현재 main.py HTML 라우트 등록 패턴 분석 (22개 개별 핸들러)
+- [x] _HTML_ROUTES 리스트 + _register_html_routes() 루프 패턴 설계
+- [x] 리팩터링 적용 (/document/{id} 제외 — path parameter)
+- [x] Docker 재시작 후 17개 라우트 + 추가 6개 모두 200 OK 회귀 확인

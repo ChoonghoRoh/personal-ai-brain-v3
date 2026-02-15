@@ -7,11 +7,11 @@ import threading
 import time
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
-from fastapi import Request
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -241,299 +241,66 @@ async def on_shutdown():
     await stop_memory_cleanup()
 
 
-@app.get("/", response_class=HTMLResponse)
-async def root(request: Request):
-    """루트 페이지 - 대시보드로 리다이렉트"""
-    if templates:
-        return templates.TemplateResponse("dashboard.html", {"request": request})
-    # 템플릿이 없으면 직접 HTML 파일 읽기
-    dashboard_file = templates_dir / "dashboard.html"
-    if dashboard_file.exists():
-        with open(dashboard_file, 'r', encoding='utf-8') as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse(content="<h1>Personal AI Brain</h1><p>웹 UI가 아직 구축되지 않았습니다.</p>")
+# ============================================
+# HTML Page Routes (Phase 13-2-3: 일괄 등록)
+# ============================================
+# (path, template_path, fallback_title)
+_HTML_ROUTES = [
+    ("/", "dashboard.html", "Personal AI Brain"),
+    ("/dashboard", "dashboard.html", "대시보드"),
+    ("/search", "search.html", "검색"),
+    ("/ask", "ask.html", "AI 질의"),
+    ("/logs", "logs.html", "로그"),
+    ("/knowledge", "knowledge/knowledge.html", "Knowledge Studio"),
+    ("/knowledge-detail", "knowledge/knowledge-detail.html", "청크 상세"),
+    ("/knowledge-label-matching", "knowledge/knowledge-label-matching.html", "라벨 매칭"),
+    ("/knowledge-relation-matching", "knowledge/knowledge-relation-matching.html", "관계 매칭"),
+    ("/reason", "reason.html", "Reasoning Lab"),
+    ("/knowledge-admin", "knowledge/knowledge-admin.html", "Knowledge Admin"),
+    ("/admin/labels", "admin/labels.html", "라벨 관리"),
+    ("/admin/groups", "admin/groups.html", "키워드 그룹 관리"),
+    ("/admin/approval", "admin/approval.html", "청크 승인 센터"),
+    ("/admin/chunk-labels", "admin/chunk-labels.html", "청크 관리"),
+    ("/admin/chunk-create", "admin/chunk-create.html", "청크 생성"),
+    ("/admin/statistics", "admin/statistics.html", "통계 대시보드"),
+    ("/admin/settings/templates", "admin/settings/templates.html", "템플릿 관리"),
+    ("/admin/settings/presets", "admin/settings/presets.html", "프리셋 관리"),
+    ("/admin/settings/rag-profiles", "admin/settings/rag-profiles.html", "RAG 프로필 관리"),
+    ("/admin/settings/policy-sets", "admin/settings/policy-sets.html", "정책 관리"),
+    ("/admin/settings/audit-logs", "admin/settings/audit-logs.html", "변경 이력"),
+]
 
 
-@app.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request):
-    """대시보드 페이지"""
-    if templates:
-        return templates.TemplateResponse("dashboard.html", {"request": request})
-    # 템플릿이 없으면 직접 HTML 파일 읽기
-    dashboard_file = templates_dir / "dashboard.html"
-    if dashboard_file.exists():
-        with open(dashboard_file, 'r', encoding='utf-8') as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse(content="<h1>Dashboard</h1><p>대시보드 페이지</p>")
+def _register_html_routes(application: FastAPI) -> None:
+    """HTML 라우트 일괄 등록"""
+    for route_path, tpl_path, title in _HTML_ROUTES:
+        def _make_handler(_tp=tpl_path, _tl=title):
+            async def _handler(request: Request):
+                if templates:
+                    return templates.TemplateResponse(_tp, {"request": request})
+                fp = templates_dir / _tp
+                if fp.exists():
+                    with open(fp, "r", encoding="utf-8") as f:
+                        return HTMLResponse(content=f.read())
+                return HTMLResponse(content=f"<h1>{_tl}</h1>")
+            return _handler
+        application.get(route_path, response_class=HTMLResponse)(_make_handler())
 
 
-@app.get("/search", response_class=HTMLResponse)
-async def search_page(request: Request):
-    """검색 페이지"""
-    if templates:
-        return templates.TemplateResponse("search.html", {"request": request})
-    # 템플릿이 없으면 직접 HTML 파일 읽기
-    search_file = templates_dir / "search.html"
-    if search_file.exists():
-        with open(search_file, 'r', encoding='utf-8') as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse(content="<h1>Search</h1><p>검색 페이지</p>")
+_register_html_routes(app)
 
 
+# 동적 경로 라우트 (path parameter)
 @app.get("/document/{document_id:path}", response_class=HTMLResponse)
 async def document_page(request: Request, document_id: str):
     """문서 뷰어 페이지"""
     if templates:
         return templates.TemplateResponse("document.html", {"request": request, "document_id": document_id})
-    # 템플릿이 없으면 직접 HTML 파일 읽기
     doc_file = templates_dir / "document.html"
     if doc_file.exists():
         with open(doc_file, 'r', encoding='utf-8') as f:
             return HTMLResponse(content=f.read())
     return HTMLResponse(content=f"<h1>Document</h1><p>문서: {document_id}</p>")
-
-
-@app.get("/ask", response_class=HTMLResponse)
-async def ask_page(request: Request):
-    """AI 질의 페이지"""
-    if templates:
-        return templates.TemplateResponse("ask.html", {"request": request})
-    # 템플릿이 없으면 직접 HTML 파일 읽기
-    ask_file = templates_dir / "ask.html"
-    if ask_file.exists():
-        with open(ask_file, 'r', encoding='utf-8') as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse(content="<h1>Ask</h1><p>AI 질의 페이지</p>")
-
-
-@app.get("/logs", response_class=HTMLResponse)
-async def logs_page(request: Request):
-    """로그 뷰어 페이지"""
-    if templates:
-        return templates.TemplateResponse("logs.html", {"request": request})
-    # 템플릿이 없으면 직접 HTML 파일 읽기
-    logs_file = templates_dir / "logs.html"
-    if logs_file.exists():
-        with open(logs_file, 'r', encoding='utf-8') as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse(content="<h1>Logs</h1><p>로그 뷰어 페이지</p>")
-
-
-@app.get("/knowledge", response_class=HTMLResponse)
-async def knowledge_page(request: Request):
-    """Knowledge Studio 페이지"""
-    if templates:
-        return templates.TemplateResponse("knowledge/knowledge.html", {"request": request})
-    # 템플릿이 없으면 직접 HTML 파일 읽기
-    knowledge_file = templates_dir / "knowledge" / "knowledge.html"
-    if knowledge_file.exists():
-        with open(knowledge_file, 'r', encoding='utf-8') as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse(content="<h1>Knowledge Studio</h1><p>지식 구조 탐색 페이지</p>")
-
-
-@app.get("/knowledge-detail", response_class=HTMLResponse)
-async def knowledge_detail_page(request: Request):
-    """청크 상세 페이지"""
-    if templates:
-        return templates.TemplateResponse("knowledge/knowledge-detail.html", {"request": request})
-    # 템플릿이 없으면 직접 HTML 파일 읽기
-    detail_file = templates_dir / "knowledge" / "knowledge-detail.html"
-    if detail_file.exists():
-        with open(detail_file, 'r', encoding='utf-8') as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse(content="<h1>청크 상세</h1><p>청크 상세 정보 페이지</p>")
-
-
-@app.get("/knowledge-label-matching", response_class=HTMLResponse)
-async def knowledge_label_matching_page(request: Request):
-    """라벨 매칭 페이지"""
-    if templates:
-        return templates.TemplateResponse("knowledge/knowledge-label-matching.html", {"request": request})
-    # 템플릿이 없으면 직접 HTML 파일 읽기
-    label_matching_file = templates_dir / "knowledge" / "knowledge-label-matching.html"
-    if label_matching_file.exists():
-        with open(label_matching_file, 'r', encoding='utf-8') as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse(content="<h1>라벨 매칭</h1><p>라벨 매칭 페이지</p>")
-
-
-@app.get("/knowledge-relation-matching", response_class=HTMLResponse)
-async def knowledge_relation_matching_page(request: Request):
-    """관계 매칭 페이지"""
-    if templates:
-        return templates.TemplateResponse("knowledge/knowledge-relation-matching.html", {"request": request})
-    # 템플릿이 없으면 직접 HTML 파일 읽기
-    relation_matching_file = templates_dir / "knowledge" / "knowledge-relation-matching.html"
-    if relation_matching_file.exists():
-        with open(relation_matching_file, 'r', encoding='utf-8') as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse(content="<h1>관계 매칭</h1><p>관계 매칭 페이지</p>")
-
-
-@app.get("/reason", response_class=HTMLResponse)
-async def reason_page(request: Request):
-    """Reasoning Lab 페이지"""
-    if templates:
-        return templates.TemplateResponse("reason.html", {"request": request})
-    # 템플릿이 없으면 직접 HTML 파일 읽기
-    reason_file = templates_dir / "reason.html"
-    if reason_file.exists():
-        with open(reason_file, 'r', encoding='utf-8') as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse(content="<h1>Reasoning Lab</h1><p>Reasoning 실행 페이지</p>")
-
-
-@app.get("/knowledge-admin", response_class=HTMLResponse)
-async def knowledge_admin_page(request: Request):
-    """[DEPRECATED] Knowledge Admin 페이지 - 개별 관리자 페이지로 분리됨"""
-    if templates:
-        return templates.TemplateResponse("knowledge/knowledge-admin.html", {"request": request})
-    # 템플릿이 없으면 직접 HTML 파일 읽기
-    admin_file = templates_dir / "knowledge" / "knowledge-admin.html"
-    if admin_file.exists():
-        with open(admin_file, 'r', encoding='utf-8') as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse(content="<h1>Knowledge Admin</h1><p>지식 구조 관리 페이지</p>")
-
-
-@app.get("/admin/labels", response_class=HTMLResponse)
-async def admin_labels_page(request: Request):
-    """라벨 관리 페이지"""
-    if templates:
-        return templates.TemplateResponse("admin/labels.html", {"request": request})
-    # 템플릿이 없으면 직접 HTML 파일 읽기
-    labels_file = templates_dir / "admin" / "labels.html"
-    if labels_file.exists():
-        with open(labels_file, 'r', encoding='utf-8') as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse(content="<h1>라벨 관리</h1><p>라벨 관리 페이지</p>")
-
-
-@app.get("/admin/groups", response_class=HTMLResponse)
-async def admin_groups_page(request: Request):
-    """키워드 그룹 관리 페이지"""
-    if templates:
-        return templates.TemplateResponse("admin/groups.html", {"request": request})
-    # 템플릿이 없으면 직접 HTML 파일 읽기
-    groups_file = templates_dir / "admin" / "groups.html"
-    if groups_file.exists():
-        with open(groups_file, 'r', encoding='utf-8') as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse(content="<h1>키워드 그룹 관리</h1><p>키워드 그룹 관리 페이지</p>")
-
-
-@app.get("/admin/approval", response_class=HTMLResponse)
-async def admin_approval_page(request: Request):
-    """청크 승인 센터 페이지"""
-    if templates:
-        return templates.TemplateResponse("admin/approval.html", {"request": request})
-    # 템플릿이 없으면 직접 HTML 파일 읽기
-    approval_file = templates_dir / "admin" / "approval.html"
-    if approval_file.exists():
-        with open(approval_file, 'r', encoding='utf-8') as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse(content="<h1>청크 승인 센터</h1><p>청크 승인 센터 페이지</p>")
-
-
-@app.get("/admin/chunk-labels", response_class=HTMLResponse)
-async def admin_chunk_labels_page(request: Request):
-    """청크 라벨 관리 페이지"""
-    if templates:
-        return templates.TemplateResponse("admin/chunk-labels.html", {"request": request})
-    chunk_labels_file = templates_dir / "admin" / "chunk-labels.html"
-    if chunk_labels_file.exists():
-        with open(chunk_labels_file, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse(content="<h1>청크 관리</h1><p>청크 라벨 관리 페이지</p>")
-
-
-@app.get("/admin/chunk-create", response_class=HTMLResponse)
-async def admin_chunk_create_page(request: Request):
-    """청크 생성 페이지"""
-    if templates:
-        return templates.TemplateResponse("admin/chunk-create.html", {"request": request})
-    chunk_create_file = templates_dir / "admin" / "chunk-create.html"
-    if chunk_create_file.exists():
-        with open(chunk_create_file, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse(content="<h1>청크 생성</h1><p>청크 생성 페이지</p>")
-
-
-@app.get("/admin/statistics", response_class=HTMLResponse)
-async def admin_statistics_page(request: Request):
-    """통계 대시보드 페이지 (Phase 9-4-2)"""
-    if templates:
-        return templates.TemplateResponse("admin/statistics.html", {"request": request})
-    statistics_file = templates_dir / "admin" / "statistics.html"
-    if statistics_file.exists():
-        with open(statistics_file, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse(content="<h1>Statistics</h1><p>통계 대시보드 페이지</p>")
-
-
-# ============================================
-# Phase 11-3: Admin Settings Management Pages
-# ============================================
-
-@app.get("/admin/settings/templates", response_class=HTMLResponse)
-async def admin_settings_templates_page(request: Request):
-    """Admin Template 관리 페이지 (Phase 11-3)"""
-    if templates:
-        return templates.TemplateResponse("admin/settings/templates.html", {"request": request})
-    template_file = templates_dir / "admin" / "settings" / "templates.html"
-    if template_file.exists():
-        with open(template_file, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse(content="<h1>Templates</h1><p>Admin Template 관리 페이지</p>")
-
-
-@app.get("/admin/settings/presets", response_class=HTMLResponse)
-async def admin_settings_presets_page(request: Request):
-    """Admin Prompt Preset 관리 페이지 (Phase 11-3)"""
-    if templates:
-        return templates.TemplateResponse("admin/settings/presets.html", {"request": request})
-    preset_file = templates_dir / "admin" / "settings" / "presets.html"
-    if preset_file.exists():
-        with open(preset_file, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse(content="<h1>Presets</h1><p>Admin Prompt Preset 관리 페이지</p>")
-
-
-@app.get("/admin/settings/rag-profiles", response_class=HTMLResponse)
-async def admin_settings_rag_profiles_page(request: Request):
-    """Admin RAG Profile 관리 페이지 (Phase 11-3)"""
-    if templates:
-        return templates.TemplateResponse("admin/settings/rag-profiles.html", {"request": request})
-    rag_file = templates_dir / "admin" / "settings" / "rag-profiles.html"
-    if rag_file.exists():
-        with open(rag_file, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse(content="<h1>RAG Profiles</h1><p>Admin RAG Profile 관리 페이지</p>")
-
-
-@app.get("/admin/settings/policy-sets", response_class=HTMLResponse)
-async def admin_settings_policy_sets_page(request: Request):
-    """Admin Policy Set 관리 페이지 (Phase 11-3)"""
-    if templates:
-        return templates.TemplateResponse("admin/settings/policy-sets.html", {"request": request})
-    policy_file = templates_dir / "admin" / "settings" / "policy-sets.html"
-    if policy_file.exists():
-        with open(policy_file, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse(content="<h1>Policy Sets</h1><p>Admin Policy Set 관리 페이지</p>")
-
-
-@app.get("/admin/settings/audit-logs", response_class=HTMLResponse)
-async def admin_settings_audit_logs_page(request: Request):
-    """Admin Audit Log 뷰어 페이지 (Phase 11-3)"""
-    if templates:
-        return templates.TemplateResponse("admin/settings/audit-logs.html", {"request": request})
-    audit_file = templates_dir / "admin" / "settings" / "audit-logs.html"
-    if audit_file.exists():
-        with open(audit_file, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse(content="<h1>Audit Logs</h1><p>Admin Audit Log 뷰어 페이지</p>")
 
 
 @app.get("/health")
@@ -596,5 +363,29 @@ async def health_ready():
     return JSONResponse(
         status_code=status_code,
         content={"status": "ok" if all_ok else "degraded", "checks": checks},
+    )
+
+
+# ============================================
+# HTML 404 핸들러 (Phase 13-2-2)
+# ============================================
+
+@app.exception_handler(StarletteHTTPException)
+async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
+    """Accept: text/html 요청 시 404.html 반환, 그 외 JSON 404 유지"""
+    if exc.status_code == 404:
+        accept = request.headers.get("accept", "")
+        if "text/html" in accept:
+            not_found_file = templates_dir / "404.html" if templates_dir else None
+            if not_found_file and not_found_file.exists():
+                with open(not_found_file, "r", encoding="utf-8") as f:
+                    return HTMLResponse(content=f.read(), status_code=404)
+            return HTMLResponse(
+                content="<h1>404</h1><p>페이지를 찾을 수 없습니다.</p>",
+                status_code=404,
+            )
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail or "Not Found"},
     )
 

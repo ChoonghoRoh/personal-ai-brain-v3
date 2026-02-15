@@ -24,7 +24,7 @@ const CHART_COLORS = {
  * Initialize page
  */
 document.addEventListener('DOMContentLoaded', () => {
-  renderHeader();
+  // Header 렌더링은 admin-common.js가 담당
   loadAllStatistics();
 });
 

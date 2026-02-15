@@ -32,9 +32,6 @@ const SETTINGS_MENU = [
   { path: '/admin/settings/audit-logs', label: '변경 이력', icon: '📜' }
 ];
 
-// 기존 호환성을 위한 NAV_MENU (deprecated)
-const NAV_MENU = USER_MENU;
-
 /**
  * Header HTML 생성
  * @param {object} options - 헤더 옵션
@@ -49,8 +46,12 @@ function createHeader(options = {}) {
   const currentPath = options.currentPath || window.location.pathname;
   
   // 현재 경로에 해당하는 메뉴 라벨 찾기
+  // [활성 해석 순서] user → settings → admin
+  // 1) USER_MENU: /dashboard는 exact match, 나머지는 startsWith
+  // 2) SETTINGS_MENU: startsWith (더 구체적인 /admin/settings/* 경로 먼저 매칭)
+  // 3) ADMIN_MENU: startsWith (/admin/* 범용)
   let currentMenuLabel = '';
-  
+
   // 사용자 메뉴에서 찾기
   const userMenuItem = USER_MENU.find(item => {
     if (item.path === '/dashboard') {
@@ -348,7 +349,6 @@ if (typeof window !== 'undefined') {
   if (!window.renderHeader) {
     window.createHeader = createHeader;
     window.renderHeader = renderHeader;
-    window.NAV_MENU = NAV_MENU;
     window.USER_MENU = USER_MENU;
     window.ADMIN_MENU = ADMIN_MENU;
     window.SETTINGS_MENU = SETTINGS_MENU;

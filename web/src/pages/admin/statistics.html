@@ -1,183 +1,184 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Statistics Dashboard - Personal AI Brain</title>
-  <link rel="stylesheet" href="/static/css/common.css">
-  <link rel="stylesheet" href="/static/css/statistics.css">
-  <script src="/static/libs/chartjs/chart.min.js"></script>
-</head>
-<body>
-  <div id="app">
-    <!-- Header -->
-    <header id="header"></header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/css/admin/admin-styles.css" />
+    <link rel="stylesheet" href="/static/css/statistics.css" />
+    <script src="/static/libs/chartjs/chart.min.js"></script>
+    <title>Personal AI Brain - 통계 대시보드</title>
+  </head>
+  <body>
+    <div class="container">
+      <div id="header-placeholder"></div>
 
-    <!-- Main Content -->
-    <main class="main-content">
-      <div class="page-header">
-        <h1>Statistics Dashboard</h1>
-        <p class="page-description">시스템 현황 및 사용량 통계</p>
-        <button id="refreshBtn" class="btn btn-secondary" onclick="loadAllStatistics()">
-          <span class="icon">↻</span> 새로고침
-        </button>
+      <div id="error-message" class="error" style="display: none"></div>
+      <div id="success-message" class="success" style="display: none"></div>
+
+      <!-- Main Content -->
+      <div class="admin-container">
+        <div class="page-header">
+          <h3>Statistics Dashboard</h3>
+          <p class="page-description">시스템 현황 및 사용량 통계</p>
+          <button id="refreshBtn" class="btn btn-secondary" onclick="loadAllStatistics()">
+            <span class="icon">↻</span> 새로고침
+          </button>
+        </div>
+
+        <!-- Summary Cards -->
+        <section class="summary-cards">
+          <div class="card summary-card" id="cardDocuments">
+            <div class="card-icon">📄</div>
+            <div class="card-content">
+              <div class="card-value" id="totalDocuments">-</div>
+              <div class="card-label">총 문서</div>
+              <div class="card-sub" id="recentDocuments">최근 7일: -</div>
+            </div>
+          </div>
+
+          <div class="card summary-card" id="cardChunks">
+            <div class="card-icon">🧩</div>
+            <div class="card-content">
+              <div class="card-value" id="totalChunks">-</div>
+              <div class="card-label">총 청크</div>
+              <div class="card-sub" id="approvedChunks">승인됨: -</div>
+            </div>
+          </div>
+
+          <div class="card summary-card" id="cardLabels">
+            <div class="card-icon">🏷️</div>
+            <div class="card-content">
+              <div class="card-value" id="totalLabels">-</div>
+              <div class="card-label">총 라벨</div>
+              <div class="card-sub" id="totalProjects">프로젝트: -</div>
+            </div>
+          </div>
+
+          <div class="card summary-card" id="cardUsage">
+            <div class="card-icon">📊</div>
+            <div class="card-content">
+              <div class="card-value" id="todayUsage">-</div>
+              <div class="card-label">오늘 사용</div>
+              <div class="card-sub" id="totalReasoning">총 추론: -</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Charts Row -->
+        <section class="charts-row">
+          <div class="card chart-card">
+            <h3>문서 유형 분포</h3>
+            <div class="chart-container">
+              <canvas id="docTypeChart"></canvas>
+            </div>
+          </div>
+
+          <div class="card chart-card">
+            <h3>청크 상태 분포</h3>
+            <div class="chart-container">
+              <canvas id="chunkStatusChart"></canvas>
+            </div>
+          </div>
+
+          <div class="card chart-card">
+            <h3>라벨 유형 분포</h3>
+            <div class="chart-container">
+              <canvas id="labelTypeChart"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- Trends Chart -->
+        <section class="trends-section">
+          <div class="card">
+            <div class="card-header">
+              <h3>일별 트렌드 (최근 7일)</h3>
+              <select id="trendDays" onchange="loadTrends()">
+                <option value="7">7일</option>
+                <option value="14">14일</option>
+                <option value="30">30일</option>
+              </select>
+            </div>
+            <div class="chart-container-wide">
+              <canvas id="trendsChart"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- Details Section -->
+        <section class="details-section">
+          <div class="card">
+            <h3>인기 라벨 TOP 10</h3>
+            <div class="table-container">
+              <table id="topLabelsTable">
+                <thead>
+                  <tr>
+                    <th>순위</th>
+                    <th>라벨</th>
+                    <th>유형</th>
+                    <th>사용 횟수</th>
+                  </tr>
+                </thead>
+                <tbody id="topLabelsBody">
+                  <tr><td colspan="4" class="loading">로딩 중...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>프로젝트별 현황</h3>
+            <div class="table-container">
+              <table id="projectsTable">
+                <thead>
+                  <tr>
+                    <th>프로젝트</th>
+                    <th>문서 수</th>
+                    <th>청크 수</th>
+                  </tr>
+                </thead>
+                <tbody id="projectsBody">
+                  <tr><td colspan="3" class="loading">로딩 중...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- System Status -->
+          <div class="card">
+            <h3>시스템 상태</h3>
+            <div class="system-status" id="systemStatus">
+              <div class="status-item">
+                <span class="status-label">PostgreSQL</span>
+                <span class="status-value" id="dbStatus">-</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Qdrant 벡터</span>
+                <span class="status-value" id="qdrantStatus">-</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Redis</span>
+                <span class="status-value" id="redisStatus">-</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Ollama LLM</span>
+                <span class="status-value" id="ollamaStatus">-</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">총 레코드</span>
+                <span class="status-value" id="totalRecords">-</span>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
+    </div>
 
-      <!-- Summary Cards -->
-      <section class="summary-cards">
-        <div class="card summary-card" id="cardDocuments">
-          <div class="card-icon">📄</div>
-          <div class="card-content">
-            <div class="card-value" id="totalDocuments">-</div>
-            <div class="card-label">총 문서</div>
-            <div class="card-sub" id="recentDocuments">최근 7일: -</div>
-          </div>
-        </div>
-
-        <div class="card summary-card" id="cardChunks">
-          <div class="card-icon">🧩</div>
-          <div class="card-content">
-            <div class="card-value" id="totalChunks">-</div>
-            <div class="card-label">총 청크</div>
-            <div class="card-sub" id="approvedChunks">승인됨: -</div>
-          </div>
-        </div>
-
-        <div class="card summary-card" id="cardLabels">
-          <div class="card-icon">🏷️</div>
-          <div class="card-content">
-            <div class="card-value" id="totalLabels">-</div>
-            <div class="card-label">총 라벨</div>
-            <div class="card-sub" id="totalProjects">프로젝트: -</div>
-          </div>
-        </div>
-
-        <div class="card summary-card" id="cardUsage">
-          <div class="card-icon">📊</div>
-          <div class="card-content">
-            <div class="card-value" id="todayUsage">-</div>
-            <div class="card-label">오늘 사용</div>
-            <div class="card-sub" id="totalReasoning">총 추론: -</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Charts Row -->
-      <section class="charts-row">
-        <!-- Document Types Chart -->
-        <div class="card chart-card">
-          <h3>문서 유형 분포</h3>
-          <div class="chart-container">
-            <canvas id="docTypeChart"></canvas>
-          </div>
-        </div>
-
-        <!-- Chunk Status Chart -->
-        <div class="card chart-card">
-          <h3>청크 상태 분포</h3>
-          <div class="chart-container">
-            <canvas id="chunkStatusChart"></canvas>
-          </div>
-        </div>
-
-        <!-- Label Types Chart -->
-        <div class="card chart-card">
-          <h3>라벨 유형 분포</h3>
-          <div class="chart-container">
-            <canvas id="labelTypeChart"></canvas>
-          </div>
-        </div>
-      </section>
-
-      <!-- Trends Chart -->
-      <section class="trends-section">
-        <div class="card">
-          <div class="card-header">
-            <h3>일별 트렌드 (최근 7일)</h3>
-            <select id="trendDays" onchange="loadTrends()">
-              <option value="7">7일</option>
-              <option value="14">14일</option>
-              <option value="30">30일</option>
-            </select>
-          </div>
-          <div class="chart-container-wide">
-            <canvas id="trendsChart"></canvas>
-          </div>
-        </div>
-      </section>
-
-      <!-- Details Section -->
-      <section class="details-section">
-        <!-- Top Labels -->
-        <div class="card">
-          <h3>인기 라벨 TOP 10</h3>
-          <div class="table-container">
-            <table id="topLabelsTable">
-              <thead>
-                <tr>
-                  <th>순위</th>
-                  <th>라벨</th>
-                  <th>유형</th>
-                  <th>사용 횟수</th>
-                </tr>
-              </thead>
-              <tbody id="topLabelsBody">
-                <tr><td colspan="4" class="loading">로딩 중...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Projects Stats -->
-        <div class="card">
-          <h3>프로젝트별 현황</h3>
-          <div class="table-container">
-            <table id="projectsTable">
-              <thead>
-                <tr>
-                  <th>프로젝트</th>
-                  <th>문서 수</th>
-                  <th>청크 수</th>
-                </tr>
-              </thead>
-              <tbody id="projectsBody">
-                <tr><td colspan="3" class="loading">로딩 중...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- System Status -->
-        <div class="card">
-          <h3>시스템 상태</h3>
-          <div class="system-status" id="systemStatus">
-            <div class="status-item">
-              <span class="status-label">PostgreSQL</span>
-              <span class="status-value" id="dbStatus">-</span>
-            </div>
-            <div class="status-item">
-              <span class="status-label">Qdrant 벡터</span>
-              <span class="status-value" id="qdrantStatus">-</span>
-            </div>
-            <div class="status-item">
-              <span class="status-label">Redis</span>
-              <span class="status-value" id="redisStatus">-</span>
-            </div>
-            <div class="status-item">
-              <span class="status-label">Ollama LLM</span>
-              <span class="status-value" id="ollamaStatus">-</span>
-            </div>
-            <div class="status-item">
-              <span class="status-label">총 레코드</span>
-              <span class="status-value" id="totalRecords">-</span>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <script src="/static/js/components/header.js"></script>
-  <script src="/static/js/admin/statistics.js"></script>
-</body>
+    <script src="/static/js/components/layout-component.js"></script>
+    <script src="/static/js/components/header-component.js"></script>
+    <script src="/static/js/admin/admin-common.js"></script>
+    <script src="/static/js/components/utils.js"></script>
+    <script src="/static/js/admin/statistics.js"></script>
+  </body>
 </html>
