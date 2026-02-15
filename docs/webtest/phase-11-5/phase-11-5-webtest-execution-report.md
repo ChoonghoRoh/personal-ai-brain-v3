@@ -72,7 +72,7 @@
 ### 2차 MCP-Cursor 테스트
 
 - **체크리스트**: [phase-11-5-mcp-webtest-scenarios.md](phase-11-5-mcp-webtest-scenarios.md) (§2.1~§2.4 시나리오 W11.5.3.1 ~ W11.5.6.4)
-- **절차**: [mcp-cursor-test-guide.md](../mcp-cursor-test-guide.md) §3 — Cursor Agent에서 위 시나리오 문서 @ 첨부 후 "가상 브라우저에서 http://localhost:8000 기준으로 순서대로 수행해 줘" 지시
+- **절차**: [mcp-cursor-test-guide.md](../mcp-cursor-test-guide.md) §3 — Cursor Agent에서 위 시나리오 문서 @ 첨부 후 "가상 브라우저에서 http://localhost:8001 기준으로 순서대로 수행해 줘" 지시
 - **지시문 예시**: phase-11-5-mcp-webtest-scenarios.md §5 참고
 - **결과 기록**: 본 리포트 "2차 MCP 결과" 표 또는 phase-11-5-mcp-webtest-scenarios.md 결과/비고란
 
@@ -118,7 +118,7 @@
 
 ## 테스트 환경
 
-- **Base URL**: http://localhost:8000
+- **Base URL**: http://localhost:8001
 - **Backend**: FastAPI (docker compose)
 - **Phase 10 E2E**: `e2e/phase-10-1.spec.js`, `phase-10-2.spec.js`, `phase-10-3.spec.js`, `phase-10-4.spec.js`
 - **도구**: Playwright (npx playwright test), curl

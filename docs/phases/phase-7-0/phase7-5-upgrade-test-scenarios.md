@@ -54,7 +54,7 @@ Phase 7 Upgrade의 핵심 기능을 검증합니다:
 
 **요청 예시**:
 ```bash
-curl -X POST http://localhost:8000/api/knowledge/chunks/1/approve \
+curl -X POST http://localhost:8001/api/knowledge/chunks/1/approve \
   -H "Content-Type: application/json" \
   -d '{"approved_by": "admin"}'
 ```
@@ -83,7 +83,7 @@ curl -X POST http://localhost:8000/api/knowledge/chunks/1/approve \
 
 **요청 예시**:
 ```bash
-curl -X POST http://localhost:8000/api/knowledge/chunks/1/reject \
+curl -X POST http://localhost:8001/api/knowledge/chunks/1/reject \
   -H "Content-Type: application/json" \
   -d '{"reason": "부적절한 내용"}'
 ```
@@ -110,7 +110,7 @@ curl -X POST http://localhost:8000/api/knowledge/chunks/1/reject \
 
 **요청 예시**:
 ```bash
-curl http://localhost:8000/api/knowledge/chunks/pending?status=draft
+curl http://localhost:8001/api/knowledge/chunks/pending?status=draft
 ```
 
 **검증 기준**: ✅ draft 상태 청크만 반환되어야 함
@@ -130,7 +130,7 @@ curl http://localhost:8000/api/knowledge/chunks/pending?status=draft
 
 **요청 예시**:
 ```bash
-curl -X POST http://localhost:8000/api/knowledge/labels/suggest?chunk_id=1
+curl -X POST http://localhost:8001/api/knowledge/labels/suggest?chunk_id=1
 ```
 
 **예상 응답**:
@@ -161,7 +161,7 @@ curl -X POST http://localhost:8000/api/knowledge/labels/suggest?chunk_id=1
 
 **요청 예시**:
 ```bash
-curl -X POST http://localhost:8000/api/knowledge/labels/suggest/1/apply/1?confidence=0.8
+curl -X POST http://localhost:8001/api/knowledge/labels/suggest/1/apply/1?confidence=0.8
 ```
 
 **검증 기준**: ✅ KnowledgeLabel이 `status=suggested`, `source=ai`로 생성되어야 함
@@ -181,7 +181,7 @@ curl -X POST http://localhost:8000/api/knowledge/labels/suggest/1/apply/1?confid
 
 **요청 예시**:
 ```bash
-curl -X POST http://localhost:8000/api/knowledge/relations/suggest?chunk_id=1&limit=5
+curl -X POST http://localhost:8001/api/knowledge/relations/suggest?chunk_id=1&limit=5
 ```
 
 **예상 응답**:
@@ -212,7 +212,7 @@ curl -X POST http://localhost:8000/api/knowledge/relations/suggest?chunk_id=1&li
 
 **요청 예시**:
 ```bash
-curl -X POST http://localhost:8000/api/knowledge/relations/suggest/1/apply \
+curl -X POST http://localhost:8001/api/knowledge/relations/suggest/1/apply \
   -H "Content-Type: application/json" \
   -d '{
     "target_chunk_id": 2,
@@ -239,7 +239,7 @@ curl -X POST http://localhost:8000/api/knowledge/relations/suggest/1/apply \
 
 **요청 예시**:
 ```bash
-curl -X POST http://localhost:8000/api/reason \
+curl -X POST http://localhost:8001/api/reason \
   -H "Content-Type: application/json" \
   -d '{
     "mode": "design_explain",

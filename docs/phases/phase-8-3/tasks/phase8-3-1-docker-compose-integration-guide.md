@@ -139,7 +139,7 @@ source venv/bin/activate
 python start_server.py
 ```
 
-서버 주소: `http://localhost:8000`
+서버 주소: `http://localhost:8001`
 
 ## 🔄 데이터 마이그레이션 (필요한 경우)
 

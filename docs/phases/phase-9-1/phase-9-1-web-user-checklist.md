@@ -12,17 +12,17 @@
 
 ## 사용자 화면 링크 (Web UI)
 
-백엔드 기동 후 브라우저에서 아래 주소로 접속합니다. (기본: `http://localhost:8000`)
+백엔드 기동 후 브라우저에서 아래 주소로 접속합니다. (기본: `http://localhost:8001`)
 
 | Task         | 화면               | URL                             |
 | ------------ | ------------------ | ------------------------------- |
-| **공통**     | 대시보드           | http://localhost:8000/dashboard |
-| **공통**     | 헬스 체크          | http://localhost:8000/health    |
-| **9-1-1**    | API 문서 (Swagger) | http://localhost:8000/docs      |
-| **9-1-1**    | API 문서 (ReDoc)   | http://localhost:8000/redoc     |
-| **테스트용** | 검색               | http://localhost:8000/search    |
-| **테스트용** | AI 질의            | http://localhost:8000/ask       |
-| **테스트용** | Reasoning Lab      | http://localhost:8000/reason    |
+| **공통**     | 대시보드           | http://localhost:8001/dashboard |
+| **공통**     | 헬스 체크          | http://localhost:8001/health    |
+| **9-1-1**    | API 문서 (Swagger) | http://localhost:8001/docs      |
+| **9-1-1**    | API 문서 (ReDoc)   | http://localhost:8001/redoc     |
+| **테스트용** | 검색               | http://localhost:8001/search    |
+| **테스트용** | AI 질의            | http://localhost:8001/ask       |
+| **테스트용** | Reasoning Lab      | http://localhost:8001/reason    |
 
 ---
 
@@ -101,7 +101,7 @@ USER가 브라우저에서 **메뉴 진입 → 화면 동작 → 결과 확인**
 
 ```javascript
 // 허용된 오리진에서 테스트
-fetch("http://localhost:8000/health")
+fetch("http://localhost:8001/health")
   .then((r) => r.json())
   .then(console.log)
   .catch(console.error);
@@ -123,7 +123,7 @@ fetch("http://localhost:8000/health")
 ```javascript
 // 65번 연속 요청 테스트
 for (let i = 0; i < 65; i++) {
-  fetch("http://localhost:8000/health")
+  fetch("http://localhost:8001/health")
     .then((r) => console.log(`${i + 1}: ${r.status}`))
     .catch((e) => console.error(`${i + 1}: Error`));
 }
@@ -211,7 +211,7 @@ for (let i = 0; i < 65; i++) {
 ### CORS 에러 발생 시
 
 ```
-Access to fetch at 'http://localhost:8000/api/...' from origin 'http://localhost:3000'
+Access to fetch at 'http://localhost:8001/api/...' from origin 'http://localhost:3000'
 has been blocked by CORS policy
 ```
 

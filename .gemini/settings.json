@@ -1,0 +1,34 @@
+{
+  "project_name": "personal-ai-brain-v3",
+  "persona_file": "docs/rules/role/FRONTEND.md",
+  "role": "Senior Frontend Architect",
+  "collaboration": {
+    "orchestrator": "Cursor",
+    "backend": "Claude",
+    "qa": "Copilot"
+  },
+  "preferred_model": "gemini-3-flash",
+  "fallback_model": "gemini-2.0-pro",
+  "reasoning_depth": "high",
+  "session": {
+    "auto_save": true,
+    "persistence": "local",
+    "context_retention": "high",
+    "max_history_turns": 50,
+    "environment_sync": [".cursorrules", "docs/rules/role/FRONTEND.md", "package.json"]
+  },
+  "watch_mode": {
+    "enabled": true,
+    "ignore": ["node_modules", ".git", "dist"]
+  },
+  "capabilities": {
+    "file_edit": true,
+    "shell_execute": true,
+    "create_directory": true
+  },
+  "safety": {
+    "confirm_on_shell": false,
+    "confirm_on_file_edit": false
+  },
+  "constraints": ["Vanilla JS only (ES Modules)", "No external CDNs (Self-contained for On-premise)", "Modular architecture by menu units"]
+}

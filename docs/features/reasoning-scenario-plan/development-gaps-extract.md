@@ -105,7 +105,7 @@
 
 - **69개 시나리오** (진입·네비게이션 11, 질문·모드 12, 실행·진행·취소 12, 결과 표시 12, 추천 11, 저장·공유·에러 11).
 - 형식: 시나리오 # | 제목 | 조치 | 기대 결과 | 검증 방법.
-- Base URL `http://localhost:8000`, MCP cursor-ide-browser 또는 cursor-browser-extension.
+- Base URL `http://localhost:8001`, MCP cursor-ide-browser 또는 cursor-browser-extension.
 
 ### 6.2 현재 소스 상태
 

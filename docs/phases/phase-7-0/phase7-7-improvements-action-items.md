@@ -31,7 +31,7 @@
 **Step 1: 브라우저 테스트**
 
 ```
-1. http://localhost:8000/knowledge-admin 접속
+1. http://localhost:8001/knowledge-admin 접속
 2. "📦 키워드 그룹" 탭 클릭
 3. "매칭 모드" 체크박스 활성화
 4. 다음 항목들을 순차적으로 테스트:

@@ -32,7 +32,7 @@
 
 ## 3. 테스트 환경
 
-- **Base URL**: http://localhost:8000
+- **Base URL**: http://localhost:8001
 - **백엔드**: Docker Compose 또는 로컬 uvicorn으로 기동 (상세: [frontend-webtest-setup-guide.md](frontend-webtest-setup-guide.md))
 - **브라우저**: Chrome, Edge 등 최신 데스크톱 브라우저 권장
 - **선택**: AI 질의·Reasoning·키워드 추천 테스트 시 Ollama(로컬 LLM) 동작 필요

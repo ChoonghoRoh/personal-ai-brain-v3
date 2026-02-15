@@ -184,13 +184,13 @@ python scripts/extract_keywords_and_labels.py --llm --openai
 
 ```bash
 # 문서 목록 조회
-curl http://localhost:8000/api/documents | jq '.[0].id'
+curl http://localhost:8001/api/documents | jq '.[0].id'
 
 # 키워드 추출 (정규식 기반)
-curl -X POST "http://localhost:8000/api/knowledge/documents/1/extract-keywords?top_n=10&use_llm=false" | jq
+curl -X POST "http://localhost:8001/api/knowledge/documents/1/extract-keywords?top_n=10&use_llm=false" | jq
 
 # 키워드 추출 (LLM 기반)
-curl -X POST "http://localhost:8000/api/knowledge/documents/1/extract-keywords?top_n=10&use_llm=true" | jq
+curl -X POST "http://localhost:8001/api/knowledge/documents/1/extract-keywords?top_n=10&use_llm=true" | jq
 ```
 
 **예상 결과**:
@@ -462,7 +462,7 @@ ORDER BY usage_count DESC;
 5. **API 테스트**
 
    ```bash
-   curl -X POST "http://localhost:8000/api/knowledge/documents/1/extract-keywords?top_n=10&use_llm=false"
+   curl -X POST "http://localhost:8001/api/knowledge/documents/1/extract-keywords?top_n=10&use_llm=false"
    ```
 
 6. **결과 검증**

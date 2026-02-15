@@ -687,7 +687,7 @@ Phase-X-Y-summary.md 작성
    retry=0
 
    while [ $retry -lt $max_retries ]; do
-       if curl -s http://localhost:8000/health 2>/dev/null | grep -q '\"status\"' 2>/dev/null; then
+       if curl -s http://localhost:8001/health 2>/dev/null | grep -q '\"status\"' 2>/dev/null; then
            echo \"✅ All services are ready!\"
            break
        fi
@@ -707,7 +707,7 @@ Phase-X-Y-summary.md 작성
 
    echo \"\"
    echo \"✅ Test environment ready (1-2 minutes)\"
-   echo \"   Backend:   http://localhost:8000\"
+   echo \"   Backend:   http://localhost:8001\"
    echo \"   Database:  localhost:5432\"
    echo \"   Qdrant:    http://localhost:6333\"
    ```

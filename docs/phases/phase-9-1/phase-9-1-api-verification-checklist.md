@@ -24,7 +24,7 @@
 
 | 항목 | 값 |
 |------|---|
-| **Base URL** | `http://localhost:8000` |
+| **Base URL** | `http://localhost:8001` |
 | **인증 (JWT)** | `Authorization: Bearer <access_token>` |
 | **인증 (API Key)** | `X-API-Key: <api_key>` |
 | **공통 헤더** | `Content-Type: application/json` (POST/PUT 시) |
@@ -188,7 +188,7 @@
 
 **API 검증 수행일**: _______________
 **검증 수행자**: _______________
-**환경**: localhost:8000, Docker 환경
+**환경**: localhost:8001, Docker 환경
 
 ---
 
@@ -198,7 +198,7 @@
 
 ```bash
 # API Key로 JWT 토큰 발급
-curl -X POST http://localhost:8000/api/auth/token \
+curl -X POST http://localhost:8001/api/auth/token \
   -H "Content-Type: application/json" \
   -d '{"api_key": "your_api_secret_key"}'
 ```
@@ -207,18 +207,18 @@ curl -X POST http://localhost:8000/api/auth/token \
 
 ```bash
 # JWT Bearer 토큰 사용
-curl http://localhost:8000/api/auth/me \
+curl http://localhost:8001/api/auth/me \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
 
 # API Key 사용
-curl http://localhost:8000/api/auth/me \
+curl http://localhost:8001/api/auth/me \
   -H "X-API-Key: your_api_secret_key"
 ```
 
 ### 7.3 CORS 프리플라이트
 
 ```bash
-curl -X OPTIONS http://localhost:8000/api/ask \
+curl -X OPTIONS http://localhost:8001/api/ask \
   -H "Origin: http://localhost:3000" \
   -H "Access-Control-Request-Method: POST" \
   -H "Access-Control-Request-Headers: Content-Type, Authorization" \
@@ -230,6 +230,6 @@ curl -X OPTIONS http://localhost:8000/api/ask \
 ```bash
 # 65번 연속 요청 (제한 초과 테스트)
 for i in {1..65}; do
-  echo "Request $i: $(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/health)"
+  echo "Request $i: $(curl -s -o /dev/null -w "%{http_code}" http://localhost:8001/health)"
 done
 ```

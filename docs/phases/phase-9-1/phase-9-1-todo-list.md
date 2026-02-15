@@ -226,13 +226,13 @@
 2. **API 테스트**
    ```bash
    # 헬스 체크
-   curl http://localhost:8000/health
+   curl http://localhost:8001/health
 
    # 인증 상태 확인
-   curl http://localhost:8000/api/auth/status
+   curl http://localhost:8001/api/auth/status
 
    # 토큰 발급 (API Key 설정 필요)
-   curl -X POST http://localhost:8000/api/auth/token \
+   curl -X POST http://localhost:8001/api/auth/token \
      -H "Content-Type: application/json" \
      -d '{"api_key": "your_api_key"}'
    ```

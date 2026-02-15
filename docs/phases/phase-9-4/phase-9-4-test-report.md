@@ -407,7 +407,7 @@ ls -la scripts/backup/
 
 ### 테스트 환경
 - Docker 컨테이너: pab-backend, pab-postgres, qdrant
-- Backend URL: http://localhost:8000
+- Backend URL: http://localhost:8001
 - 테스트 데이터: 문서 5개, 청크 69개, 라벨 151개
 
 ### 추가 테스트 권장 사항

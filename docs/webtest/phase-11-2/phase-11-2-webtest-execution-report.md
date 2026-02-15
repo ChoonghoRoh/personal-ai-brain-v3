@@ -78,7 +78,7 @@
 
 ## 테스트 환경
 
-- **Base URL**: http://localhost:8000
+- **Base URL**: http://localhost:8001
 - **백엔드**: FastAPI (docker compose, container: backend)
 - **DB**: PostgreSQL (seed data 로드됨)
 - **도구**: curl + python3 JSON 파싱

@@ -40,7 +40,7 @@ Phase 9-3 웹 사용자 테스트를 [frontend-webtest-personas.md](frontend-web
 | **총 테스트 수** | 19                                                   |
 | **통과**         | 19                                                   |
 | **실패**         | 0                                                    |
-| **환경**         | Base URL http://localhost:8000, Chromium, Playwright |
+| **환경**         | Base URL http://localhost:8001, Chromium, Playwright |
 
 ---
 

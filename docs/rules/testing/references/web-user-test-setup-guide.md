@@ -8,7 +8,7 @@
 
 ### 1.1 백엔드 및 Base URL
 
-- **Base URL**: `http://localhost:8000` (기본값)
+- **Base URL**: `http://localhost:8001` (기본값)
 - 백엔드가 이 주소에서 응답해야 브라우저로 웹 화면(대시보드, 검색, Ask, Reasoning Lab, 지식 관리 등)에 접근할 수 있습니다.
 
 ### 1.2 브라우저
@@ -29,7 +29,7 @@ docker-compose up -d
 ```
 
 - PostgreSQL, Qdrant, Backend 서비스가 기동됩니다.
-- Backend: http://localhost:8000 (대시보드: `/dashboard`, API 문서: `/docs`)
+- Backend: http://localhost:8001 (대시보드: `/dashboard`, API 문서: `/docs`)
 - Ollama(로컬 LLM)는 호스트에서 별도 실행하는 구성을 권장합니다. AI 질의·Reasoning·키워드 추천 등을 테스트할 경우 Ollama가 동작 중이어야 합니다.
 
 ### 2.2 로컬에서 Backend만 기동
@@ -41,7 +41,7 @@ DB·Qdrant는 Docker로 띄운 뒤, Backend만 로컬에서 실행할 수도 있
 uvicorn backend.main:app --host 0.0.0.0 --port 8000
 ```
 
-- 브라우저에서 http://localhost:8000/dashboard 로 접속해 화면이 뜨는지 확인합니다.
+- 브라우저에서 http://localhost:8001/dashboard 로 접속해 화면이 뜨는지 확인합니다.
 
 ---
 
@@ -52,7 +52,7 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000
 ### 3.1 공통 전제
 
 - **백엔드가 Base URL에서 기동 중**이어야 합니다. (위 2절대로 `docker-compose up -d` 또는 uvicorn)
-- **Base URL**: `http://localhost:8000` (자동화/에이전트가 같은 호스트에서 실행할 때). 원격 에이전트가 접속할 경우에는 터널(예: ngrok) 또는 배포 URL이 필요할 수 있습니다.
+- **Base URL**: `http://localhost:8001` (자동화/에이전트가 같은 호스트에서 실행할 때). 원격 에이전트가 접속할 경우에는 터널(예: ngrok) 또는 배포 URL이 필요할 수 있습니다.
 
 ### 3.2 Playwright E2E로 자동 실행
 
@@ -64,7 +64,7 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000
   npm install -D @playwright/test
   npx playwright install
   ```
-- **설정**: `playwright.config.js`에서 `baseURL: 'http://localhost:8000'` 지정. 필요 시 `webServer`로 테스트 전에 백엔드를 기동하도록 설정.
+- **설정**: `playwright.config.js`에서 `baseURL: 'http://localhost:8001'` 지정. 필요 시 `webServer`로 테스트 전에 백엔드를 기동하도록 설정.
 - **실행**: `npx playwright test` 로 체크리스트를 반영한 E2E 스펙을 실행. (체크리스트 → E2E 변환 가이드는 [phase-unit-user-test-guide.md](phase-unit-user-test-guide.md) 또는 프로젝트 E2E 문서 참조)
 
 ### 3.3 에이전트(AI)·MCP 브라우저로 직접 실행
@@ -72,7 +72,7 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000
 AI 에이전트(Cursor 등)가 **브라우저 MCP**로 페이지 이동·클릭·입력·스냅샷을 수행하며 체크리스트를 따라가는 방식입니다.
 
 - **필요 조건**: 에이전트가 사용하는 브라우저 MCP 서버가 **테스트 대상 앱에 접근 가능한 URL**을 사용할 수 있어야 합니다. (일부 MCP는 격리된 서버에서 동작해 `localhost`·사설 IP에 접근하지 못할 수 있음.)
-- **로컬 에이전트**: 에이전트와 브라우저가 같은 PC에서 동작하면 `http://localhost:8000` 으로 접속 가능. 백엔드만 위 2절대로 기동하면 됩니다.
+- **로컬 에이전트**: 에이전트와 브라우저가 같은 PC에서 동작하면 `http://localhost:8001` 으로 접속 가능. 백엔드만 위 2절대로 기동하면 됩니다.
 - **Cursor에서 브라우저 활성화·지시문**: [mcp-cursor-test-guide.md](mcp-cursor-test-guide.md), [prompts/prompt-mcp-webtest.md](prompts/prompt-mcp-webtest.md) 참고.
 - **실행 방법**: 에이전트에게 “해당 phase 웹 체크리스트(예: phase-9-1)를 가상 브라우저에서 순서대로 수행해 줘”처럼 지시하고, 해당 phase 체크리스트 문서(예: [phase-9-1-web-user-checklist.md](../phases/phase-9-1/phase-9-1-web-user-checklist.md), [phase-9-3-web-user-checklist.md](../phases/phase-9-3/phase-9-3-web-user-checklist.md))를 참조하게 하면 됩니다. 관점별 프롬프트는 [prompts/](prompts/) 를 함께 주면 기획자/개발자/UIUX 관점으로 기록하도록 유도할 수 있습니다.
 

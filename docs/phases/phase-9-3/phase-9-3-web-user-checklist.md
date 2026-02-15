@@ -10,28 +10,28 @@
 
 ## 사용자 화면 링크 (Web UI)
 
-백엔드 기동 후 브라우저에서 아래 주소로 접속합니다. (기본: `http://localhost:8000`)
+백엔드 기동 후 브라우저에서 아래 주소로 접속합니다. (기본: `http://localhost:8001`)
 
 | Task                      | 화면                     | URL                                                             |
 | ------------------------- | ------------------------ | --------------------------------------------------------------- |
-| **9-3-3** RAG             | 검색                     | http://localhost:8000/search                                    |
-| **9-3-3** RAG             | AI 질의(Ask)             | http://localhost:8000/ask                                       |
-| **9-3-1** Reasoning       | Reasoning Lab            | http://localhost:8000/reason                                    |
-| **9-3-2** 지식구조        | 지식 구조 목록           | http://localhost:8000/knowledge                                 |
-| **9-3-2** 지식구조        | 지식 상세·라벨/관계 매칭 | http://localhost:8000/knowledge-detail?id={chunk_id}            |
-| **9-3-2** 지식구조        | 라벨 매칭                | http://localhost:8000/knowledge-label-matching?id={chunk_id}    |
-| **9-3-2** 지식구조        | 관계 매칭                | http://localhost:8000/knowledge-relation-matching?id={chunk_id} |
-| **9-3-2** 지식구조        | 지식 관리·청크 승인      | http://localhost:8000/knowledge-admin                           |
-| **9-3-2** 청크 승인(단독) | 청크 승인 센터           | http://localhost:8000/admin/approval                            |
-| **9-3-2** 지식구조        | 청크 관리(라벨)          | http://localhost:8000/admin/chunk-labels                        |
-| **9-3-2** 지식구조        | 청크 생성                | http://localhost:8000/admin/chunk-create                        |
-| 공통                      | 대시보드                 | http://localhost:8000/dashboard                                 |
+| **9-3-3** RAG             | 검색                     | http://localhost:8001/search                                    |
+| **9-3-3** RAG             | AI 질의(Ask)             | http://localhost:8001/ask                                       |
+| **9-3-1** Reasoning       | Reasoning Lab            | http://localhost:8001/reason                                    |
+| **9-3-2** 지식구조        | 지식 구조 목록           | http://localhost:8001/knowledge                                 |
+| **9-3-2** 지식구조        | 지식 상세·라벨/관계 매칭 | http://localhost:8001/knowledge-detail?id={chunk_id}            |
+| **9-3-2** 지식구조        | 라벨 매칭                | http://localhost:8001/knowledge-label-matching?id={chunk_id}    |
+| **9-3-2** 지식구조        | 관계 매칭                | http://localhost:8001/knowledge-relation-matching?id={chunk_id} |
+| **9-3-2** 지식구조        | 지식 관리·청크 승인      | http://localhost:8001/knowledge-admin                           |
+| **9-3-2** 청크 승인(단독) | 청크 승인 센터           | http://localhost:8001/admin/approval                            |
+| **9-3-2** 지식구조        | 청크 관리(라벨)          | http://localhost:8001/admin/chunk-labels                        |
+| **9-3-2** 지식구조        | 청크 생성                | http://localhost:8001/admin/chunk-create                        |
+| 공통                      | 대시보드                 | http://localhost:8001/dashboard                                 |
 
 ---
 
 ## Postman 참고 (API 단독 조회 시)
 
-- **Base URL**: `http://localhost:8000`
+- **Base URL**: `http://localhost:8001`
 - **검색 API**: 쿼리 파라미터 **q** (필수). `query` 사용 시 `"Field required"` 에러.
 
 ---

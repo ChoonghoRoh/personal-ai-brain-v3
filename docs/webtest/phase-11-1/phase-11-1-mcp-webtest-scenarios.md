@@ -3,7 +3,7 @@
 **대상**: Phase 11-1 DB 스키마·마이그레이션  
 **기준**: [phase-11-1-0-todo-list.md](../../phases/phase-11-1/phase-11-1-0-todo-list.md), Task 11-1-1~11-1-3  
 **전제**: PostgreSQL 기동, 필요 시 Phase 11-2 Admin API 기동 (GET /api/admin/* 로 테이블 연동 검증)  
-**환경**: http://localhost:8000 (Admin API 검증 시)
+**환경**: http://localhost:8001 (Admin API 검증 시)
 
 **참고**: 11-1은 웹 UI가 없어, 검증은 **마이그레이션·시딩 실행**, **테이블 존재 확인**, **Admin API(11-2) 목록 200** 으로 수행합니다.
 
@@ -28,7 +28,7 @@
 | **4** | prompt_presets 테이블 존재 | 동일, table_name='prompt_presets' | 1행 반환 | 쿼리 결과 |
 | **5** | 시딩 11_1_1 실행 | `docker exec -i pab-postgres psql -U brain -d knowledge < scripts/db/seed_phase11_1_1.sql` | 에러 없음 | exit code 0 |
 | **6** | schemas 행 수 확인 | `SELECT COUNT(*) FROM schemas` | 0 이상 | count ≥ 0 |
-| **7** | Admin API schemas 목록 | GET http://localhost:8000/api/admin/schemas?limit=5 | 200, body에 items·total | status 200, JSON items/total |
+| **7** | Admin API schemas 목록 | GET http://localhost:8001/api/admin/schemas?limit=5 | 200, body에 items·total | status 200, JSON items/total |
 | **8** | Admin API templates 목록 | GET /api/admin/templates?limit=5 | 200, items·total | 동일 |
 | **9** | Admin API presets 목록 | GET /api/admin/presets?limit=5 | 200, items·total | 동일 |
 | **10** | 인덱스 존재 | `SELECT indexname FROM pg_indexes WHERE tablename IN ('templates','prompt_presets')` | idx_templates_*, idx_prompt_presets_* 존재 | index 목록 |

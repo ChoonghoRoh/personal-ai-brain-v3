@@ -22,12 +22,12 @@ Cursor는 **별도 MCP 서버 설치 없이** 내장 브라우저 기능을 제�
 ### 1.2 Enterprise / 팀 사용 시
 
 - **Admin Dashboard** → **MCP Configuration** → **Browser features** (또는 **Enable Browser Automation Features**) 토글이 **켜져 있는지** 확인합니다.
-- Origin 제한이 있으면 `http://localhost:8000`(또는 사용하는 Base URL)이 허용 목록에 있는지 확인합니다.
+- Origin 제한이 있으면 `http://localhost:8001`(또는 사용하는 Base URL)이 허용 목록에 있는지 확인합니다.
 
 ### 1.3 동작 확인
 
 - Agent(Composer) 채팅에서 **@browser** 를 입력해 브라우저 컨텍스트가 제안되는지 확인합니다.
-- 또는 _"http://localhost:8000/dashboard 로 이동해 줘"_ 라고 지시했을 때 브라우저가 열리고 페이지가 로드되면 정상입니다.
+- 또는 _"http://localhost:8001/dashboard 로 이동해 줘"_ 라고 지시했을 때 브라우저가 열리고 페이지가 로드되면 정상입니다.
 
 ---
 
@@ -36,7 +36,7 @@ Cursor는 **별도 MCP 서버 설치 없이** 내장 브라우저 기능을 제�
 | 항목                  | 내용                                                                                                                           |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | **백엔드 기동**       | [frontend-webtest-setup-guide.md](frontend-webtest-setup-guide.md) 2절 — `docker-compose up -d` 또는 `uvicorn ... --port 8000` |
-| **Base URL**          | `http://localhost:8000` (로컬에서 Cursor와 같은 PC면 접근 가능)                                                                |
+| **Base URL**          | `http://localhost:8001` (로컬에서 Cursor와 같은 PC면 접근 가능)                                                                |
 | **체크리스트 위치**   | `docs/phases/phase-<X>-<Y>/phase-<X>-<Y>-web-user-checklist.md`                                                                |
 | **테스트 계획(선택)** | `docs/webtest/phase-<X>-<Y>/phase-<X>-<Y>-user-test-plan.md`                                                                   |
 
@@ -62,7 +62,7 @@ Cursor는 **별도 MCP 서버 설치 없이** 내장 브라우저 기능을 제�
 @docs/phases/phase-9-1/phase-9-1-web-user-checklist.md
 
 이 문서의 "메뉴(라우터)별 시나리오 체크리스트"를 따라
-가상 브라우저(MCP)에서 http://localhost:8000 기준으로 순서대로 수행해 줘.
+가상 브라우저(MCP)에서 http://localhost:8001 기준으로 순서대로 수행해 줘.
 
 - 각 시나리오(W1.1, W1.2, …)별로 접속·동작·결과를 확인하고
 - 결과/비고란에 통과(OK)·실패·비고를 기록해 줘.
@@ -75,7 +75,7 @@ Cursor는 **별도 MCP 서버 설치 없이** 내장 브라우저 기능을 제�
 @docs/phases/phase-9-3/phase-9-3-web-user-checklist.md
 
 phase-9-3 웹 체크리스트를 가상 브라우저(MCP)에서
-http://localhost:8000 기준으로 순서대로 수행해 줘.
+http://localhost:8001 기준으로 순서대로 수행해 줘.
 결과는 체크리스트의 결과/비고 형식으로 기록해 줘.
 ```
 

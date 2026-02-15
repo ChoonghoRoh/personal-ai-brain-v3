@@ -15,7 +15,7 @@
 @docs/phases/phase-9-1/phase-9-1-web-user-checklist.md
 
 이 문서의 "메뉴(라우터)별 시나리오 체크리스트"를 따라
-가상 브라우저(MCP)에서 http://localhost:8000 기준으로 순서대로 수행해 줘.
+가상 브라우저(MCP)에서 http://localhost:8001 기준으로 순서대로 수행해 줘.
 각 시나리오(W1.1~W9.x)별로 접속·동작·결과를 확인하고, 결과/비고란에 통과(OK)·실패·비고를 기록해 줘.
 ```
 
@@ -26,7 +26,7 @@
 @docs/webtest/personas.md
 @docs/webtest/prompts/prompt-developer.md
 
-phase-9-1 웹 체크리스트를 가상 브라우저에서 http://localhost:8000 기준으로 순서대로 수행해 줘.
+phase-9-1 웹 체크리스트를 가상 브라우저에서 http://localhost:8001 기준으로 순서대로 수행해 줘.
 개발자 관점(버그·에러·API·재현 단계)으로 발견 사항을 기록해 줘.
 ```
 
@@ -39,7 +39,7 @@ phase-9-1 웹 체크리스트를 가상 브라우저에서 http://localhost:8000
 ```
 @docs/phases/phase-9-3/phase-9-3-web-user-checklist.md
 
-phase-9-3 웹 체크리스트를 가상 브라우저(MCP)에서 http://localhost:8000 기준으로 순서대로 수행해 줘.
+phase-9-3 웹 체크리스트를 가상 브라우저(MCP)에서 http://localhost:8001 기준으로 순서대로 수행해 줘.
 결과는 체크리스트의 결과/비고 형식으로 기록해 줘.
 ```
 
@@ -50,7 +50,7 @@ phase-9-3 웹 체크리스트를 가상 브라우저(MCP)에서 http://localhost
 ```
 @docs/phases/phase-X-Y/phase-X-Y-web-user-checklist.md
 
-phase-X-Y 웹 체크리스트를 가상 브라우저(MCP)에서 http://localhost:8000 기준으로 순서대로 수행해 줘.
+phase-X-Y 웹 체크리스트를 가상 브라우저(MCP)에서 http://localhost:8001 기준으로 순서대로 수행해 줘.
 각 시나리오별 접속·동작·결과를 확인하고, 결과/비고란에 기록해 줘.
 ```
 

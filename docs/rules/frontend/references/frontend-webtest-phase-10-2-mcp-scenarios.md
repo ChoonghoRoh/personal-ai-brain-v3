@@ -3,13 +3,13 @@
 **대상**: Phase 10-2 모드별 분석 고도화  
 **기준**: [phase-10-2-0-todo-list.md](../../../phases/phase-10-2/phase-10-2-0-todo-list.md), Task 10-2-1~10-2-4  
 **전제**: E2E(Playwright) 완료 후, MCP cursor-ide-browser 또는 Playwright 시나리오 스펙 사용  
-**환경**: http://localhost:8000
+**환경**: http://localhost:8001
 
 ---
 
 ## 공통 준비
 
-- 브라우저에서 `http://localhost:8000/reason` 접속
+- 브라우저에서 `http://localhost:8001/reason` 접속
 - 필요 시 질문 입력 후 모드 선택 → Reasoning 실행
 
 ---

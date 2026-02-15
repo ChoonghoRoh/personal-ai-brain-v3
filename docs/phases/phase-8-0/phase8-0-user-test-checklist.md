@@ -1092,7 +1092,7 @@ Phase 8.0.0 작업 항목별 테스트 완료 현황:
 - [Phase 8.0.0 최종 요약 보고서](./phase8-0-0-final-summary-report.md)
 - [Phase 8.0.0 TODO 리스트](./phase8-0-0-todo-list.md)
 - [Phase 8.0.0 계획](./phase8-0-0-plan.md)
-- [API 문서](http://localhost:8000/docs)
+- [API 문서](http://localhost:8001/docs)
 
 ---
 

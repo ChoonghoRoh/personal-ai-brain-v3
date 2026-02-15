@@ -73,20 +73,20 @@ Audit Logs: 테이블 생성됨
 1. **Templates API**
 
    ```bash
-   curl -s http://localhost:8000/api/admin/templates
+   curl -s http://localhost:8001/api/admin/templates
    → 6 items 반환
    ```
 
 2. **Presets API**
 
    ```bash
-   curl -s http://localhost:8000/api/admin/presets
+   curl -s http://localhost:8001/api/admin/presets
    → 8 items 반환
    ```
 
 3. **RAG Profiles API**
    ```bash
-   curl -s http://localhost:8000/api/admin/rag-profiles
+   curl -s http://localhost:8001/api/admin/rag-profiles
    → 6 items 반환
    ```
 

@@ -13,7 +13,7 @@
 브라우저 주소창에 다음 URL을 입력하세요:
 
 ```
-http://localhost:8000/knowledge-admin
+http://localhost:8001/knowledge-admin
 ```
 
 ### 방법 3: 대시보드에서 접근
@@ -52,7 +52,7 @@ http://localhost:8000/knowledge-admin
 
 ### 페이지가 로드되지 않을 때
 
-1. 서버가 실행 중인지 확인하세요 (`http://localhost:8000/health`)
+1. 서버가 실행 중인지 확인하세요 (`http://localhost:8001/health`)
 2. 브라우저 콘솔에서 오류 메시지를 확인하세요
 3. 네트워크 탭에서 요청 상태를 확인하세요
 
@@ -61,7 +61,7 @@ http://localhost:8000/knowledge-admin
 위의 방법들이 작동하지 않으면, 브라우저 주소창에 직접 입력하세요:
 
 ```
-http://localhost:8000/knowledge-admin
+http://localhost:8001/knowledge-admin
 ```
 
 ---

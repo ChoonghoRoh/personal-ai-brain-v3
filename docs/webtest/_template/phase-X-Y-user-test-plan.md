@@ -26,7 +26,7 @@
 
 ## 3. 테스트 환경
 
-- **Base URL**: http://localhost:8000
+- **Base URL**: http://localhost:8001
 - **백엔드**: [web-user-test-setup-guide.md](../web-user-test-setup-guide.md) 참조
 - **브라우저**: Chrome, Edge 등 권장
 - **선택**: 해당 phase에서 필요한 DB/LLM/외부 서비스 요구사항

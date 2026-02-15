@@ -46,7 +46,7 @@ Task당 **10개** 시나리오, **총 30개**. 상세 조치·기대 결과·검
 
 ## 4. MCP 실행 가이드 (cursor-ide-browser)
 
-1. **환경**: `http://localhost:8000` 기동
+1. **환경**: `http://localhost:8001` 기동
 2. **순서**: `browser_navigate` → `browser_lock` → 시나리오별 조치(snapshot / click / type) → `browser_unlock`
 3. **시나리오 문서**: [phase-10-1-mcp-webtest-scenarios.md](phase-10-1-mcp-webtest-scenarios.md) 표의 조치·기대 결과대로 수행
 4. **권장 실행 순서**: 10-1-1(1→…→10) → 10-1-2(1→…→10) → 10-1-3(1→…→10)

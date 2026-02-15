@@ -32,7 +32,7 @@
 
 ## 3. 테스트 환경
 
-- **Base URL**: http://localhost:8000
+- **Base URL**: http://localhost:8001
 - **백엔드**: [web-user-test-setup-guide.md](../web-user-test-setup-guide.md) 참조
 - **Phase 11**: Admin API·UI 기동 상태(연동 검증 시)
 - **E2E**: `e2e/phase-10-1.spec.js`, `phase-10-2.spec.js` 등

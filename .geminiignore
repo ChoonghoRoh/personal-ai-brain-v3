@@ -1,0 +1,6 @@
+node_modules/
+.git/
+dist/
+build/
+*.log
+private_key/ # 기업용 패키지의 핵심 보안키 등

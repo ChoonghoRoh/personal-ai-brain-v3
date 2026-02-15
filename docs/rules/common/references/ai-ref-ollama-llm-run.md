@@ -45,7 +45,7 @@ ollama pull bnksys/yanolja-eeve-korean-instruct-10.8b
 
 ## 4. 동작 확인
 
-- **대시보드**: http://localhost:8000/dashboard → 로컬 LLM(Ollama) 상태에서 “사용 가능” 및 “🧪 테스트” 확인
+- **대시보드**: http://localhost:8001/dashboard → 로컬 LLM(Ollama) 상태에서 “사용 가능” 및 “🧪 테스트” 확인
 - **스크립트** (호스트에서, Ollama 미실행 시 자동 기동 + 모델 검증):
 
 ```bash

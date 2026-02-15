@@ -280,7 +280,7 @@ class SearchResult(BaseModel):
 
 ```bash
 # OpenAPI 스펙 다운로드
-$ curl http://localhost:8000/openapi.json > openapi.json
+$ curl http://localhost:8001/openapi.json > openapi.json
 
 # 스펙 검증
 $ npx openapi-cli validate openapi.json

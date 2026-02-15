@@ -65,7 +65,7 @@
 ## 7. Step 5 — Webtest MCP Scenarios
 
 - **Output**: [08-webtest-mcp-reasoning-scenarios.md](08-webtest-mcp-reasoning-scenarios.md)
-- **Content**: User-executable MCP Cursor browser scenarios for Reasoning Lab (/reason). At least **10 scenarios per category**, 6 categories (entry/navigation, question/mode, run/progress/cancel, results, recommendations, save/share/errors). Format: scenario # | title | action | expected result | verification method. Base URL: `http://localhost:8000`.
+- **Content**: User-executable MCP Cursor browser scenarios for Reasoning Lab (/reason). At least **10 scenarios per category**, 6 categories (entry/navigation, question/mode, run/progress/cancel, results, recommendations, save/share/errors). Format: scenario # | title | action | expected result | verification method. Base URL: `http://localhost:8001`.
 
 ---
 

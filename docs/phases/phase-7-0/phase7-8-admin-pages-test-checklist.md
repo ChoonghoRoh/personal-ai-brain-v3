@@ -6,7 +6,7 @@
 
 ## 테스트 환경
 
-- URL: http://localhost:8000
+- URL: http://localhost:8001
 - 테스트 날짜: 2026-01-08
 
 ---
@@ -15,7 +15,7 @@
 
 ### 접근 확인
 
-- [x] URL: `http://localhost:8000/admin/labels` 접근 가능 (백엔드 라우팅 확인됨: `@app.get("/admin/labels")`)
+- [x] URL: `http://localhost:8001/admin/labels` 접근 가능 (백엔드 라우팅 확인됨: `@app.get("/admin/labels")`)
 - [ ] 헤더가 정상적으로 표시됨 (좌측: 사용자 메뉴, 우측: 관리자 메뉴) - 브라우저 테스트 필요
 - [x] 페이지 제목: "🏷️ 라벨 관리" (코드 확인: `initializeAdminPage({ title: "🏷️ 라벨 관리" })`)
 - [x] 부제목: "라벨 생성 및 청크 라벨 관리" (코드 확인: `subtitle: "라벨 생성 및 청크 라벨 관리"`)
@@ -54,7 +54,7 @@
 
 ### 접근 확인
 
-- [x] URL: `http://localhost:8000/admin/groups` 접근 가능 (백엔드 라우팅 확인됨: `@app.get("/admin/groups")`)
+- [x] URL: `http://localhost:8001/admin/groups` 접근 가능 (백엔드 라우팅 확인됨: `@app.get("/admin/groups")`)
 - [ ] 헤더가 정상적으로 표시됨 - 브라우저 테스트 필요
 - [x] 페이지 제목: "📦 키워드 그룹 관리" (코드 확인: `initializeAdminPage({ title: "📦 키워드 그룹 관리" })`)
 - [x] 부제목: "키워드 그룹 생성 및 관리" (코드 확인: `subtitle: "키워드 그룹 생성 및 관리"`)
@@ -99,7 +99,7 @@
 
 ### 접근 확인
 
-- [x] URL: `http://localhost:8000/admin/approval` 접근 가능 (백엔드 라우팅 확인됨: `@app.get("/admin/approval")`)
+- [x] URL: `http://localhost:8001/admin/approval` 접근 가능 (백엔드 라우팅 확인됨: `@app.get("/admin/approval")`)
 - [ ] 헤더가 정상적으로 표시됨 - 브라우저 테스트 필요
 - [x] 페이지 제목: "✅ 청크 승인 센터" (코드 확인: `initializeAdminPage({ title: "✅ 청크 승인 센터" })`)
 - [x] 부제목: "청크 승인 및 거절 관리" (코드 확인: `subtitle: "청크 승인 및 거절 관리"`)

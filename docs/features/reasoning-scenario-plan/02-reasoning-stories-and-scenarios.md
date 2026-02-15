@@ -12,7 +12,7 @@
 
 **Preconditions**
 
-- Backend and web server running at `http://localhost:8000`.
+- Backend and web server running at `http://localhost:8001`.
 - At least one approved chunk in the knowledge base (PostgreSQL + Qdrant).
 - Ollama (or configured LLM) available if full answer is required.
 

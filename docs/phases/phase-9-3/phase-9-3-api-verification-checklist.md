@@ -24,7 +24,7 @@
 
 | 항목          | 값                                             |
 | ------------- | ---------------------------------------------- |
-| **Base URL**  | `http://localhost:8000`                        |
+| **Base URL**  | `http://localhost:8001`                        |
 | **인증**      | 없음                                           |
 | **공통 헤더** | `Content-Type: application/json` (POST/PUT 시) |
 
@@ -174,4 +174,4 @@
 
 **API 검증 수행일**: 2026-02-02  
 **검증 수행자**: (curl 기반 1차 점검)  
-**환경 (Ollama/Qdrant/DB)**: 백엔드 localhost:8000, Qdrant·DB 연동됨. Ollama 미동작 시 Ask/Reason 폴백 동작.
+**환경 (Ollama/Qdrant/DB)**: 백엔드 localhost:8001, Qdrant·DB 연동됨. Ollama 미동작 시 Ask/Reason 폴백 동작.

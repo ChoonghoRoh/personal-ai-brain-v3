@@ -80,7 +80,7 @@
 
 ## 테스트 환경
 
-- **Base URL**: http://localhost:8000
+- **Base URL**: http://localhost:8001
 - **DB**: PostgreSQL (docker compose, container: pab-postgres)
 - **User/Database**: brain/knowledge
 - **백엔드**: FastAPI (docker compose, container: backend)

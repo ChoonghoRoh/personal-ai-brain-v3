@@ -3,7 +3,7 @@
 **작성일**: 2026-02-08  
 **버전**: Phase 11 완료 기준  
 **대상**: Backend·Frontend·기능 분석 후 메뉴별 목차 (관리자 운영 가이드 포함)  
-**Base URL**: http://localhost:8000
+**Base URL**: http://localhost:8001
 
 ---
 
@@ -14,7 +14,7 @@
 | **Backend** | FastAPI, PostgreSQL, Qdrant, Ollama(로컬 LLM) |
 | **Frontend** | Vanilla JS + HTML + CSS (SPA 아님, 페이지 단위), `web/` |
 | **정적·템플릿** | `web/public/` (CSS·JS·favicon), `web/src/pages/` (HTML) |
-| **API 문서** | http://localhost:8000/docs (OpenAPI) |
+| **API 문서** | http://localhost:8001/docs (OpenAPI) |
 | **기본 모델** | qwen2.5:7b (docker-compose.yml 기본값, .env 변경 가능) |
 | **현재 Phase** | Phase 11 (Admin 설정 관리), Phase 11-5 (Phase 10 고도화) 완료 |
 
@@ -223,13 +223,13 @@ tar -czf brain_backup_$(date +%Y%m%d_%H%M%S).tar.gz brain/
 
 ```bash
 # 백업 생성
-curl -X POST http://localhost:8000/api/backup/create
+curl -X POST http://localhost:8001/api/backup/create
 
 # 백업 목록
-curl http://localhost:8000/api/backup/list
+curl http://localhost:8001/api/backup/list
 
 # 백업 복원 (백업 ID 필요)
-curl -X POST http://localhost:8000/api/backup/restore/{backup_id}
+curl -X POST http://localhost:8001/api/backup/restore/{backup_id}
 ```
 
 #### 복원 절차
@@ -270,10 +270,10 @@ docker-compose up -d
 docker logs pab-backend
 
 # 2. DB 무결성 검사
-curl -X POST http://localhost:8000/api/integrity/check
+curl -X POST http://localhost:8001/api/integrity/check
 
 # 3. Audit Log 확인 (최근 변경 이력)
-curl "http://localhost:8000/api/admin/audit-logs?limit=10"
+curl "http://localhost:8001/api/admin/audit-logs?limit=10"
 ```
 
 #### 수동 롤백 (Phase 11-2-3 자동 롤백 구현 전)
@@ -308,10 +308,10 @@ AUTH_ENABLED=true   # 프로덕션 환경 (인증 필수)
 
 ```bash
 # 1. 시스템 통계 대시보드
-http://localhost:8000/admin/statistics
+http://localhost:8001/admin/statistics
 
 # 2. API 통계
-curl http://localhost:8000/api/system/statistics/dashboard
+curl http://localhost:8001/api/system/statistics/dashboard
 
 # 3. DB 연결 풀 상태
 docker exec pab-postgres psql -U brain -d knowledge -c "SELECT * FROM pg_stat_activity;"
@@ -498,7 +498,7 @@ docker exec pab-postgres psql -U brain -d knowledge -f /scripts/db/migrate_phase
 
 ```bash
 # API를 통한 무결성 검사
-curl -X POST http://localhost:8000/api/integrity/check
+curl -X POST http://localhost:8001/api/integrity/check
 
 # 수동 검사 (SQL)
 docker exec -it pab-postgres psql -U brain knowledge
@@ -515,10 +515,10 @@ docker exec -it pab-postgres psql -U brain knowledge
 docker ps | grep pab-backend
 
 # 헬스체크
-curl http://localhost:8000/api/system/health
+curl http://localhost:8001/api/system/health
 
 # OpenAPI 문서 확인
-http://localhost:8000/docs
+http://localhost:8001/docs
 ```
 
 #### 인증 오류
@@ -541,7 +541,7 @@ docker-compose restart backend
 curl http://localhost:6333/collections
 
 # 문서 임베딩 상태 확인
-curl http://localhost:8000/api/documents
+curl http://localhost:8001/api/documents
 
 # 재임베딩 (필요 시)
 # Admin UI → 청크 생성 페이지에서 재업로드

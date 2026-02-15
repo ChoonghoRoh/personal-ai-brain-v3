@@ -129,7 +129,7 @@
 
 ## 테스트 환경
 
-- **Base URL**: http://localhost:8000
+- **Base URL**: http://localhost:8001
 - **Backend**: FastAPI (docker compose, container: backend)
 - **Frontend**: Vanilla JS + HTML + CSS
 - **DB**: PostgreSQL (docker compose, container: pab-postgres)

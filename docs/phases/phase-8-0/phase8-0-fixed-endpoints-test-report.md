@@ -22,7 +22,7 @@
 ### 1. 관계 상세 조회
 
 **엔드포인트**: `GET /api/relations/{relation_id}`  
-**URL**: `http://localhost:8000/api/relations/1`  
+**URL**: `http://localhost:8001/api/relations/1`  
 **상태 코드**: 200 ✅  
 **응답 시간**: 74.88ms
 
@@ -34,7 +34,7 @@
 ### 2. 프로젝트 목록 조회
 
 **엔드포인트**: `GET /api/knowledge/projects`  
-**URL**: `http://localhost:8000/api/knowledge/projects`  
+**URL**: `http://localhost:8001/api/knowledge/projects`  
 **상태 코드**: 200 ✅  
 **응답 시간**: 14.10ms
 
@@ -46,7 +46,7 @@
 ### 3. 시스템 정보 조회
 
 **엔드포인트**: `GET /api/system/info`  
-**URL**: `http://localhost:8000/api/system/info`  
+**URL**: `http://localhost:8001/api/system/info`  
 **상태 코드**: 200 ✅  
 **응답 시간**: 4447.44ms
 
@@ -58,7 +58,7 @@
 ### 4. 문서 상세 조회
 
 **엔드포인트**: `GET /api/knowledge/documents/{document_id}`  
-**URL**: `http://localhost:8000/api/knowledge/documents/1`  
+**URL**: `http://localhost:8001/api/knowledge/documents/1`  
 **상태 코드**: 200 ✅  
 **응답 시간**: 14.29ms
 

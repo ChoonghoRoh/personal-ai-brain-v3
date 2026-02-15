@@ -94,7 +94,7 @@
 | **E2E MCP scenarios** | `e2e/phase-10-1-mcp-scenarios.spec.js`                                                     | MCP-aligned Playwright scenarios for /reason.                        |
 | **Webtest scenarios** | `docs/webtest/phase-10-1/phase-10-1-mcp-webtest-scenarios.md`                              | Human/MCP checklist: progress, cancel, ETA (10 per task).            |
 | **MCP test guide**    | `docs/webtest/mcp-cursor-test-guide.md`                                                    | How to run MCP Cursor browser tests.                                 |
-| **Base URL**          | `http://localhost:8000`                                                                    | Backend and web server must be up.                                   |
+| **Base URL**          | `http://localhost:8001`                                                                    | Backend and web server must be up.                                   |
 
 ---
 

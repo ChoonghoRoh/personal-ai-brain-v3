@@ -29,7 +29,7 @@
 
 ## 3. 테스트 환경
 
-- **Base URL**: http://localhost:8000 (Admin API·웹 서버)
+- **Base URL**: http://localhost:8001 (Admin API·웹 서버)
 - **DB**: PostgreSQL (마이그레이션·시딩 실행 환경)
 - **전제**: Phase 11-2 Admin API 배포 후, GET /api/admin/schemas 등으로 11-1 테이블 연동 검증 가능
 

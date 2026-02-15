@@ -24,7 +24,7 @@ n8n 워크플로우에서 **Backend API**를 호출하는 노드는 JSON으로 i
 
 | 필드 | JSON 기본값 (참고용) | 수동 수정 예시 |
 |------|----------------------|----------------|
-| **URL** | `http://localhost:8000/api/workflow/run-task` | 아래 표 참고 |
+| **URL** | `http://localhost:8001/api/workflow/run-task` | 아래 표 참고 |
 
 ---
 
@@ -72,7 +72,7 @@ return [{
 |-----------|------------------|
 | **n8n·Backend 모두 Docker Compose** (같은 네트워크) | `http://backend:8000/api/workflow/run-task` |
 | n8n만 Docker, Backend는 호스트에서 실행 | `http://host.docker.internal:8000/api/workflow/run-task` (Mac/Win) 또는 호스트 IP |
-| n8n·Backend 모두 호스트에서 실행 | `http://localhost:8000/api/workflow/run-task` |
+| n8n·Backend 모두 호스트에서 실행 | `http://localhost:8001/api/workflow/run-task` |
 
 **참고:** Docker Compose에는 `BACKEND_URL=http://backend:8000` 이 설정되어 있으나, n8n HTTP Request 노드에서 **환경 변수**를 쓰려면 n8n 표현식(예: `{{ $env.BACKEND_URL }}`) 지원 여부를 확인한 뒤 사용하세요. 지원되지 않으면 위 표처럼 URL을 **직접 입력**합니다.
 
@@ -85,7 +85,7 @@ return [{
 - 또는 **Error code: ECONNREFUSED**, **Full message: connect ECONNREFUSED ::1:8000**
 
 **원인 (Docker 사용 시):**  
-URL이 `http://localhost:8000` 이면, n8n 컨테이너 안에서 **localhost**(또는 ::1) = n8n 자신이라 Backend 컨테이너에 연결되지 않습니다.
+URL이 `http://localhost:8001` 이면, n8n 컨테이너 안에서 **localhost**(또는 ::1) = n8n 자신이라 Backend 컨테이너에 연결되지 않습니다.
 
 **해결:**
 
@@ -101,7 +101,7 @@ URL이 `http://localhost:8000` 이면, n8n 컨테이너 안에서 **localhost**(
 
 **Backend 동작 확인:**
 
-- 호스트에서: `curl -s http://localhost:8000/health` → `{"status":"ok"}` 이면 Backend 정상
+- 호스트에서: `curl -s http://localhost:8001/health` → `{"status":"ok"}` 이면 Backend 정상
 - Docker 내부(n8n 컨테이너)에서 Backend 도달 확인:  
   `docker exec -it n8n wget -qO- http://backend:8000/health`  
   → `{"status":"ok"}` 이면 같은 네트워크에서 Backend 접근 가능

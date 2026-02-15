@@ -63,7 +63,7 @@
 
 ## 테스트 환경
 
-- **Base URL**: http://localhost:8000
+- **Base URL**: http://localhost:8001
 - **Backend**: FastAPI (docker compose)
 - **DB**: PostgreSQL
 - **도구**: (curl / MCP / E2E 등)

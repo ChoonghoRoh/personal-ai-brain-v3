@@ -44,7 +44,7 @@
 - **참고:** 다른 환경(예: 로컬)에서는 필요 시 다시 `process.env.WORKSPACE_ROOT || '/workspace'` 로 변경 가능.
 
 ### 3.3 HTTP_RunTaskExecution2
-- **URL:** `http://localhost:8000/...` → `http://backend:8000/api/workflow/run-task`
+- **URL:** `http://localhost:8001/...` → `http://backend:8000/api/workflow/run-task`
 - **저장소 반영:** 다운로드본에는 URL 끝 공백(`run-task `)이 있었음. 저장소 JSON에서는 해당 공백 제거함.
 
 ### 3.4 JS_SetTaskStatusFromResponse1

@@ -1,7 +1,7 @@
 # Webtest — MCP Cursor Reasoning Lab (/reason) 시나리오
 
 **대상**: Reasoning Lab (/reason) 전용 MCP 웹 브라우저 가상 테스트
-**전제**: Base URL `http://localhost:8000`, 백엔드·웹 서버 기동
+**전제**: Base URL `http://localhost:8001`, 백엔드·웹 서버 기동
 **도구**: MCP cursor-ide-browser 또는 cursor-browser-extension
 **형식**: 시나리오 번호 | 시나리오 제목 | 조치 | 기대 결과 | 검증 방법
 
@@ -11,16 +11,16 @@
 
 | #      | 시나리오 제목                | 조치                                                                                 | 기대 결과                                      | 검증 방법                                          |
 | ------ | ---------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------- | -------------------------------------------------- |
-| **1**  | /reason 직접 접속            | 브라우저에서 `http://localhost:8000/reason` 이동                                     | Reasoning Lab 페이지 로드, 질문 입력 영역 표시 | URL이 /reason, DOM에 #question 또는 질문 입력 요소 |
-| **2**  | 대시보드에서 Reasoning 링크  | `http://localhost:8000/dashboard` 접속 후 "Reasoning" 또는 "Reasoning Lab" 링크 클릭 | /reason으로 이동                               | URL이 /reason                                      |
+| **1**  | /reason 직접 접속            | 브라우저에서 `http://localhost:8001/reason` 이동                                     | Reasoning Lab 페이지 로드, 질문 입력 영역 표시 | URL이 /reason, DOM에 #question 또는 질문 입력 요소 |
+| **2**  | 대시보드에서 Reasoning 링크  | `http://localhost:8001/dashboard` 접속 후 "Reasoning" 또는 "Reasoning Lab" 링크 클릭 | /reason으로 이동                               | URL이 /reason                                      |
 | **3**  | 네비게이션 바 Reasoning 메뉴 | 상단/사이드 네비에서 Reasoning 항목 클릭                                             | /reason 페이지 표시                            | URL 및 페이지 제목/헤더 확인                       |
 | **4**  | /reason 접속 시 HTML 제목    | /reason 로드 후 document.title 또는 헤더 확인                                        | "Reasoning" 또는 "Reasoning Lab" 관련 제목     | title 또는 h1 텍스트                               |
-| **5**  | 새 탭에서 /reason 열기       | 새 탭에서 localhost:8000/reason 열기                                                 | 독립 탭에서 동일 페이지                        | 탭 URL 및 콘텐츠                                   |
-| **6**  | URL 파라미터 chunk_id        | `http://localhost:8000/reason?chunk_id=1` 접속                                       | 시드 청크 로드 시도(해당 기능 있을 경우)       | loadSeedChunk 호출 또는 질문/필터 반영             |
-| **7**  | URL 파라미터 mode            | `http://localhost:8000/reason?mode=design_explain` 접속                              | 모드 선택이 design_explain으로 설정될 수 있음  | 모드 선택 UI 값                                    |
-| **8**  | 루트에서 /reason 이동        | `http://localhost:8000/` 접속 후 /reason 링크 클릭                                   | /reason 도달                                   | URL 및 폼 존재                                     |
+| **5**  | 새 탭에서 /reason 열기       | 새 탭에서 localhost:8001/reason 열기                                                 | 독립 탭에서 동일 페이지                        | 탭 URL 및 콘텐츠                                   |
+| **6**  | URL 파라미터 chunk_id        | `http://localhost:8001/reason?chunk_id=1` 접속                                       | 시드 청크 로드 시도(해당 기능 있을 경우)       | loadSeedChunk 호출 또는 질문/필터 반영             |
+| **7**  | URL 파라미터 mode            | `http://localhost:8001/reason?mode=design_explain` 접속                              | 모드 선택이 design_explain으로 설정될 수 있음  | 모드 선택 UI 값                                    |
+| **8**  | 루트에서 /reason 이동        | `http://localhost:8001/` 접속 후 /reason 링크 클릭                                   | /reason 도달                                   | URL 및 폼 존재                                     |
 | **9**  | 뒤로가기 후 재진입           | /reason → 다른 페이지 → 브라우저 뒤로가기                                            | /reason 복귀, 상태 유지 또는 초기화            | URL /reason, 폼 표시                               |
-| **10** | 직접 URL 입력 후 엔터        | 주소창에 localhost:8000/reason 입력 후 엔터                                          | /reason 로드                                   | 200 응답, 페이지 렌더                              |
+| **10** | 직접 URL 입력 후 엔터        | 주소창에 localhost:8001/reason 입력 후 엔터                                          | /reason 로드                                   | 200 응답, 페이지 렌더                              |
 | **11** | /reason 하위 경로            | `/reason/extra` 접속                                                                 | 404 또는 /reason으로 리다이렉트(구현에 따름)   | HTTP 상태 또는 리다이렉트 URL                      |
 
 ---

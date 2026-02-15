@@ -54,13 +54,13 @@ Content-Type: application/json
 
 ```bash
 # 문서 생성
-DOC=$(curl -s -X POST http://localhost:8000/api/knowledge/documents \
+DOC=$(curl -s -X POST http://localhost:8001/api/knowledge/documents \
   -H "Content-Type: application/json" \
   -d '{"file_path":"brain/test/sample.md","file_name":"sample.md","file_type":"md"}')
 DOC_ID=$(echo $DOC | python3 -c "import sys,json; print(json.load(sys.stdin)['document']['id'])")
 
 # 청크 생성
-curl -s -X POST "http://localhost:8000/api/knowledge/chunks?include_suggestions=false" \
+curl -s -X POST "http://localhost:8001/api/knowledge/chunks?include_suggestions=false" \
   -H "Content-Type: application/json" \
   -d "{\"document_id\":$DOC_ID,\"content\":\"샘플 청크 내용\",\"chunk_index\":0}"
 ```

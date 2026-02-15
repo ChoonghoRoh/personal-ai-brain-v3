@@ -226,7 +226,7 @@ textarea:focus-visible {
 ### 4.1 Lighthouse 접근성 감사
 
 ```bash
-$ npx lighthouse https://localhost:8000 --view
+$ npx lighthouse https://localhost:8001 --view
 
 Accessibility: 95/100
 - Missing alt text on 1 image → 고정됨

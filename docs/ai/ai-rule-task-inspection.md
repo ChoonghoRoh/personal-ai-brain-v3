@@ -102,7 +102,7 @@ Task 검사가 **완료(DONE)** 로 판정된 Phase에 대해서는, **webtest �
 
 | 순서 | 단계                       | 문서/명령                                                                                  | 설명                                                                                             |
 | ---- | -------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| 1    | **환경 구축**              | [docs/webtest/web-user-test-setup-guide.md](../webtest/web-user-test-setup-guide.md)       | 백엔드 기동, Base URL `http://localhost:8000`                                                    |
+| 1    | **환경 구축**              | [docs/webtest/web-user-test-setup-guide.md](../webtest/web-user-test-setup-guide.md)       | 백엔드 기동, Base URL `http://localhost:8001`                                                    |
 | 2    | **Phase 단위 절차**        | [docs/webtest/phase-unit-user-test-guide.md](../webtest/phase-unit-user-test-guide.md)     | 3가지 방안(MCP·페르소나·E2E) 선택, [webtest: X-Y start] 명령                                     |
 | 3    | **E2E 실행**               | `python3 scripts/webtest.py X-Y start`                                                     | 해당 Phase E2E 스펙 실행 (스펙이 있는 Phase만)                                                   |
 | 4    | **MCP 시나리오(Phase 10)** | [docs/webtest/phase-10-test-scenario-guide.md](../webtest/phase-10-test-scenario-guide.md) | Phase 10-1·10-2: E2E 후 MCP 시나리오(Task당 10개) .md 실행 → 결과 기록                           |

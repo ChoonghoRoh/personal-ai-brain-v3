@@ -138,7 +138,7 @@ docker-compose up -d
 docker-compose up -d backend
 ```
 
-- **Backend API**: http://localhost:8000 (대시보드: /dashboard, API 문서: /docs)
+- **Backend API**: http://localhost:8001 (대시보드: /dashboard, API 문서: /docs)
 - **n8n**: http://localhost:5678
 - **Ollama**: http://localhost:11434 (로컬 LLM, EEVE-Korean 등)
 - **PostgreSQL**: localhost:5432
@@ -285,9 +285,9 @@ python backend/start_server.py
 
 서버 실행 후:
 
-- 대시보드: http://localhost:8000/dashboard
-- 검색: http://localhost:8000/search
-- API 문서: http://localhost:8000/docs
+- 대시보드: http://localhost:8001/dashboard
+- 검색: http://localhost:8001/search
+- API 문서: http://localhost:8001/docs
 
 ## 📝 사용 예시
 

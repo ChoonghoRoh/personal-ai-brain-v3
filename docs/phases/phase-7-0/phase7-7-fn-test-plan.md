@@ -5,7 +5,7 @@
 1️⃣ Keyword Group Management (키워드 그룹 관리)
 
 접근 경로
-http://localhost:8000/knowledge-admin
+http://localhost:8001/knowledge-admin
 
 확인 방법 1. Knowledge Admin 페이지 접근 2. 상단 탭에서 “📦 키워드 그룹” 클릭
 
@@ -25,7 +25,7 @@ http://localhost:8000/knowledge-admin
 2️⃣ 라벨 매칭 카드
 
 접근 경로
-http://localhost:8000/knowledge
+http://localhost:8001/knowledge
 
 확인 방법 1. Knowledge Studio 페이지 접근 2. 청크 카드 클릭하여 상세 정보 열기 3. “💡 라벨 매칭” 탭 기본 활성화 확인
 
@@ -44,7 +44,7 @@ http://localhost:8000/knowledge
 3️⃣ 관계 매칭 보드
 
 접근 경로
-http://localhost:8000/knowledge
+http://localhost:8001/knowledge
 
 확인 방법 1. Knowledge Studio 페이지 접근 2. 청크 카드 클릭하여 상세 정보 열기 3. “🔗 관계 매칭” 탭 클릭
 
@@ -70,7 +70,7 @@ http://localhost:8000/knowledge
 4️⃣ Reasoning 필터 확장
 
 접근 경로
-http://localhost:8000/reason
+http://localhost:8001/reason
 
 확인 방법 1. Reasoning Lab 페이지 접근 2. 브라우저 개발자 도구 (F12) 실행 → Network 탭 열기 3. Reasoning 실행 시 POST /api/reason 요청 확인
 
@@ -86,7 +86,7 @@ Request Body filters 구조 확인
 }
 
 또는 API 문서에서 확인
-http://localhost:8000/docs
+http://localhost:8001/docs
 /api/reason 엔드포인트 → Try it out → filters 추가 후 테스트
 
 ⸻

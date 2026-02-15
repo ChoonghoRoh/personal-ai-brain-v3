@@ -2,7 +2,7 @@
 
 **테스트 실행일**: 2026-01-07  
 **테스트 스크립트**: `scripts/test_phase7.py`  
-**서버 URL**: http://localhost:8000
+**서버 URL**: http://localhost:8001
 
 ---
 
@@ -278,7 +278,7 @@
 
 ```bash
 # 서버 실행 확인
-curl http://localhost:8000/api/system/status
+curl http://localhost:8001/api/system/status
 
 # 테스트 실행
 cd /Users/map-rch/WORKS/personal-ai-brain-v2

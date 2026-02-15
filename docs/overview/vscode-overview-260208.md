@@ -935,10 +935,10 @@ CORS_ORIGINS=["http://localhost:3000"]
 
 ### A. 빠른 참조 링크
 
-**API 문서**: http://localhost:8000/docs
-**대시보드**: http://localhost:8000/dashboard
-**Reasoning Lab**: http://localhost:8000/reason
-**Admin 설정**: http://localhost:8000/admin/settings/templates
+**API 문서**: http://localhost:8001/docs
+**대시보드**: http://localhost:8001/dashboard
+**Reasoning Lab**: http://localhost:8001/reason
+**Admin 설정**: http://localhost:8001/admin/settings/templates
 
 ### B. 문제 해결
 

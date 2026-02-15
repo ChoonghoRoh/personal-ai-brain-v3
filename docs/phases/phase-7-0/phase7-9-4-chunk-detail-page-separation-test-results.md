@@ -112,7 +112,7 @@ window.location.href = `/knowledge-detail?id=${chunkId}`;
 3. **API 호출**:
 
    ```bash
-   curl "http://localhost:8000/api/knowledge/chunks/66"
+   curl "http://localhost:8001/api/knowledge/chunks/66"
    ```
 
    - ✅ API 정상 응답 (청크 정보 JSON 반환)

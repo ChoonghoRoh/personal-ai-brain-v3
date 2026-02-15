@@ -32,7 +32,7 @@
 
 ## 3. 테스트 환경
 
-- **Base URL**: http://localhost:8000
+- **Base URL**: http://localhost:8001
 - **백엔드**: [web-user-test-setup-guide.md](../web-user-test-setup-guide.md) 참조
 - **DB**: PostgreSQL (마이그레이션·시딩 완료 상태)
 - **선택**: curl, MCP 브라우저, E2E(Playwright) 조합

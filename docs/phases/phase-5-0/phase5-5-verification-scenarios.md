@@ -87,7 +87,7 @@ python start_server.py &
 
 # 헬스 체크
 sleep 3
-curl http://localhost:8000/health
+curl http://localhost:8001/health
 # 예상 결과: {"status":"ok"}
 ```
 
@@ -154,7 +154,7 @@ python search_and_query.py "프로젝트 목적"
 
 ```bash
 # API를 통한 검색 테스트
-curl "http://localhost:8000/api/search?q=프로젝트&limit=3" | jq
+curl "http://localhost:8001/api/search?q=프로젝트&limit=3" | jq
 ```
 
 ---
@@ -330,7 +330,7 @@ python work_logger.py cleanup 90
 
 **검증 시나리오**:
 
-1. 브라우저에서 `http://localhost:8000/dashboard` 접속
+1. 브라우저에서 `http://localhost:8001/dashboard` 접속
 2. 다음 항목 확인:
    - 시스템 상태 표시
    - 통계 카드 (문서 수, Qdrant 포인트, 프로젝트 수, 총 작업 수)
@@ -350,10 +350,10 @@ python work_logger.py cleanup 90
 
 ```bash
 # 시스템 상태 API
-curl http://localhost:8000/api/system/status | jq
+curl http://localhost:8001/api/system/status | jq
 
 # 로그 통계 API
-curl http://localhost:8000/api/logs/stats | jq
+curl http://localhost:8001/api/logs/stats | jq
 ```
 
 ---
@@ -362,7 +362,7 @@ curl http://localhost:8000/api/logs/stats | jq
 
 **검증 시나리오**:
 
-1. 브라우저에서 `http://localhost:8000/search` 접속
+1. 브라우저에서 `http://localhost:8001/search` 접속
 2. 검색어 입력 (예: "프로젝트")
 3. 다음 항목 확인:
    - 검색 결과 표시
@@ -381,7 +381,7 @@ curl http://localhost:8000/api/logs/stats | jq
 
 ```bash
 # 검색 API
-curl "http://localhost:8000/api/search?q=test&limit=5" | jq
+curl "http://localhost:8001/api/search?q=test&limit=5" | jq
 ```
 
 ---
@@ -407,8 +407,8 @@ curl "http://localhost:8000/api/search?q=test&limit=5" | jq
 
 ```bash
 # 문서 API
-curl "http://localhost:8000/api/documents" | jq '.[0]'
-curl "http://localhost:8000/api/documents/brain/system/status.md" | jq
+curl "http://localhost:8001/api/documents" | jq '.[0]'
+curl "http://localhost:8001/api/documents/brain/system/status.md" | jq
 ```
 
 ---
@@ -417,7 +417,7 @@ curl "http://localhost:8000/api/documents/brain/system/status.md" | jq
 
 **검증 시나리오**:
 
-1. 브라우저에서 `http://localhost:8000/ask` 접속
+1. 브라우저에서 `http://localhost:8001/ask` 접속
 2. 질문 입력 (예: "프로젝트 목적은?")
 3. 다음 항목 확인:
    - AI 응답 표시
@@ -435,7 +435,7 @@ curl "http://localhost:8000/api/documents/brain/system/status.md" | jq
 
 ```bash
 # AI 질의 API
-curl -X POST http://localhost:8000/api/ask \
+curl -X POST http://localhost:8001/api/ask \
   -H "Content-Type: application/json" \
   -d '{"question": "프로젝트 목적", "context_enabled": true, "top_k": 3}' | jq
 ```
@@ -446,7 +446,7 @@ curl -X POST http://localhost:8000/api/ask \
 
 **검증 시나리오**:
 
-1. 브라우저에서 `http://localhost:8000/logs` 접속
+1. 브라우저에서 `http://localhost:8001/logs` 접속
 2. 다음 항목 확인:
    - 타임라인 뷰
    - 날짜별 필터
@@ -464,8 +464,8 @@ curl -X POST http://localhost:8000/api/ask \
 
 ```bash
 # 로그 API
-curl "http://localhost:8000/api/logs?limit=10" | jq
-curl "http://localhost:8000/api/logs/stats" | jq
+curl "http://localhost:8001/api/logs?limit=10" | jq
+curl "http://localhost:8001/api/logs/stats" | jq
 ```
 
 ---
@@ -499,18 +499,18 @@ docker exec pab-postgres psql -U brain -d knowledge -c "SELECT id, chunk_index, 
 
 ```bash
 # 라벨 생성
-curl -X POST http://localhost:8000/api/labels \
+curl -X POST http://localhost:8001/api/labels \
   -H "Content-Type: application/json" \
   -d '{"name": "implementation", "label_type": "project_phase", "description": "구현 단계"}' | jq
 
 # 라벨 목록 조회
-curl http://localhost:8000/api/labels | jq
+curl http://localhost:8001/api/labels | jq
 
 # 청크에 라벨 추가
-curl -X POST "http://localhost:8000/api/labels/chunks/1/labels/1" | jq
+curl -X POST "http://localhost:8001/api/labels/chunks/1/labels/1" | jq
 
 # 청크의 라벨 조회
-curl "http://localhost:8000/api/labels/chunks/1/labels" | jq
+curl "http://localhost:8001/api/labels/chunks/1/labels" | jq
 ```
 
 **검증 기준**:
@@ -527,18 +527,18 @@ curl "http://localhost:8000/api/labels/chunks/1/labels" | jq
 
 ```bash
 # 관계 생성
-curl -X POST http://localhost:8000/api/relations \
+curl -X POST http://localhost:8001/api/relations \
   -H "Content-Type: application/json" \
   -d '{"source_chunk_id": 1, "target_chunk_id": 2, "relation_type": "refers-to", "description": "참조 관계"}' | jq
 
 # 관계 목록 조회
-curl http://localhost:8000/api/relations | jq
+curl http://localhost:8001/api/relations | jq
 
 # 나가는 관계 조회
-curl "http://localhost:8000/api/relations/chunks/1/outgoing" | jq
+curl "http://localhost:8001/api/relations/chunks/1/outgoing" | jq
 
 # 들어오는 관계 조회
-curl "http://localhost:8000/api/relations/chunks/2/incoming" | jq
+curl "http://localhost:8001/api/relations/chunks/2/incoming" | jq
 ```
 
 **검증 기준**:
@@ -555,7 +555,7 @@ curl "http://localhost:8000/api/relations/chunks/2/incoming" | jq
 
 ```bash
 # 프로젝트 기반 Reasoning
-curl -X POST http://localhost:8000/api/reason \
+curl -X POST http://localhost:8001/api/reason \
   -H "Content-Type: application/json" \
   -d '{
     "mode": "combine",
@@ -566,7 +566,7 @@ curl -X POST http://localhost:8000/api/reason \
   }' | jq
 
 # 라벨 기반 Reasoning
-curl -X POST http://localhost:8000/api/reason \
+curl -X POST http://localhost:8001/api/reason \
   -H "Content-Type: application/json" \
   -d '{
     "mode": "analyze",
@@ -576,7 +576,7 @@ curl -X POST http://localhost:8000/api/reason \
   }' | jq
 
 # 분석 모드
-curl -X POST http://localhost:8000/api/reason \
+curl -X POST http://localhost:8001/api/reason \
   -H "Content-Type: application/json" \
   -d '{
     "mode": "suggest",
@@ -618,7 +618,7 @@ docker exec pab-postgres psql -U brain -d knowledge -c "SELECT * FROM documents 
 curl http://localhost:6333/collections/brain_documents | jq '.result.points_count'
 
 # 5. 웹에서 검색
-# 브라우저에서 http://localhost:8000/search 접속하여 "새 프로젝트" 검색
+# 브라우저에서 http://localhost:8001/search 접속하여 "새 프로젝트" 검색
 
 # 6. 작업 로그 확인
 tail -20 brain/system/work_log.md
@@ -676,20 +676,20 @@ tail -20 brain/system/work_log.md | grep "commit"
 docker exec pab-postgres psql -U brain -d knowledge -c "SELECT id FROM knowledge_chunks LIMIT 2;"
 
 # 2. 라벨 생성
-curl -X POST http://localhost:8000/api/labels \
+curl -X POST http://localhost:8001/api/labels \
   -H "Content-Type: application/json" \
   -d '{"name": "planning", "label_type": "project_phase"}' | jq
 
 # 3. 청크에 라벨 추가
-curl -X POST "http://localhost:8000/api/labels/chunks/1/labels/1" | jq
+curl -X POST "http://localhost:8001/api/labels/chunks/1/labels/1" | jq
 
 # 4. 관계 생성
-curl -X POST http://localhost:8000/api/relations \
+curl -X POST http://localhost:8001/api/relations \
   -H "Content-Type: application/json" \
   -d '{"source_chunk_id": 1, "target_chunk_id": 2, "relation_type": "refers-to"}' | jq
 
 # 5. Reasoning 실행
-curl -X POST http://localhost:8000/api/reason \
+curl -X POST http://localhost:8001/api/reason \
   -H "Content-Type: application/json" \
   -d '{"mode": "combine", "inputs": {"projects": [1]}}' | jq
 ```
@@ -708,10 +708,10 @@ curl -X POST http://localhost:8000/api/reason \
 
 ```bash
 # API 응답 시간 측정
-time curl -s http://localhost:8000/api/search?q=test&limit=5 > /dev/null
-time curl -s http://localhost:8000/api/system/status > /dev/null
-time curl -s http://localhost:8000/api/documents > /dev/null
-time curl -s -X POST http://localhost:8000/api/reason \
+time curl -s http://localhost:8001/api/search?q=test&limit=5 > /dev/null
+time curl -s http://localhost:8001/api/system/status > /dev/null
+time curl -s http://localhost:8001/api/documents > /dev/null
+time curl -s -X POST http://localhost:8001/api/reason \
   -H "Content-Type: application/json" \
   -d '{"mode": "combine", "inputs": {"projects": [1]}}' > /dev/null
 ```
@@ -730,7 +730,7 @@ time curl -s -X POST http://localhost:8000/api/reason \
 ```bash
 # 동시 요청 테스트
 for i in {1..10}; do
-  curl -s http://localhost:8000/api/search?q=test&limit=1 > /dev/null &
+  curl -s http://localhost:8001/api/search?q=test&limit=1 > /dev/null &
 done
 wait
 ```
@@ -801,13 +801,13 @@ echo "PostgreSQL 청크 수: $PG_COUNT"
 
 ```bash
 # 존재하지 않는 문서 조회
-curl "http://localhost:8000/api/documents/nonexistent.md" | jq
+curl "http://localhost:8001/api/documents/nonexistent.md" | jq
 
 # 존재하지 않는 라벨 조회
-curl "http://localhost:8000/api/labels/999" | jq
+curl "http://localhost:8001/api/labels/999" | jq
 
 # 잘못된 관계 생성
-curl -X POST http://localhost:8000/api/relations \
+curl -X POST http://localhost:8001/api/relations \
   -H "Content-Type: application/json" \
   -d '{"source_chunk_id": 999, "target_chunk_id": 999, "relation_type": "invalid"}' | jq
 ```
@@ -826,13 +826,13 @@ curl -X POST http://localhost:8000/api/relations \
 docker stop qdrant
 
 # API 호출 (예상: 에러 응답)
-curl http://localhost:8000/api/search?q=test
+curl http://localhost:8001/api/search?q=test
 
 # PostgreSQL 중단
 docker stop pab-postgres
 
 # API 호출 (예상: 에러 응답)
-curl http://localhost:8000/api/labels
+curl http://localhost:8001/api/labels
 ```
 
 **검증 기준**:

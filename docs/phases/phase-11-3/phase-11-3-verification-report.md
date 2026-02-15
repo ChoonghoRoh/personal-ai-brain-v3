@@ -73,11 +73,11 @@ Phase 11-3에서 구현한 Admin 설정 관리 UI의 동작을 검증한다.
 
 | 엔드포인트                                          | HTTP 상태 | 결과    |
 | --------------------------------------------------- | --------- | ------- |
-| `http://localhost:8000/admin/settings/templates`    | 200       | ✅ 정상 |
-| `http://localhost:8000/admin/settings/presets`      | 200       | ✅ 정상 |
-| `http://localhost:8000/admin/settings/rag-profiles` | 200       | ✅ 정상 |
-| `http://localhost:8000/admin/settings/policy-sets`  | 200       | ✅ 정상 |
-| `http://localhost:8000/admin/settings/audit-logs`   | 200       | ✅ 정상 |
+| `http://localhost:8001/admin/settings/templates`    | 200       | ✅ 정상 |
+| `http://localhost:8001/admin/settings/presets`      | 200       | ✅ 정상 |
+| `http://localhost:8001/admin/settings/rag-profiles` | 200       | ✅ 정상 |
+| `http://localhost:8001/admin/settings/policy-sets`  | 200       | ✅ 정상 |
+| `http://localhost:8001/admin/settings/audit-logs`   | 200       | ✅ 정상 |
 
 ---
 
@@ -86,7 +86,7 @@ Phase 11-3에서 구현한 Admin 설정 관리 UI의 동작을 검증한다.
 #### Templates API
 
 ```bash
-curl -s http://localhost:8000/api/admin/templates
+curl -s http://localhost:8001/api/admin/templates
 ```
 
 **결과**: ✅ 정상 응답
@@ -108,7 +108,7 @@ curl -s http://localhost:8000/api/admin/templates
 **Health Check**:
 
 ```bash
-curl http://localhost:8000/health
+curl http://localhost:8001/health
 {"status":"ok"}
 ```
 

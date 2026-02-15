@@ -3,13 +3,13 @@
 **대상**: Phase 10-1 UX/UI 개선  
 **기준**: [phase-10-1-0-todo-list.md](../../phases/phase-10-1/phase-10-1-0-todo-list.md), Task 10-1-1~10-1-3  
 **전제**: E2E(Playwright) 완료 후, MCP cursor-ide-browser 또는 cursor-browser-extension 사용  
-**환경**: http://localhost:8000 (백엔드·웹 서버 기동 상태)
+**환경**: http://localhost:8001 (백엔드·웹 서버 기동 상태)
 
 ---
 
 ## 공통 준비
 
-- 브라우저에서 `http://localhost:8000` 접속
+- 브라우저에서 `http://localhost:8001` 접속
 - 필요 시 대시보드(`/dashboard`)에서 시작
 
 ---

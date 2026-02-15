@@ -94,7 +94,7 @@
 
 ## 테스트 환경
 
-- **Base URL**: http://localhost:8000
+- **Base URL**: http://localhost:8001
 - **Frontend**: Vanilla JS + HTML + CSS (web/ 디렉토리)
 - **Backend**: FastAPI (docker compose, container: backend)
 - **도구**: curl HTTP 상태 코드 확인

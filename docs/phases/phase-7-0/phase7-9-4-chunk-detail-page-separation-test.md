@@ -46,7 +46,7 @@
 
 **절차**:
 
-1. 브라우저에서 `http://localhost:8000/knowledge` 접근
+1. 브라우저에서 `http://localhost:8001/knowledge` 접근
 2. 페이지가 정상적으로 로드되는지 확인
 3. 청크 목록이 표시되는지 확인
 
@@ -187,7 +187,7 @@
 
 **절차**:
 
-1. 브라우저에서 `http://localhost:8000/knowledge-detail?id=999999` 접근
+1. 브라우저에서 `http://localhost:8001/knowledge-detail?id=999999` 접근
 2. 오류 메시지가 표시되는지 확인
 
 **예상 결과**:
@@ -206,7 +206,7 @@
 
 **절차**:
 
-1. 브라우저에서 `http://localhost:8000/knowledge-detail` 접근
+1. 브라우저에서 `http://localhost:8001/knowledge-detail` 접근
 2. 오류 메시지가 표시되는지 확인
 
 **예상 결과**:
@@ -343,7 +343,7 @@
 
 ```bash
 # 청크 상세 API 직접 호출 테스트
-curl http://localhost:8000/api/knowledge/chunks/1
+curl http://localhost:8001/api/knowledge/chunks/1
 
 # 예상 응답: JSON 형식의 청크 정보
 ```

@@ -210,25 +210,25 @@ for file in web/public/js/*.js; do
 done
 
 # HTTP 접근성 테스트
-curl -I http://localhost:8000/static/js/dashboard.js
+curl -I http://localhost:8001/static/js/dashboard.js
 ```
 
 ### 2. 수동 테스트 (권장)
 브라우저에서 다음 페이지들을 열고 개발자 도구(F12)의 Console 탭에서 JavaScript 오류가 없는지 확인:
 
-1. http://localhost:8000/dashboard
-2. http://localhost:8000/knowledge
-3. http://localhost:8000/search
-4. http://localhost:8000/ask
-5. http://localhost:8000/reason
-6. http://localhost:8000/logs
-7. http://localhost:8000/knowledge-detail?chunk_id=1
-8. http://localhost:8000/knowledge-label-matching?chunk_id=1
-9. http://localhost:8000/knowledge-relation-matching?chunk_id=1
-10. http://localhost:8000/knowledge-admin
-11. http://localhost:8000/admin/labels
-12. http://localhost:8000/admin/approval
-13. http://localhost:8000/admin/groups
+1. http://localhost:8001/dashboard
+2. http://localhost:8001/knowledge
+3. http://localhost:8001/search
+4. http://localhost:8001/ask
+5. http://localhost:8001/reason
+6. http://localhost:8001/logs
+7. http://localhost:8001/knowledge-detail?chunk_id=1
+8. http://localhost:8001/knowledge-label-matching?chunk_id=1
+9. http://localhost:8001/knowledge-relation-matching?chunk_id=1
+10. http://localhost:8001/knowledge-admin
+11. http://localhost:8001/admin/labels
+12. http://localhost:8001/admin/approval
+13. http://localhost:8001/admin/groups
 
 각 페이지에서:
 - ✅ 페이지가 정상적으로 로드되는지 확인

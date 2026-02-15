@@ -307,7 +307,7 @@ Phase 작업을 실행 가능한 작업들로 분해하는 것입니다.
 
 ```bash
 # API Test
-curl -X GET http://localhost:8000/api/v1/resource
+curl -X GET http://localhost:8001/api/v1/resource
 
 # Frontend Test
 Open http://localhost:3000/admin/settings
@@ -653,7 +653,7 @@ Builder: phase-10-1-todo-list.md를 읽었습니다
 [검증_요청]
 Task: 10-1-1
 파일: backend/models/workflow_common.py
-테스트: curl -X GET http://localhost:8000/api/v1/status
+테스트: curl -X GET http://localhost:8001/api/v1/status
 ```
 
 ### 예시 3: Tester가 Phase 검증하기

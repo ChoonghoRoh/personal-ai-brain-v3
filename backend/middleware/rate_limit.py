@@ -28,6 +28,24 @@ logger = logging.getLogger(__name__)
 # Rate Limit 키 생성 함수
 # ============================================
 
+def _get_client_ip(request: Request) -> str:
+    """클라이언트 실제 IP 추출 (Phase 12-3-2)
+
+    리버스 프록시(Nginx, Docker 등) 뒤에서 X-Forwarded-For 헤더를 파싱하여
+    실제 클라이언트 IP를 반환한다. 헤더가 없으면 기존 방식(request.client.host)을 사용.
+
+    X-Forwarded-For 형식: "client, proxy1, proxy2"
+    첫 번째 IP가 원본 클라이언트 IP.
+    """
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        # 첫 번째 IP = 원본 클라이언트
+        client_ip = forwarded_for.split(",")[0].strip()
+        if client_ip:
+            return client_ip
+    return get_remote_address(request)
+
+
 def get_key_func(request: Request) -> str:
     """
     Rate Limit 키 생성 함수
@@ -38,8 +56,8 @@ def get_key_func(request: Request) -> str:
     if hasattr(request.state, "user") and request.state.user:
         return f"user:{request.state.user.username}"
 
-    # IP 기반
-    return get_remote_address(request)
+    # IP 기반 (X-Forwarded-For 우선, Phase 12-3-2)
+    return _get_client_ip(request)
 
 
 # ============================================

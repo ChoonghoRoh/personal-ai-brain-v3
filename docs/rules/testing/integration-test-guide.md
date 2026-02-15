@@ -71,7 +71,7 @@
 
    | 테스트 대상        | 대체 방법           | 예시                                                                                      |
    | ------------------ | ------------------- | ----------------------------------------------------------------------------------------- |
-   | **API 엔드포인트** | curl + JSON 파싱    | `curl -s http://localhost:8000/api/admin/templates \| python3 -c "import sys, json; ..."` |
+   | **API 엔드포인트** | curl + JSON 파싱    | `curl -s http://localhost:8001/api/admin/templates \| python3 -c "import sys, json; ..."` |
    | **UI 페이지**      | HTTP 상태 코드 확인 | `curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/admin/settings/templates`   |
    | **데이터베이스**   | psql 직접 쿼리      | `docker compose exec postgres psql -U brain -d knowledge -c "SELECT * FROM templates"`    |
 

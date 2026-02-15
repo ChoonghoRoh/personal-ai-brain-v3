@@ -56,7 +56,7 @@
 | `npx playwright test e2e/phase-X-Y.spec.js`                | Phase X-Y E2E 스펙 직접 실행                         | [phase-10-test-scenario-guide](../frontend/references/frontend-webtest-phase-10-test-scenario-guide.md)                                                                |
 | `npx playwright test e2e/phase-10-1-mcp-scenarios.spec.js` | Phase 10-1 MCP 시나리오 30개 실행                    | [phase-10-test-scenario-guide](../frontend/references/frontend-webtest-phase-10-test-scenario-guide.md)                                                                |
 
-- **전제**: [web-user-test-setup-guide.md](../frontend/references/frontend-webtest-setup-guide.md)대로 백엔드(Base URL `http://localhost:8000`) 기동 후 실행.
+- **전제**: [web-user-test-setup-guide.md](../frontend/references/frontend-webtest-setup-guide.md)대로 백엔드(Base URL `http://localhost:8001`) 기동 후 실행.
 
 ---
 

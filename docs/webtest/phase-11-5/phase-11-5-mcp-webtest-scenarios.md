@@ -1,7 +1,7 @@
 # Phase 11-5 MCP(Cursor) 웹테스트 시나리오 — 이번 개발(§2.1~§2.4) 검증
 
 **대상**: Phase 11-5 선택 항목 개발(11-5-3~11-5-6) 검증  
-**Base URL**: http://localhost:8000  
+**Base URL**: http://localhost:8001  
 **용도**: 2차 webtest·MCP-Cursor 테스트 시 체크리스트로 사용.
 
 ---
@@ -55,7 +55,7 @@
 @docs/webtest/phase-11-5/phase-11-5-mcp-webtest-scenarios.md
 
 이 문서의 §2.1~§2.4 시나리오(W11.5.3.1 ~ W11.5.6.4)를
-가상 브라우저(MCP)에서 http://localhost:8000 기준으로 순서대로 수행해 줘.
+가상 브라우저(MCP)에서 http://localhost:8001 기준으로 순서대로 수행해 줘.
 
 - 각 시나리오별로 접속·동작·결과를 확인하고
 - "결과/비고"란에 통과(OK)·실패·비고를 기록해 줘.

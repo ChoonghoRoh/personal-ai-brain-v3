@@ -10,11 +10,11 @@
 1. **서버 확인**
    ```bash
    # 서버가 실행 중인지 확인
-   curl http://localhost:8000/health
+   curl http://localhost:8001/health
    ```
 
 2. **브라우저 접속**
-   - URL: `http://localhost:8000/knowledge`
+   - URL: `http://localhost:8001/knowledge`
    - 또는 대시보드에서 "지식 구조" 메뉴 클릭
 
 ---

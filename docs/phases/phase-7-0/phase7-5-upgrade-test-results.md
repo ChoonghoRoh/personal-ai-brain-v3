@@ -2,7 +2,7 @@
 
 **테스트 실행일**: 2026-01-07  
 **테스트 스크립트**: 수동 테스트  
-**서버 URL**: http://localhost:8000
+**서버 URL**: http://localhost:8001
 
 ---
 
@@ -298,18 +298,18 @@
 
 ```bash
 # 서버 실행 확인
-curl http://localhost:8000/api/system/status
+curl http://localhost:8001/api/system/status
 
 # 청크 승인 테스트
-curl -X POST http://localhost:8000/api/knowledge/chunks/1/approve \
+curl -X POST http://localhost:8001/api/knowledge/chunks/1/approve \
   -H "Content-Type: application/json" \
   -d '{"approved_by": "admin"}'
 
 # 라벨 추천 테스트
-curl -X POST http://localhost:8000/api/knowledge/labels/suggest?chunk_id=1
+curl -X POST http://localhost:8001/api/knowledge/labels/suggest?chunk_id=1
 
 # 관계 추천 테스트
-curl -X POST http://localhost:8000/api/knowledge/relations/suggest?chunk_id=1&limit=5
+curl -X POST http://localhost:8001/api/knowledge/relations/suggest?chunk_id=1&limit=5
 ```
 
 ---

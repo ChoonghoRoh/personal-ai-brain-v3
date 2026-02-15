@@ -59,7 +59,7 @@
 ## MCP Cursor 테스트 결과 (2026-02-04)
 
 **수행 방법**: 방안 A — **cursor-browser-extension** MCP (브라우저 navigate·snapshot·click·type)  
-**Base URL**: http://localhost:8000
+**Base URL**: http://localhost:8001
 
 | 체크리스트 ID | 시나리오                                     | MCP 결과 | 비고                                                        |
 | ------------- | -------------------------------------------- | -------- | ----------------------------------------------------------- |

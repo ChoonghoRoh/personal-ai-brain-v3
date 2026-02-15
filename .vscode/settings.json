@@ -93,5 +93,10 @@
   "explorer.confirmDragAndDrop": false,
   "window.commandCenter": false,
   "prettier.printWidth": 180,
-  "cursorpyright.analysis.typeCheckingMode": "basic"
+  "cursorpyright.analysis.typeCheckingMode": "basic",
+  "github.copilot.chat.codeGeneration.instructions": [
+    {
+      "text": "You are a QA & Security Analyst. Review all code for bugs, edge cases, and vulnerabilities. Suggest concrete fixes and test scenarios. Focus on pytest (Backend) and Playwright (E2E) testing standards. Check security (SQL Injection, XSS, CSRF), performance, and rate limiting. Refer to docs/rules/role/QA.md and docs/rules/testing/ for project guidelines."
+    }
+  ]
 }

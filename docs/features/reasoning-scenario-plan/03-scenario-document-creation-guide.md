@@ -115,16 +115,16 @@ Use this structure for each scenario you add to a scenario document (e.g. 02 or 
 
 | #   | Scenario title     | Action                            | Expected result                          | Verification method                      |
 | --- | ------------------ | --------------------------------- | ---------------------------------------- | ---------------------------------------- |
-| 1   | /reason page loads | Open http://localhost:8000/reason | Page loads; question and mode UI visible | Snapshot has #question and mode selector |
+| 1   | /reason page loads | Open http://localhost:8001/reason | Page loads; question and mode UI visible | Snapshot has #question and mode selector |
 
 ### 4.4 Example (Structured Form)
 
 **Scenario ID**: REASON-ENTRY-01
 **Title**: Reasoning Lab page loads.
-**Preconditions**: Backend and web server running at http://localhost:8000.
+**Preconditions**: Backend and web server running at http://localhost:8001.
 **Steps**:
 
-1. Navigate to http://localhost:8000/reason.
+1. Navigate to http://localhost:8001/reason.
 2. Wait for page load.
    **Expected result**: Page shows question input and mode selector; no fatal errors.
    **Verification method**: DOM snapshot contains #question and mode dropdown/buttons.

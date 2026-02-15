@@ -143,7 +143,7 @@ python scripts/check_gpt4all_model.py
 
 2. 브라우저에서 접속:
    ```
-   http://localhost:8000/dashboard
+   http://localhost:8001/dashboard
    ```
 
 3. "GPT4All 상태" 섹션에서 확인:
@@ -236,7 +236,7 @@ keywords = extract_keywords_with_gpt4all("문서 내용", top_n=10)
 
 ```bash
 # API를 통한 질의응답
-curl -X POST http://localhost:8000/api/ask \
+curl -X POST http://localhost:8001/api/ask \
   -H "Content-Type: application/json" \
   -d '{"question": "프로젝트 목적은 무엇인가요?"}'
 ```

@@ -152,7 +152,7 @@ LOOP_TodoItems → HTTP_GenerateTaskPlan → JS_ProcessApiResponse → CMD_Write
 ### cURL로 API 직접 테스트
 
 ```bash
-curl -X POST http://localhost:8000/api/workflow/generate-task-plan \
+curl -X POST http://localhost:8001/api/workflow/generate-task-plan \
   -H "Content-Type: application/json" \
   -d '{
     "task_num": "8-2-9",

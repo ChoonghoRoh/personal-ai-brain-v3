@@ -230,7 +230,7 @@ errors=0
 
 # 1. Backend 확인
 echo "Checking Backend service..."
-if curl -s http://localhost:8000/health | grep -q '"status".*"ok"'; then
+if curl -s http://localhost:8001/health | grep -q '"status".*"ok"'; then
     echo -e "${GREEN}✅${NC} Backend is running"
 else
     echo -e "${RED}❌${NC} Backend not running or health check failed"
@@ -260,7 +260,7 @@ fi
 
 # 4. Base URL 연결성 확인
 echo "Checking Base URL connectivity..."
-if curl -s http://localhost:8000 > /dev/null 2>&1; then
+if curl -s http://localhost:8001 > /dev/null 2>&1; then
     echo -e "${GREEN}✅${NC} Base URL is accessible"
 else
     echo -e "${RED}❌${NC} Base URL not accessible"

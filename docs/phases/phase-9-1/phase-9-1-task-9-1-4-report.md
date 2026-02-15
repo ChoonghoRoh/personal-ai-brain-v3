@@ -139,14 +139,14 @@ def get_key_func(request: Request) -> str:
 ```bash
 # 61번 연속 요청 (기본 제한 60/분)
 for i in {1..65}; do
-  curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8000/health
+  curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8001/health
 done
 ```
 
 ### 7.2 Rate Limit 정보 확인
 
 ```bash
-curl -v http://localhost:8000/health
+curl -v http://localhost:8001/health
 # X-RateLimit-* 헤더 확인
 ```
 

@@ -47,7 +47,7 @@ function initLayoutStyles() {
 
 /**
  * Container를 생성하고 반환
- * @param {string} content - 컨테이너 내부 콘텐츠 HTML
+ * @param {string|HTMLElement} content - 컨테이너 내부 콘텐츠 (HTML string 또는 DOM 요소)
  * @param {object} options - 옵션
  * @param {string} options.className - 추가 클래스명
  * @param {string} options.maxWidth - 최대 너비 (기본: 1200px)
@@ -56,15 +56,20 @@ function initLayoutStyles() {
 function createContainer(content = '', options = {}) {
   const className = options.className || '';
   const maxWidth = options.maxWidth || '1200px';
-  
+
   const container = document.createElement('div');
   container.className = `container ${className}`.trim();
   container.style.maxWidth = maxWidth;
-  
+
   if (content) {
-    container.innerHTML = content;
+    if (content instanceof HTMLElement || content instanceof DocumentFragment) {
+      container.appendChild(content);
+    } else {
+      // @trusted: 개발자 제공 HTML 템플릿만 허용. 사용자 입력은 escapeHtml() 처리 필수.
+      container.innerHTML = content;
+    }
   }
-  
+
   return container;
 }
 
@@ -76,19 +81,19 @@ function createContainer(content = '', options = {}) {
 function renderContainer(content = '', options = {}) {
   // Layout 스타일 초기화
   initLayoutStyles();
-  
+
   // 기존 container 찾기
   const existingContainer = document.querySelector('.container');
-  
+
   if (existingContainer) {
     // 기존 container가 있으면 내용만 업데이트
-    if (typeof content === 'string') {
+    if (content instanceof HTMLElement || content instanceof DocumentFragment) {
+      existingContainer.replaceChildren(content);
+    } else if (typeof content === 'string') {
+      // @trusted: 개발자 제공 HTML 템플릿만 허용. 사용자 입력은 escapeHtml() 처리 필수.
       existingContainer.innerHTML = content;
-    } else if (content instanceof HTMLElement) {
-      existingContainer.innerHTML = '';
-      existingContainer.appendChild(content);
     }
-    
+
     // 옵션 적용
     if (options.maxWidth) {
       existingContainer.style.maxWidth = options.maxWidth;

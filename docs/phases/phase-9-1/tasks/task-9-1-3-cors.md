@@ -23,7 +23,7 @@
 ```
 브라우저 보안 정책으로, 다른 오리진(도메인)에서의 요청을 제한
 - 프론트엔드: http://localhost:3000
-- 백엔드 API: http://localhost:8000
+- 백엔드 API: http://localhost:8001
 → 다른 오리진이므로 CORS 설정 필요
 ```
 
@@ -284,7 +284,7 @@ class TestCORS:
 #### 3-2. 수동 테스트 (브라우저)
 ```javascript
 // 브라우저 콘솔에서 테스트
-fetch('http://localhost:8000/health', {
+fetch('http://localhost:8001/health', {
     method: 'GET',
     headers: {
         'Content-Type': 'application/json'

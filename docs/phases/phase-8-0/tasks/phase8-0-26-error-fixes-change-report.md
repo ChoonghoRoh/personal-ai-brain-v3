@@ -304,16 +304,16 @@ def sync_single_document(file_path: str, db: Session, qdrant_client: QdrantClien
 
 ```bash
 # API 호출
-curl -X POST "http://localhost:8000/api/documents/sync"
+curl -X POST "http://localhost:8001/api/documents/sync"
 
 # 또는 문서 목록 조회 시 자동 동기화
-curl "http://localhost:8000/api/documents?sync=true"
+curl "http://localhost:8001/api/documents?sync=true"
 ```
 
 ### 단일 문서 경로 동기화
 
 ```bash
-curl -X POST "http://localhost:8000/api/documents/sync/docs/phases/phase-7-0/phase7-upgrade-test-scenarios.md"
+curl -X POST "http://localhost:8001/api/documents/sync/docs/phases/phase-7-0/phase7-upgrade-test-scenarios.md"
 ```
 
 ### 전체 문서 재임베딩

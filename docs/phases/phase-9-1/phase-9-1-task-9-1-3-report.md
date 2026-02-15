@@ -119,7 +119,7 @@ Access-Control-Max-Age: 600
 ### 6.1 프리플라이트 요청 테스트
 
 ```bash
-curl -X OPTIONS http://localhost:8000/api/ask \
+curl -X OPTIONS http://localhost:8001/api/ask \
   -H "Origin: http://localhost:3000" \
   -H "Access-Control-Request-Method: POST" \
   -H "Access-Control-Request-Headers: Content-Type, Authorization" \
@@ -129,7 +129,7 @@ curl -X OPTIONS http://localhost:8000/api/ask \
 ### 6.2 실제 요청 테스트
 
 ```bash
-curl http://localhost:8000/health \
+curl http://localhost:8001/health \
   -H "Origin: http://localhost:3000" \
   -v
 ```
