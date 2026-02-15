@@ -267,12 +267,96 @@ class RecommendationService:
                 break
         return out
 
+    def _gather_keyword_context(self, content: str, chunk_id: Optional[int] = None) -> str:
+        """추천 키워드 추론용 컨텍스트 수집: 유사 청크 라벨, 관계 청크 라벨, 기존 라벨 샘플."""
+        parts: List[str] = []
+        try:
+            # 1) 유사 청크의 라벨 수집
+            hybrid_results = self.hybrid_search.search_hybrid(
+                db=self.db,
+                query=(content or "")[:400],
+                top_k=5,
+            )
+            similar_label_names: List[str] = []
+            for r in hybrid_results:
+                doc_id = r.get("document_id")
+                chunk = (
+                    self.db.query(KnowledgeChunk)
+                    .filter(
+                        KnowledgeChunk.qdrant_point_id == str(doc_id),
+                        KnowledgeChunk.status == "approved",
+                    )
+                    .first()
+                )
+                if not chunk:
+                    continue
+                kl_list = (
+                    self.db.query(KnowledgeLabel)
+                    .filter(
+                        KnowledgeLabel.chunk_id == chunk.id,
+                        KnowledgeLabel.status == "confirmed",
+                    )
+                    .all()
+                )
+                for kl in kl_list:
+                    lb = self.db.query(Label).filter(Label.id == kl.label_id).first()
+                    if lb and lb.name not in similar_label_names:
+                        similar_label_names.append(lb.name)
+                if len(similar_label_names) >= 20:
+                    break
+            if similar_label_names:
+                parts.append(f"참고 - 유사한 문서의 키워드: {', '.join(similar_label_names[:20])}")
+
+            # 2) 관계 청크의 라벨 수집 (chunk_id가 있는 경우)
+            if chunk_id:
+                relations = (
+                    self.db.query(KnowledgeRelation)
+                    .filter(
+                        (
+                            KnowledgeRelation.source_chunk_id == chunk_id
+                        ) | (
+                            KnowledgeRelation.target_chunk_id == chunk_id
+                        ),
+                        KnowledgeRelation.confirmed == "true",
+                    )
+                    .limit(10)
+                    .all()
+                )
+                related_label_names: List[str] = []
+                for rel in relations:
+                    other_id = rel.target_chunk_id if rel.source_chunk_id == chunk_id else rel.source_chunk_id
+                    kl_list = (
+                        self.db.query(KnowledgeLabel)
+                        .filter(
+                            KnowledgeLabel.chunk_id == other_id,
+                            KnowledgeLabel.status == "confirmed",
+                        )
+                        .all()
+                    )
+                    for kl in kl_list:
+                        lb = self.db.query(Label).filter(Label.id == kl.label_id).first()
+                        if lb and lb.name not in related_label_names and lb.name not in similar_label_names:
+                            related_label_names.append(lb.name)
+                if related_label_names:
+                    parts.append(f"참고 - 관련 문서의 키워드: {', '.join(related_label_names[:20])}")
+
+            # 3) DB 전체 라벨 샘플
+            all_labels = self.db.query(Label.name).distinct().limit(30).all()
+            sample_names = [lb[0] for lb in all_labels]
+            if sample_names:
+                parts.append(f"참고 - 시스템 내 기존 키워드 (일부): {', '.join(sample_names)}")
+        except Exception as e:
+            logger.debug("_gather_keyword_context failed: %s", e)
+
+        return "\n".join(parts)
+
     def recommend_labels_with_llm(
         self,
         content: str,
         existing_label_ids: Optional[List[int]] = None,
         limit: int = 10,
         model: Optional[str] = None,
+        chunk_id: Optional[int] = None,
     ) -> Dict[str, Any]:
         """LLM(Ollama)으로 청크 내용에서 키워드 추출 후,
         (1) 기존 키워드 추천: DB 라벨과 매칭된 항목,
@@ -304,29 +388,29 @@ class RecommendationService:
             return _fallback_with_extract()
 
         text_slice = (content or "").strip()[:2000]
-        prompt = f"""다음 텍스트를 요약하는 키워드 또는 짧은 구문을 10개 이내로 한 줄에 하나씩만 나열하세요.
-키워드는 영어 소문자나 한글 단어/구로 짧게 작성하세요. 번호나 불릿 없이 키워드만 한 줄에 하나씩 작성하세요.
+        context_info = self._gather_keyword_context(content, chunk_id)
+        if context_info:
+            context_info = "\n\n" + context_info
+        prompt = f"""다음 텍스트를 분석하여 핵심 키워드를 10개 이내로 추출하세요.
+텍스트에 직접 언급되지 않더라도, 참고 정보를 바탕으로 관련성이 높은 키워드를 추론하여 포함하세요.
+
+반드시 한국어 또는 영어 소문자 전문 용어로만 작성하세요.
+중국어(中文), 일본어로 답변하지 마세요.
+번호나 불릿 없이 키워드만 한 줄에 하나씩 작성하세요.
 
 텍스트:
 {text_slice}
-
+{context_info}
 키워드 목록:"""
 
         try:
-            raw = ollama_generate(prompt, max_tokens=300, temperature=0.3, model=model)
+            from backend.config import OLLAMA_MODEL_LIGHT
+            use_model = model or OLLAMA_MODEL_LIGHT
+            raw = ollama_generate(prompt, max_tokens=300, temperature=0.3, model=use_model)
             if not raw:
                 return _fallback_with_extract()
-            lines = [
-                ln.strip().lstrip("-*0123456789.) ")
-                for ln in raw.strip().split("\n")
-                if ln.strip() and len(ln.strip()) >= 2
-            ]
-            if not lines:
-                # 쉼표/세미콜론으로도 분리 시도
-                for sep in (",", ";", "、"):
-                    if sep in raw:
-                        lines = [x.strip() for x in raw.split(sep) if x.strip() and len(x.strip()) >= 2]
-                        break
+            from backend.utils.korean_utils import postprocess_korean_keywords
+            lines = postprocess_korean_keywords(raw)
             if not lines:
                 return _fallback_with_extract()
         except Exception as e:
@@ -445,7 +529,13 @@ class RecommendationService:
 {context_text}
 
 질문 목록 (번호 없이 한 줄에 하나씩):"""
-            raw = ollama_generate(prompt, max_tokens=300, temperature=0.7, model=model)
+            from backend.config import OLLAMA_MODEL_LIGHT
+            use_model = model or OLLAMA_MODEL_LIGHT
+            raw = ollama_generate(prompt, max_tokens=300, temperature=0.7, model=use_model)
+            if not raw:
+                return []
+            from backend.utils.korean_utils import postprocess_korean_text
+            raw = postprocess_korean_text(raw)
             if not raw:
                 return []
             lines = [ln.strip() for ln in raw.strip().split("\n") if ln.strip() and not ln.strip().startswith("#")]

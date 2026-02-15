@@ -89,6 +89,7 @@ def extract_keywords_with_llm(content: str, top_n: int = 10) -> List[str]:
 3. 일반적인 단어보다 문서에 특화된 전문 용어나 개념을 우선
 4. 키워드는 한글로, 2글자 이상
 5. 상위 {top_n}개만 추출
+6. 중국어(中文)나 일본어로 작성하지 마세요
 
 키워드를 쉼표로 구분하여 나열해주세요. 설명 없이 키워드만 출력하세요.
 예시: 프로젝트, 개발, 시스템, API, 데이터베이스"""
@@ -145,24 +146,22 @@ def extract_keywords_with_ollama(prompt: str, top_n: int = 10, model: Optional[s
     except ImportError:
         raise ImportError("backend.services.ai.ollama_client를 사용할 수 없습니다. PYTHONPATH에 프로젝트 루트가 있어야 합니다.")
 
+    from backend.config import OLLAMA_MODEL_LIGHT
+    use_model = model or OLLAMA_MODEL_LIGHT
+
     response = ollama_generate(
         prompt,
         max_tokens=200,
         temperature=0.3,
         top_p=0.9,
         timeout=60.0,
-        model=model,
+        model=use_model,
     )
     if not response:
         raise RuntimeError("Ollama 응답 없음 (서비스 실행 여부 및 모델 로드 확인)")
 
-    # 응답에서 키워드 추출 (쉼표·줄바꿈 구분)
-    keywords = []
-    for line in response.strip().split('\n'):
-        for kw in line.split(','):
-            kw = kw.strip()
-            if kw and len(kw) >= 2:
-                keywords.append(kw)
+    from backend.utils.korean_utils import postprocess_korean_keywords
+    keywords = postprocess_korean_keywords(response)
     return keywords[:top_n]
 
 

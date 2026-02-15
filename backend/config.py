@@ -130,12 +130,14 @@ COLLECTION_NAME = get_env("COLLECTION_NAME", "brain_documents")
 # ============================================
 OLLAMA_BASE_URL = get_env("OLLAMA_BASE_URL", "http://localhost:11434")
 OLLAMA_MODEL = get_env("OLLAMA_MODEL", "qwen2.5:7b")
+OLLAMA_MODEL_LIGHT = get_env("OLLAMA_MODEL_LIGHT", "qwen2.5:3b")
 
 # ============================================
 # API 설정
 # ============================================
 API_HOST = get_env("API_HOST", "0.0.0.0")
 API_PORT = get_env_int("API_PORT", 8000)
+EXTERNAL_PORT = get_env_int("EXTERNAL_PORT", 8001)  # 호스트 노출 포트 (Phase 12-1-2)
 
 # 임베딩 모델
 EMBEDDING_MODEL = get_env("EMBEDDING_MODEL", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
@@ -174,6 +176,20 @@ RATE_LIMIT_AUTH_PER_MINUTE = get_env_int("RATE_LIMIT_AUTH_PER_MINUTE", 5)
 
 # Redis (Rate Limiting 분산 환경용)
 REDIS_URL = get_env("REDIS_URL")
+
+# ============================================
+# HSTS Configuration (Phase 12-1-3)
+# ============================================
+HSTS_ENABLED = get_env_bool("HSTS_ENABLED", ENVIRONMENT == "production")
+HSTS_MAX_AGE = get_env_int("HSTS_MAX_AGE", 31536000)  # 1년 (초)
+HSTS_INCLUDE_SUBDOMAINS = get_env_bool("HSTS_INCLUDE_SUBDOMAINS", True)
+HSTS_PRELOAD = get_env_bool("HSTS_PRELOAD", False)
+
+# ============================================
+# Memory Cleanup Scheduler (Phase 12-3-4)
+# ============================================
+MEMORY_CLEANUP_ENABLED = get_env_bool("MEMORY_CLEANUP_ENABLED", True)
+MEMORY_CLEANUP_INTERVAL_MINUTES = get_env_int("MEMORY_CLEANUP_INTERVAL_MINUTES", 60)
 
 # ============================================
 # RAG Enhancement (Phase 9-3-3)

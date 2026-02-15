@@ -12,6 +12,10 @@ from backend.utils.common import (
     http_unprocessable,
     http_internal_error,
 )
+from backend.utils.korean_utils import (
+    postprocess_korean_keywords,
+    postprocess_korean_text,
+)
 
 __all__ = [
     "sanitize_input",
@@ -23,4 +27,6 @@ __all__ = [
     "http_bad_request",
     "http_unprocessable",
     "http_internal_error",
+    "postprocess_korean_keywords",
+    "postprocess_korean_text",
 ]

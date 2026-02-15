@@ -1,6 +1,7 @@
 # Personal AI Brain — ver3 전용 (ver2와 포트·컨테이너·데이터 분리)
 # - PostgreSQL: 5433 (ver2는 5432), 볼륨 postgres_data_ver3
 # - Qdrant: 6343/6344 (ver2는 6333/6334), 경로 ./qdrant-data-ver3
+# - Redis: 6379 (Rate Limit 분산 저장소, Phase 12-2-2)
 # - Backend: 8001 (ver2는 8000), 컨테이너 pab-backend-ver3
 #
 # n8n · backend · web 파일 공유: PAB_PROJECT_ROOT (호스트 경로)
@@ -54,6 +55,24 @@ services:
       timeout: 5s
       retries: 5
 
+  # Redis (Phase 12-2-2: Rate Limit 분산 저장소)
+  redis:
+    image: redis:7-alpine
+    container_name: pab-redis-ver3
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data_ver3:/data
+    networks:
+      - pab-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # --- Ollama 로컬 LLM: localhost(호스트)에서 실행 (Docker 분리) ---
   # Ollama는 호스트의 localhost:11434 에서 실행 (ollama serve). backend는 host.docker.internal 로 접속.
   # Docker에서 Ollama 사용 시 아래 주석 해제하고 backend의 OLLAMA_BASE_URL 를 http://ollama:11434 로 변경.
@@ -100,6 +119,7 @@ services:
       # Ollama는 localhost(호스트)에서 실행. .env 에 없으면 아래 기본값 사용
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen2.5:7b}
+      - OLLAMA_MODEL_LIGHT=${OLLAMA_MODEL_LIGHT:-qwen2.5:3b}
       # Security (Phase 9-1)
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-development_secret_key_change_in_production}
       - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
@@ -113,6 +133,8 @@ services:
       - RATE_LIMIT_ENABLED=${RATE_LIMIT_ENABLED:-true}
       - RATE_LIMIT_PER_MINUTE=${RATE_LIMIT_PER_MINUTE:-60}
       - RATE_LIMIT_LLM_PER_MINUTE=${RATE_LIMIT_LLM_PER_MINUTE:-10}
+      # Redis (Phase 12-2-2: Rate Limit 분산 저장소)
+      - REDIS_URL=redis://redis:6379/0
       # External APIs
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
     volumes:
@@ -123,11 +145,19 @@ services:
       - /Users/map-rch/.claude:/root/.claude
     networks:
       - pab-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/live')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     depends_on:
       postgres:
         condition: service_healthy
       qdrant:
         condition: service_started
+      redis:
+        condition: service_healthy
 
   # n8n Workflow Automation (보류: 주석 해제 시 재활성화)
   # n8n:
@@ -162,6 +192,8 @@ services:
 
 volumes:
   postgres_data_ver3:
+    driver: local
+  redis_data_ver3:
     driver: local
   # n8n_data:  # n8n 재활성화 시 위 n8n 서비스와 함께 주석 해제
   #   driver: local

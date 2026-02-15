@@ -91,6 +91,7 @@ async def suggest_labels_llm(
         existing_label_ids=existing_ids,
         limit=limit,
         model=model,
+        chunk_id=chunk_id,
     )
     suggestions = result.get("suggestions", [])
     new_keywords = result.get("new_keywords", [])

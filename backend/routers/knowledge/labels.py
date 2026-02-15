@@ -193,12 +193,17 @@ async def suggest_keywords_from_description(
 3. 전문 용어나 개념을 우선
 4. 키워드는 한글로, 2글자 이상
 5. 상위 10개만 추출
+6. 중국어(中文)나 일본어로 작성하지 마세요
 
 키워드를 쉼표로 구분하여 나열해주세요. 설명 없이 키워드만 출력하세요.
 예시: 인프라, 벡터, 데이터베이스, API, 시스템"""
 
     try:
-        llm_keywords = extract_keywords_with_gpt4all(prompt, top_n=10, model=body.model)
+        from backend.config import OLLAMA_MODEL_LIGHT
+        use_model = body.model or OLLAMA_MODEL_LIGHT
+        llm_keywords = extract_keywords_with_gpt4all(prompt, top_n=10, model=use_model)
+        from backend.utils.korean_utils import postprocess_korean_keywords
+        llm_keywords = postprocess_korean_keywords("\n".join(llm_keywords)) if llm_keywords else []
         extraction_method = "ollama"
     except Exception as e:
         print(f"⚠️ Ollama 오류: {e}, 정규식 기반으로 대체...")
