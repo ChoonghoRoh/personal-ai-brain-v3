@@ -24,7 +24,10 @@ const CHART_COLORS = {
  * Initialize page
  */
 document.addEventListener('DOMContentLoaded', () => {
-  // Header 렌더링은 admin-common.js가 담당
+  initializeAdminPage({
+    title: '📈 통계 대시보드',
+    subtitle: '시스템 현황 및 사용량 통계'
+  });
   loadAllStatistics();
 });
 

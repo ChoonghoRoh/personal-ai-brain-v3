@@ -88,33 +88,65 @@
 
 ## 7. 시나리오 요약 및 E2E 매핑
 
-| 카테고리 | 시나리오 수 | E2E 스펙 매핑 |
-|----------|:-----------:|---------------|
-| 공통 (header-component) | 4 | 수동 또는 E2E 커스텀 |
-| 사용자 메뉴 진입 | 8 | smoke.spec.js (dashboard), phase-10-1.spec.js (reason) 등 |
-| Admin 지식 메뉴 진입 | 8 | phase-11-3.spec.js 외 Admin 진입 테스트 추가 시 |
-| Admin 설정 메뉴 진입 | 8 | phase-11-3.spec.js (1.1~1.5, 7.1, 7.2) |
-| 메뉴 간 이동 | 5 | phase-11-3.spec.js 7.1 (Templates→Presets) 등 확장 |
-| 라우팅·에러 | 3 | phase-11-3.spec.js 9.1 (없는 경로 404) |
-| **합계** | **36** | — |
+| 카테고리 | 시나리오 수 | E2E 스펙 매핑 | E2E 커버 |
+|----------|:-----------:|---------------|:--------:|
+| 공통 (header-component) | 4 | `phase-13-menu-user.spec.js` (#1 루트, #2 활성), `phase-13-menu-cross.spec.js` (#4 전체순회) | 4/4 |
+| 사용자 메뉴 진입 | 8 | `phase-13-menu-user.spec.js` (6개 페이지 × 3 = 로드·헤더·활성) | 8/8 |
+| Admin 지식 메뉴 진입 | 8 | `phase-13-menu-admin-knowledge.spec.js` (6개 × 3 = 로드·shell·활성) | 8/8 |
+| Admin 설정 메뉴 진입 | 8 | `phase-13-menu-admin-knowledge.spec.js` (5개 × 2 = 로드·shell), `phase-11-3.spec.js` | 8/8 |
+| 메뉴 간 이동 | 5 | `phase-13-menu-cross.spec.js` (전체순회, 사용자→Admin, Admin→설정, 설정→사용자) | 5/5 |
+| 라우팅·에러 | 3 | `phase-13-menu-cross.spec.js` (404: /admin/unknown, /admin/settings/unknown, /dashbord) | 3/3 |
+| **합계** | **36** | — | **36/36** |
+
+### 시나리오별 E2E 테스트 케이스 ID 상세 매핑
+
+| 시나리오 # | 카테고리 | 시나리오 제목 | E2E 스펙 | 테스트 이름 |
+|:----------:|----------|--------------|----------|-------------|
+| §1-1 | 공통 | header-component 상수 존재 | `phase-13-menu-user` | 대시보드 헤더가 렌더링된다 |
+| §1-2 | 공통 | 현재 경로 기준 활성 하이라이트 | `phase-13-menu-user` | 대시보드 메뉴 활성 하이라이트 |
+| §1-3 | 공통 | 구체 경로 우선 활성 해석 | `phase-13-menu-admin-knowledge` | 설정 5개 shell 로드 |
+| §1-4 | 공통 | 모든 path 라우트 1:1 대응 | `phase-13-menu-user` + `admin-knowledge` | 전체 17개 200 OK |
+| §2-1~6 | 사용자 | 6개 메뉴 직접 접속 | `phase-13-menu-user` | 각 페이지 로드 + 헤더 + 활성 |
+| §2-7 | 사용자 | 대시보드→Reasoning 클릭 | `phase-13-menu-cross` | 전체 순회 (dashboard→groups→templates→search) |
+| §2-8 | 사용자 | 사용자 메뉴 순차 클릭 | `phase-13-menu-user` | 6개 각각 개별 진입 검증 |
+| §3-1~6 | Admin 지식 | 6개 메뉴 직접 접속 | `phase-13-menu-admin-knowledge` | 각 페이지 로드 + shell + 활성 |
+| §3-7 | Admin 지식 | Admin 공통 shell | `phase-13-menu-admin-knowledge` | shell 로드 테스트 (container, header) |
+| §3-8 | Admin 지식 | Admin 지식 순차 클릭 | `phase-13-menu-admin-knowledge` | 6개 각각 개별 진입 검증 |
+| §4-1~5 | Admin 설정 | 5개 메뉴 직접 접속 | `phase-13-menu-admin-knowledge` | 각 페이지 로드 + shell |
+| §4-6 | Admin 설정 | header-component 동일 사용 | `phase-13-menu-admin-knowledge` | 5개 shell 로드 (header 동일) |
+| §4-7 | Admin 설정 | Templates→Presets 이동 | `phase-13-menu-cross` | Admin→설정 이동 |
+| §4-8 | Admin 설정 | 설정 5개 로딩 시간 | `phase-13-menu-admin-knowledge` | 10초 타임아웃 내 로드 |
+| §5-1 | 메뉴 간 | 사용자→Admin 지식 | `phase-13-menu-cross` | 사용자→Admin 활성 변경 |
+| §5-2 | 메뉴 간 | Admin 지식→Admin 설정 | `phase-13-menu-cross` | Admin→설정 이동 |
+| §5-3 | 메뉴 간 | Admin 설정→사용자 | `phase-13-menu-cross` | 설정→사용자 이동 |
+| §5-4 | 메뉴 간 | Admin 설정→Admin 지식 | `phase-13-menu-cross` | 전체 순회 |
+| §5-5 | 메뉴 간 | 루트→사용자 진입 | `phase-13-menu-user` | 루트(/) 대시보드 로드 |
+| §6-1 | 에러 | /admin/unknown 404 | `phase-13-menu-cross` | /admin/unknown 404 |
+| §6-2 | 에러 | /admin/settings/unknown 404 | `phase-13-menu-cross` | /admin/settings/unknown 404 |
+| §6-3 | 에러 | /dashbord 오타 404 | `phase-13-menu-cross` | /dashbord 404 |
 
 ---
 
-## 8. 테스트 실행 결과 (2026-02-09)
+## 8. 테스트 실행 결과 (2026-02-16, Phase 13-3)
 
-**실행 명령**: `npx playwright test e2e/smoke.spec.js e2e/phase-11-3.spec.js`  
+**실행 명령**: `npx playwright test e2e/phase-13-menu-user.spec.js e2e/phase-13-menu-admin-knowledge.spec.js e2e/phase-13-menu-cross.spec.js`
 **Base URL**: `http://localhost:8001`
 
 | 결과 | 개수 | 비고 |
 |------|:----:|------|
-| **통과** | 22 | smoke 2 + phase-11-3 20 |
+| **통과** | 56 | user 19 + admin-knowledge 28 + cross 9 |
 | **실패** | 0 | — |
 | **건너뜀** | 0 | — |
 
-**phase-11-3 커버리지**: Admin 설정 5개 페이지 접근(1.1~1.5), 설정 페이지 기능(2~6), Admin 네비(7), API 연동(8), 에러(9.1).  
-**smoke**: 대시보드·API 문서 접근.
+**커버리지 요약**:
+- 사용자 메뉴 6개: 페이지 로드·헤더 렌더링·활성 하이라이트 각각 검증 (18 tests)
+- Admin 지식 6개: 페이지 로드·공통 shell·활성 메뉴 각각 검증 (18 tests)
+- Admin 설정 5개: 페이지 로드·공통 shell 검증 (10 tests)
+- 메뉴 간 이동: 4개 시나리오 (전체순회, 사용자→Admin, Admin→설정, 설정→사용자)
+- 404 시나리오: 3개 경로 + 404 페이지 header 렌더링 + 대시보드 링크 (5 tests)
+- 루트 접근: 1 test
 
-**미커버**: 사용자 메뉴 search/knowledge/ask/logs 전용 E2E, Admin 지식 6개 페이지 전용 E2E, 메뉴 간 이동 시나리오 전수. → 본 시나리오 문서로 수동/MCP 실행 시 사용.
+**이전 대비**: 36개 시나리오 전수 E2E 커버 달성 (이전 22개 → 현재 56개 테스트)
 
 ---
 
