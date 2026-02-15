@@ -11,7 +11,7 @@ from backend.services.search.search_service import get_search_service
 from backend.services.search.hybrid_search import get_hybrid_search_service
 from backend.services.search.reranker import get_reranker
 from backend.services.search.multi_hop_rag import get_multi_hop_rag
-from backend.services.ai.ollama_client import ollama_generate, ollama_available, ollama_connection_check
+from backend.services.ai.ollama_client import ollama_generate, ollama_generate_stream, ollama_available, ollama_connection_check
 from backend.services.ai.context_manager import get_context_manager
 from backend.models.database import get_db
 
@@ -145,112 +145,48 @@ def prepare_question_context_enhanced(request: AskRequest, db: Session) -> tuple
     return context_docs, context_text, sources, has_relevant_context, similar_docs
 
 
+AI_SYSTEM_PROMPT = """당신은 한국어 전용 AI 어시스턴트입니다. 다음 규칙을 반드시 지키세요:
+- 반드시 한국어로만 답변하세요. 영어·중국어(中文)·일본어로 답변하지 마세요.
+- 컨텍스트에 없는 내용은 추측하지 마세요.
+- 구체적이고 간결하게 답변하세요.
+- 불필요한 반복, 이모지, 장식적 표현을 피하세요.
+- 영어 문장, 영어 설명, 코드 블록을 포함하지 마세요."""
+
+
 def build_prompt(question: str, context_text: str, has_relevant_context: bool, similar_docs: list) -> str:
-    """프롬프트 구성"""
+    """프롬프트 구성 — 시스템 지시는 AI_SYSTEM_PROMPT로 분리됨."""
     if not context_text or not has_relevant_context:
-        # 컨텍스트가 없거나 관련성이 낮은 경우
         similar_docs_text = ""
         if similar_docs:
             similar_docs_text = "\n\n참고: 다음 문서들이 유사하지만 직접적인 답변을 제공하기에는 관련성이 낮습니다:\n"
             similar_docs_text += "\n".join([f"- {doc['file']} (유사도: {doc['score']*100:.1f}%)" for doc in similar_docs[:3]])
-        
-        return f"""당신은 한국어로만 답변하는 AI 어시스턴트입니다. 절대로 영어로 답변하지 마세요.
 
-질문: {question}
-
-중요 지시사항:
-1. 반드시 한국어로만 답변하세요. 영어·중국어(中文)로 답변하지 마세요.
-2. 질문에 대한 정보가 지식 베이스에 없으면 "질문하신 내용에 대한 정보가 지식 베이스에 없습니다."라고만 답변하세요.
-3. 일반적인 지식이나 추측으로 답변하지 마세요.
-4. 컨텍스트가 없으면 절대 답변을 만들어내지 마세요.
-5. 영어 문장, 영어 설명, 영어 코드 주석을 포함하지 마세요.{similar_docs_text}
-
-한국어로만 답변하세요:"""
+        return f"""질문: {question}
+{similar_docs_text}
+지식 베이스에 정보가 없으면 "질문하신 내용에 대한 정보가 지식 베이스에 없습니다."라고만 답변하세요."""
     else:
-        # 관련 컨텍스트가 있는 경우
-        return f"""당신은 한국어로만 답변하는 AI 어시스턴트입니다. 절대로 영어로 답변하지 마세요.
-
-컨텍스트:
+        return f"""컨텍스트:
 {context_text}
 
 질문: {question}
 
-중요 지시사항:
-1. 반드시 한국어로만 답변하세요. 영어·중국어(中文)로 답변하지 마세요.
-2. 컨텍스트의 정보를 바탕으로만 답변하세요.
-3. 컨텍스트에 없는 내용은 추측하지 마세요.
-4. 구체적이고 실용적인 답변을 제공하세요.
-5. 불필요한 반복, 이모지, 장식적인 표현을 피하세요.
-6. 답변은 간결하고 명확하게 작성하세요.
-7. 영어 문장, 영어 설명, 영어 코드 주석을 포함하지 마세요.
-
-한국어로만 답변하세요:"""
+컨텍스트의 정보를 바탕으로만 답변하세요."""
 
 
 def postprocess_answer(answer: str) -> str:
-    """답변 후처리"""
+    """답변 후처리 — System Prompt 분리 후 경량화 (Phase 13-5-3)."""
     import re
     answer = answer.strip()
-    
-    # 코드 블록 제거 (```python, ``` 등)
-    answer = re.sub(r'```[\s\S]*?```', '', answer)
-    answer = re.sub(r'`[^`]+`', '', answer)
-    
-    # 영어 지시사항 패턴 제거
-    answer = re.sub(r'Please respond in Korean[\s\S]*?You should[\s\S]*?\.', '', answer, flags=re.IGNORECASE)
-    answer = re.sub(r'Please respond[\s\S]*?\.', '', answer, flags=re.IGNORECASE)
-    answer = re.sub(r'I\'m waiting[\s\S]*?\.', '', answer, flags=re.IGNORECASE)
-    answer = re.sub(r'You should only[\s\S]*?\.', '', answer, flags=re.IGNORECASE)
-    answer = re.sub(r'Your answer should[\s\S]*?\.', '', answer, flags=re.IGNORECASE)
-    
-    # 영어 문장 제거 (대문자로 시작하고 마침표로 끝나는 영어 문장)
-    # 단, 한국어와 섞인 경우는 보존
-    lines = answer.split('\n')
-    filtered_lines = []
-    for line in lines:
-        # 영어만 있는 줄 제거 (한국어가 포함된 줄은 보존)
-        if re.match(r'^[A-Z][^가-힣]*[.!?]\s*$', line.strip()) and not re.search(r'[가-힣]', line):
-            continue
-        # "Please", "You should", "I'm waiting" 등으로 시작하는 줄 제거
-        if re.match(r'^(Please|You should|I\'m waiting|Your answer)', line.strip(), re.IGNORECASE):
-            continue
-        filtered_lines.append(line)
-    answer = '\n'.join(filtered_lines)
-    
-    # 불필요한 패턴 제거
-    answer = re.sub(r'\(토큰 제한 고려하여[^)]*\)\s*💪', '', answer)
-    answer = re.sub(r'💪\s*$', '', answer)
-    answer = re.sub(r'\.\.\.\s*\(과정을 재현\)\s*💭', '', answer)
+
+    # 이모지 클러스터 제거
     answer = re.sub(r'([😊🤔💪📝🔍🤝💭🎉]+\s*)+', '', answer)
-    
-    # "This code", "This function" 같은 영어 설명 제거
-    answer = re.sub(r'This (code|function|method|class)[\s\S]*?\.', '', answer, flags=re.IGNORECASE)
-    answer = re.sub(r'This defines[\s\S]*?\.', '', answer, flags=re.IGNORECASE)
-    
-    # "import"로 시작하는 줄 제거 (코드 예제)
-    lines = answer.split('\n')
-    filtered_lines = []
-    for line in lines:
-        if not line.strip().startswith('import ') and not line.strip().startswith('def ') and not line.strip().startswith('class '):
-            filtered_lines.append(line)
-    answer = '\n'.join(filtered_lines)
-    
+
+    # LLM이 프롬프트를 반복하는 경우 제거
+    answer = re.sub(r'^(Please|You should|I\'m waiting|Your answer|This code)[\s\S]*?\.\s*', '', answer, flags=re.IGNORECASE)
+
     # 연속된 빈 줄 정리
     answer = re.sub(r'\n{3,}', '\n\n', answer)
-    
-    # 앞뒤 공백 제거
-    answer = answer.strip()
-    
-    # 영어만 있는 문단 제거 (한국어가 전혀 없는 경우)
-    paragraphs = answer.split('\n\n')
-    filtered_paragraphs = []
-    for para in paragraphs:
-        if re.search(r'[가-힣]', para):  # 한국어가 포함된 문단만 보존
-            filtered_paragraphs.append(para)
-        elif not re.match(r'^[A-Z][^가-힣]*[.!?]\s*$', para.strip()):  # 영어 문장이 아닌 경우도 보존
-            filtered_paragraphs.append(para)
-    answer = '\n\n'.join(filtered_paragraphs)
-    
+
     return answer.strip()
 
 
@@ -286,6 +222,7 @@ def generate_ai_answer(
         top_k=40,
         top_p=0.9,
         repeat_penalty=1.2,
+        system_prompt=AI_SYSTEM_PROMPT,
     )
     if answer is None:
         raise ValueError("Ollama 응답 없음")
@@ -471,28 +408,22 @@ async def generate_streaming_answer(
     has_relevant_context: bool = True,
     similar_docs: list = None
 ) -> AsyncGenerator[str, None]:
-    """스트리밍 AI 답변 생성 (Ollama 전체 응답 후 청크로 스트리밍)"""
+    """True Streaming AI 답변 생성 — Ollama 토큰 즉시 SSE 전달 (Phase 13-5-1)."""
     if similar_docs is None:
         similar_docs = []
     prompt = build_prompt(question, context_text, has_relevant_context, similar_docs)
-    
+
     try:
-        answer = ollama_generate(
+        for token in ollama_generate_stream(
             prompt,
             max_tokens=max_tokens,
             temperature=temperature,
             top_k=40,
             top_p=0.9,
             repeat_penalty=1.2,
-        )
-        if answer is None:
-            answer = ""
-        answer = postprocess_answer(answer)
-        # 답변을 청크 단위로 스트리밍
-        chunk_size = 10
-        for i in range(0, len(answer), chunk_size):
-            chunk = answer[i:i + chunk_size]
-            data = {"type": "chunk", "content": chunk}
+            system_prompt=AI_SYSTEM_PROMPT,
+        ):
+            data = {"type": "chunk", "content": token}
             yield f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
         data = {"type": "done", "content": ""}
         yield f"data: {json.dumps(data, ensure_ascii=False)}\n\n"

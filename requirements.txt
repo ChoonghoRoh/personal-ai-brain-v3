@@ -16,6 +16,9 @@ qdrant-client>=1.7.0
 sentence-transformers>=2.2.2
 torch>=2.0.0
 
+# 토큰 계산 (선택 — Context Window 정밀 관리)
+tiktoken>=0.5.0
+
 # 데이터베이스
 sqlalchemy>=2.0.0
 psycopg2-binary>=2.9.9

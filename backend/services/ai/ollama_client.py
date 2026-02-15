@@ -65,6 +65,7 @@ def ollama_generate(
     stream: bool = False,
     timeout: float = 120.0,
     model: Optional[str] = None,
+    system_prompt: Optional[str] = None,
 ) -> Optional[str]:
     """Ollama /api/generate로 텍스트 생성.
 
@@ -76,6 +77,7 @@ def ollama_generate(
         stream: True면 스트리밍 (현재 미구현, False만 사용)
         timeout: 요청 타임아웃(초)
         model: 사용할 모델명. None이면 OLLAMA_MODEL 사용.
+        system_prompt: 시스템 프롬프트 (role: system). None이면 생략.
 
     Returns:
         생성된 텍스트. 오류 시 None
@@ -83,7 +85,7 @@ def ollama_generate(
     use_model = (model or OLLAMA_MODEL).strip() or OLLAMA_MODEL
     # EEVE·instruct 등 채팅형 모델은 /api/chat을 먼저 사용 (generate에서 빈 응답/타임아웃 많음)
     if _is_chat_oriented_model(use_model):
-        text = _ollama_chat_fallback(use_model, prompt, max_tokens, temperature, timeout)
+        text = _ollama_chat_fallback(use_model, prompt, max_tokens, temperature, timeout, system_prompt=system_prompt)
         if text:
             return text
     url = f"{OLLAMA_BASE_URL.rstrip('/')}/api/generate"
@@ -99,6 +101,8 @@ def ollama_generate(
             "repeat_penalty": repeat_penalty,
         },
     }
+    if system_prompt:
+        body["system"] = system_prompt
     data = json.dumps(body).encode("utf-8")
     req = urllib.request.Request(
         url,
@@ -115,13 +119,13 @@ def ollama_generate(
             text = out.get("response", "").strip() or None
             if text:
                 return text
-            return _ollama_chat_fallback(use_model, prompt, max_tokens, temperature, timeout)
+            return _ollama_chat_fallback(use_model, prompt, max_tokens, temperature, timeout, system_prompt=system_prompt)
     except (ValueError, json.JSONDecodeError):
         raise
     except Exception as e:
         logger.warning("Ollama generate 실패 (model=%s): %s", use_model, e)
         # 타임아웃 등 예외 시에도 채팅형 폴백 시도
-        return _ollama_chat_fallback(use_model, prompt, max_tokens, temperature, timeout)
+        return _ollama_chat_fallback(use_model, prompt, max_tokens, temperature, timeout, system_prompt=system_prompt)
 
 
 def ollama_generate_stream(
@@ -133,6 +137,7 @@ def ollama_generate_stream(
     repeat_penalty: float = 1.2,
     timeout: float = 120.0,
     model: Optional[str] = None,
+    system_prompt: Optional[str] = None,
 ) -> Generator[str, None, None]:
     """Ollama /api/generate 스트리밍 — 토큰 단위 yield (Phase 10-4-1).
 
@@ -143,13 +148,14 @@ def ollama_generate_stream(
         top_p, top_k, repeat_penalty: 생성 옵션
         timeout: 요청 타임아웃(초)
         model: 사용할 모델명. None이면 OLLAMA_MODEL 사용.
+        system_prompt: 시스템 프롬프트 (role: system). None이면 생략.
 
     Yields:
         생성된 텍스트 토큰
     """
     use_model = (model or OLLAMA_MODEL).strip() or OLLAMA_MODEL
     if _is_chat_oriented_model(use_model):
-        yield from _ollama_chat_stream(use_model, prompt, max_tokens, temperature, timeout)
+        yield from _ollama_chat_stream(use_model, prompt, max_tokens, temperature, timeout, system_prompt=system_prompt)
         return
     url = f"{OLLAMA_BASE_URL.rstrip('/')}/api/generate"
     body = {
@@ -164,6 +170,8 @@ def ollama_generate_stream(
             "repeat_penalty": repeat_penalty,
         },
     }
+    if system_prompt:
+        body["system"] = system_prompt
     data = json.dumps(body).encode("utf-8")
     req = urllib.request.Request(
         url, data=data, headers={"Content-Type": "application/json"}, method="POST",
@@ -204,12 +212,17 @@ def _ollama_chat_fallback(
     max_tokens: int = 500,
     temperature: float = 0.7,
     timeout: float = 120.0,
+    system_prompt: Optional[str] = None,
 ) -> Optional[str]:
     """채팅형 모델용 /api/chat 호출 (generate 빈 응답/예외 시 폴백 또는 우선 사용)."""
     url = f"{OLLAMA_BASE_URL.rstrip('/')}/api/chat"
+    messages = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+    messages.append({"role": "user", "content": prompt})
     body = {
         "model": model,
-        "messages": [{"role": "user", "content": prompt}],
+        "messages": messages,
         "stream": False,
         "options": {
             "num_predict": max_tokens,
@@ -275,12 +288,17 @@ def _ollama_chat_stream(
     max_tokens: int = 500,
     temperature: float = 0.7,
     timeout: float = 120.0,
+    system_prompt: Optional[str] = None,
 ) -> Generator[str, None, None]:
     """채팅형 모델용 /api/chat 스트리밍 호출 (Phase 10-4-1)."""
     url = f"{OLLAMA_BASE_URL.rstrip('/')}/api/chat"
+    messages = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+    messages.append({"role": "user", "content": prompt})
     body = {
         "model": model,
-        "messages": [{"role": "user", "content": prompt}],
+        "messages": messages,
         "stream": True,
         "options": {
             "num_predict": max_tokens,

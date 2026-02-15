@@ -1,4 +1,4 @@
-"""Context Manager — 질문 복잡도·컨텍스트 압축·토큰 제한 (Phase 9-3-3)"""
+"""Context Manager — 질문 복잡도·컨텍스트 압축·토큰 제한 (Phase 9-3-3, 13-5-2)"""
 import re
 import logging
 from typing import List, Dict, Any, Optional
@@ -7,15 +7,27 @@ from backend.config import CONTEXT_MAX_TOKENS_SIMPLE, CONTEXT_MAX_TOKENS_COMPLEX
 
 logger = logging.getLogger(__name__)
 
-# 토큰 근사: 문자 수 / 4 (한국어·영어 혼합 기준)
-CHARS_PER_TOKEN_APPROX = 4
+# tiktoken 로드 (설치 시 정확한 토큰 계산, 미설치 시 근사치 폴백)
+_tiktoken_encoding = None
+try:
+    import tiktoken
+    _tiktoken_encoding = tiktoken.get_encoding("cl100k_base")
+    logger.info("tiktoken cl100k_base 인코딩 로드 완료")
+except ImportError:
+    logger.info("tiktoken 미설치 — 문자 수 기반 토큰 근사 사용")
+
+# 폴백 근사: 한국어 1.5~2 토큰/문자, 영어 ~0.25 토큰/문자 → 혼합 기준 2문자=1토큰
+CHARS_PER_TOKEN_APPROX = 2
 
 
 def _approx_tokens(text: str) -> int:
-    """문자 수 기반 토큰 수 근사."""
+    """토큰 수 계산 — tiktoken 사용 가능 시 정확 계산, 아니면 문자 수 근사."""
     if not text:
         return 0
-    return max(1, len(text.strip()) // CHARS_PER_TOKEN_APPROX)
+    text = text.strip()
+    if _tiktoken_encoding is not None:
+        return len(_tiktoken_encoding.encode(text))
+    return max(1, len(text) // CHARS_PER_TOKEN_APPROX)
 
 
 class ContextManager:
