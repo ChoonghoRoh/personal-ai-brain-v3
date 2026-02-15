@@ -6,7 +6,7 @@
   <title>Statistics Dashboard - Personal AI Brain</title>
   <link rel="stylesheet" href="/static/css/common.css">
   <link rel="stylesheet" href="/static/css/statistics.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/static/libs/chartjs/chart.min.js"></script>
 </head>
 <body>
   <div id="app">
@@ -158,6 +158,14 @@
             <div class="status-item">
               <span class="status-label">Qdrant 벡터</span>
               <span class="status-value" id="qdrantStatus">-</span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">Redis</span>
+              <span class="status-value" id="redisStatus">-</span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">Ollama LLM</span>
+              <span class="status-value" id="ollamaStatus">-</span>
             </div>
             <div class="status-item">
               <span class="status-label">총 레코드</span>

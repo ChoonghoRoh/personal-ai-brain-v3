@@ -35,9 +35,12 @@ from backend.config import (
     CORS_ALLOW_HEADERS,
     ENVIRONMENT,
     AUTH_ENABLED,
+    EXTERNAL_PORT,
 )
 from backend.middleware.security import SecurityHeadersMiddleware
+from backend.middleware.request_id import RequestIDMiddleware  # Phase 12-2-4
 from backend.middleware.rate_limit import setup_rate_limiting
+from backend.middleware.error_handler import setup_error_handlers  # Phase 12-2-4
 from backend.models.database import init_db
 
 app = FastAPI(
@@ -72,7 +75,7 @@ app = FastAPI(
     },
     servers=[
         {
-            "url": "http://localhost:8000",
+            "url": f"http://localhost:{EXTERNAL_PORT}",
             "description": "로컬 개발 서버"
         },
     ]
@@ -106,10 +109,18 @@ else:
 # 보안 헤더 미들웨어 추가
 app.add_middleware(SecurityHeadersMiddleware)
 
+# Request ID 미들웨어 (Phase 12-2-4)
+app.add_middleware(RequestIDMiddleware)
+
 # ============================================
 # Rate Limiting 설정 (Phase 9-1-4)
 # ============================================
 setup_rate_limiting(app)
+
+# ============================================
+# 전역 에러 핸들러 (Phase 12-2-4)
+# ============================================
+setup_error_handlers(app)
 
 # ============================================
 # 라우터 등록
@@ -210,13 +221,24 @@ def _llm_check_after_startup() -> None:
 
 
 @app.on_event("startup")
-def on_startup():
+async def on_startup():
     """앱 기동 시 DB 테이블이 없으면 생성 (labels 등). /knowledge 등 페이지 500 방지."""
     try:
         init_db()
     except Exception as e:
         logging.getLogger(__name__).warning("DB 초기화 실패 (테이블이 이미 있거나 DB 연결 문제): %s", e)
     threading.Thread(target=_llm_check_after_startup, daemon=True).start()
+
+    # Phase 12-3-4: 만료 기억 자동 정리 스케줄러
+    from backend.services.cognitive.memory_scheduler import start_memory_cleanup
+    await start_memory_cleanup()
+
+
+@app.on_event("shutdown")
+async def on_shutdown():
+    """앱 종료 시 스케줄러 정리 (Phase 12-3-4)"""
+    from backend.services.cognitive.memory_scheduler import stop_memory_cleanup
+    await stop_memory_cleanup()
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -516,6 +538,63 @@ async def admin_settings_audit_logs_page(request: Request):
 
 @app.get("/health")
 async def health():
-    """헬스 체크"""
+    """헬스 체크 (Liveness — 기존 호환)"""
     return {"status": "ok"}
+
+
+@app.get("/health/live")
+async def health_live():
+    """Liveness probe — 프로세스 생존 확인"""
+    return {"status": "ok"}
+
+
+@app.get("/health/ready")
+async def health_ready():
+    """Readiness probe — 의존 서비스 연결 확인 (Phase 12-3-5)"""
+    checks = {}
+    all_ok = True
+
+    # PostgreSQL 연결 확인
+    try:
+        from backend.models.database import SessionLocal
+        from sqlalchemy import text
+        db = SessionLocal()
+        db.execute(text("SELECT 1"))
+        db.close()
+        checks["postgres"] = "ok"
+    except Exception as e:
+        checks["postgres"] = f"error: {type(e).__name__}"
+        all_ok = False
+
+    # Qdrant 연결 확인
+    try:
+        from qdrant_client import QdrantClient
+        from backend.config import QDRANT_HOST, QDRANT_PORT
+        qc = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT, timeout=5)
+        qc.get_collections()
+        checks["qdrant"] = "ok"
+    except Exception as e:
+        checks["qdrant"] = f"error: {type(e).__name__}"
+        all_ok = False
+
+    # Redis 연결 확인 (선택적 — REDIS_URL 미설정 시 skip)
+    try:
+        from backend.config import REDIS_URL
+        if REDIS_URL:
+            import redis
+            r = redis.from_url(REDIS_URL, socket_timeout=3)
+            r.ping()
+            checks["redis"] = "ok"
+        else:
+            checks["redis"] = "skipped (not configured)"
+    except Exception as e:
+        checks["redis"] = f"error: {type(e).__name__}"
+        all_ok = False
+
+    from fastapi.responses import JSONResponse
+    status_code = 200 if all_ok else 503
+    return JSONResponse(
+        status_code=status_code,
+        content={"status": "ok" if all_ok else "degraded", "checks": checks},
+    )
 

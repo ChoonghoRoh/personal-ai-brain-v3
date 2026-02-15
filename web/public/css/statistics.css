@@ -230,6 +230,10 @@ td.loading {
   color: var(--error-color, #dc3545);
 }
 
+.status-value.warning {
+  color: var(--warning-color, #ffc107);
+}
+
 /* Buttons */
 .btn {
   display: inline-flex;

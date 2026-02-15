@@ -86,10 +86,23 @@ class StatisticsService:
 
     def get_system_statistics(self) -> Dict[str, Any]:
         """시스템 상태 통계"""
-        return {
+        result = {
             "database": self._get_database_stats(),
             "qdrant": self._get_qdrant_stats(),
         }
+        try:
+            from backend.services.system.system_service import get_system_service
+            sys_svc = get_system_service()
+            ollama_info = sys_svc._get_ollama_status(run_test=False)
+            result["ollama"] = {
+                "status": ollama_info.get("status", "unknown"),
+                "model_name": ollama_info.get("model_name"),
+                "models": ollama_info.get("models", []),
+            }
+        except Exception as e:
+            logger.error(f"Ollama 상태 확인 실패: {e}")
+            result["ollama"] = {"status": "error"}
+        return result
 
     def get_trends(self, days: int = 7) -> Dict[str, Any]:
         """트렌드 데이터 (일별)"""
@@ -436,10 +449,20 @@ class StatisticsService:
             # 컬렉션 정보 조회
             collection_info = client.get_collection(COLLECTION_NAME)
 
+            # Qdrant 버전 호환성 처리 (vectors_count → points_count)
+            points_count = None
+            try:
+                points_count = collection_info.points_count
+            except AttributeError:
+                try:
+                    points_count = collection_info.vectors_count
+                except AttributeError:
+                    points_count = 0
+
             return {
                 "collection_name": COLLECTION_NAME,
-                "vectors_count": collection_info.vectors_count,
-                "points_count": collection_info.points_count,
+                "vectors_count": points_count or 0,
+                "points_count": points_count or 0,
                 "status": collection_info.status.value if collection_info.status else "unknown"
             }
         except Exception as e:

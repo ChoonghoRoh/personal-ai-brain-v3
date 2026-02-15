@@ -36,12 +36,13 @@ async function loadAllStatistics() {
     showLoading();
 
     // Load all data in parallel
-    const [summary, knowledge, usage, system, trends] = await Promise.all([
+    const [summary, knowledge, usage, system, trends, health] = await Promise.all([
       fetchStatistics('/api/system/statistics'),
       fetchStatistics('/api/system/statistics/knowledge'),
       fetchStatistics('/api/system/statistics/usage'),
       fetchStatistics('/api/system/statistics/system'),
-      fetchStatistics(`/api/system/statistics/trends?days=${document.getElementById('trendDays')?.value || 7}`)
+      fetchStatistics(`/api/system/statistics/trends?days=${document.getElementById('trendDays')?.value || 7}`),
+      fetchStatistics('/health/ready').catch(() => ({ status: 'unknown', checks: {} }))
     ]);
 
     // Update summary cards
@@ -58,7 +59,7 @@ async function loadAllStatistics() {
     updateProjectsTable(knowledge);
 
     // Update system status
-    updateSystemStatus(system);
+    updateSystemStatus(system, health);
 
   } catch (error) {
     console.error('Statistics load error:', error);
@@ -390,21 +391,69 @@ function updateProjectsTable(data) {
 /**
  * Update system status
  */
-function updateSystemStatus(data) {
-  // Database status
+function updateSystemStatus(data, health) {
+  const checks = health?.checks || {};
+
+  // Database status (health/ready + statistics 통합)
   const dbTables = data.database?.tables || {};
   const totalRecords = data.database?.total_records || 0;
-  document.getElementById('dbStatus').textContent = `${Object.keys(dbTables).length} 테이블`;
-  document.getElementById('dbStatus').classList.add('success');
+  const dbEl = document.getElementById('dbStatus');
+  if (checks.postgres === 'ok') {
+    dbEl.textContent = `OK (${Object.keys(dbTables).length} 테이블)`;
+    dbEl.classList.add('success');
+  } else if (checks.postgres) {
+    dbEl.textContent = 'Error';
+    dbEl.classList.add('error');
+  } else {
+    dbEl.textContent = `${Object.keys(dbTables).length} 테이블`;
+    dbEl.classList.add('success');
+  }
 
   // Qdrant status
   const qdrant = data.qdrant || {};
-  if (qdrant.error) {
-    document.getElementById('qdrantStatus').textContent = '연결 실패';
-    document.getElementById('qdrantStatus').classList.add('error');
+  const qdrantEl = document.getElementById('qdrantStatus');
+  if (checks.qdrant === 'ok') {
+    qdrantEl.textContent = `OK (${formatNumber(qdrant.vectors_count || 0)} 벡터)`;
+    qdrantEl.classList.add('success');
+  } else if (qdrant.error || (checks.qdrant && checks.qdrant !== 'ok')) {
+    qdrantEl.textContent = 'Error';
+    qdrantEl.classList.add('error');
   } else {
-    document.getElementById('qdrantStatus').textContent = formatNumber(qdrant.vectors_count || 0) + ' 벡터';
-    document.getElementById('qdrantStatus').classList.add('success');
+    qdrantEl.textContent = formatNumber(qdrant.vectors_count || 0) + ' 벡터';
+    qdrantEl.classList.add('success');
+  }
+
+  // Redis status
+  const redisEl = document.getElementById('redisStatus');
+  if (redisEl) {
+    if (checks.redis === 'ok') {
+      redisEl.textContent = 'OK';
+      redisEl.classList.add('success');
+    } else if (checks.redis && checks.redis.startsWith('skipped')) {
+      redisEl.textContent = '미설정';
+      redisEl.classList.add('warning');
+    } else if (checks.redis) {
+      redisEl.textContent = 'Error';
+      redisEl.classList.add('error');
+    }
+  }
+
+  // Ollama LLM status
+  const ollamaEl = document.getElementById('ollamaStatus');
+  if (ollamaEl) {
+    const ollama = data.ollama || {};
+    if (ollama.status === 'available' || ollama.status === 'connected') {
+      ollamaEl.textContent = `OK (${ollama.model_name || 'model'})`;
+      ollamaEl.classList.add('success');
+    } else if (ollama.status === 'not_installed') {
+      ollamaEl.textContent = '미설치';
+      ollamaEl.classList.add('warning');
+    } else if (ollama.status === 'error') {
+      ollamaEl.textContent = 'Error';
+      ollamaEl.classList.add('error');
+    } else {
+      ollamaEl.textContent = '-';
+    }
   }
 
   // Total records
