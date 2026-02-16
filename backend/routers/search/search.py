@@ -10,7 +10,7 @@ from backend.services.search.hybrid_search import get_hybrid_search_service
 from backend.models.database import get_db, SessionLocal
 from backend.models.models import KnowledgeChunk, Document, Project
 
-router = APIRouter(prefix="/api/search", tags=["search"])
+router = APIRouter(prefix="/api/search", tags=["Search"])
 
 
 class AdvancedSearchRequest(BaseModel):

@@ -12,7 +12,7 @@ from backend.services.automation.task_plan_generator import generate_task_plan
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/workflow", tags=["workflow"])
+router = APIRouter(prefix="/api/workflow", tags=["Workflow"])
 
 
 class RunTaskRequest(BaseModel):

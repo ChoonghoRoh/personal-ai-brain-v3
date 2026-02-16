@@ -6,7 +6,7 @@ import json
 
 from backend.services.system.logging_service import get_error_tracker
 
-router = APIRouter(prefix="/api/error-logs", tags=["error-logs"])
+router = APIRouter(prefix="/api/error-logs", tags=["Error Logs"])
 
 
 @router.get("/stats")

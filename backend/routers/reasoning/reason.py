@@ -10,7 +10,7 @@ from backend.services.search.search_service import get_search_service
 from backend.services.reasoning.dynamic_reasoning_service import get_dynamic_reasoning_service
 from backend.services.reasoning.recommendation_service import get_recommendation_service
 
-router = APIRouter(prefix="/api/reason", tags=["reason"])
+router = APIRouter(prefix="/api/reason", tags=["Reasoning"])
 
 
 class ReasonFilters(BaseModel):  # Phase 7.7

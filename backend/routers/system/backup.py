@@ -307,7 +307,7 @@ async def get_backup_status():
 # ================== Legacy API (하위 호환성) ==================
 # 기존 /api/backup/* 경로 지원을 위한 별칭
 
-legacy_router = APIRouter(prefix="/api/backup", tags=["Backup (Legacy)"])
+legacy_router = APIRouter(prefix="/api/backup", tags=["Backup"])
 
 
 @legacy_router.post("/create")

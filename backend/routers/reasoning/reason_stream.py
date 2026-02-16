@@ -28,7 +28,7 @@ from backend.services.reasoning.recommendation_service import get_recommendation
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/reason", tags=["reason-stream"])
+router = APIRouter(prefix="/api/reason", tags=["Reasoning Stream"])
 
 # 진행 중인 태스크 관리 (취소 기능용)
 active_tasks: Dict[str, Dict] = {}

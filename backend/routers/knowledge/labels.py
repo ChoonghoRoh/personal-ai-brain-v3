@@ -9,7 +9,7 @@ from pydantic import BaseModel, field_serializer
 from backend.models.database import get_db
 from backend.models.models import Label, KnowledgeLabel, KnowledgeChunk
 
-router = APIRouter(prefix="/api/labels", tags=["labels"])
+router = APIRouter(prefix="/api/labels", tags=["Labels"])
 
 
 class LabelCreate(BaseModel):

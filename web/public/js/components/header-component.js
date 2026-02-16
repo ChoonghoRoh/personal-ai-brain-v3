@@ -1,9 +1,27 @@
 /**
- * 공통 Header 컴포넌트
- * 모든 페이지에서 일관된 헤더와 네비게이션을 제공
+ * 공통 Header + LNB 컴포넌트
+ * Phase 14-3: 좌측 LNB 네비게이션 + 심플 상단 헤더
+ * Phase 14-1: 역할 기반 메뉴 표시/숨김
  */
 
-// 사용자 메뉴 정의 (좌측)
+// 역할 계층 (Phase 14-1)
+const ROLE_HIERARCHY = {
+  'user': 0,
+  'admin_knowledge': 1,
+  'admin_system': 2,
+};
+
+// 메뉴 그룹별 필요 최소 역할 (Phase 14-1)
+const MENU_REQUIRED_ROLE = {
+  'user-menu': 'user',
+  'admin-menu': 'admin_knowledge',
+  'settings-menu': 'admin_system',
+};
+
+// 캐시된 사용자 역할 (Phase 14-1)
+let _cachedUserRole = null;
+
+// 사용자 메뉴 정의
 const USER_MENU = [
   { path: '/dashboard', label: '대시보드', icon: '🎛️' },
   { path: '/search', label: '검색', icon: '🔍' },
@@ -13,7 +31,7 @@ const USER_MENU = [
   { path: '/logs', label: '로그', icon: '📋' }
 ];
 
-// 관리자 메뉴 정의 - 지식 관리 (우측)
+// 관리자 메뉴 - 지식 관리
 const ADMIN_MENU = [
   { path: '/admin/groups', label: '키워드 관리', icon: '📦' },
   { path: '/admin/labels', label: '라벨 관리', icon: '🏷️' },
@@ -23,7 +41,7 @@ const ADMIN_MENU = [
   { path: '/admin/statistics', label: '통계', icon: '📈' }
 ];
 
-// 설정 관리 메뉴 정의 (Phase 11-3)
+// 설정 관리 메뉴 (Phase 11-3)
 const SETTINGS_MENU = [
   { path: '/admin/settings/templates', label: '템플릿', icon: '📄' },
   { path: '/admin/settings/presets', label: '프리셋', icon: '⚙️' },
@@ -32,30 +50,254 @@ const SETTINGS_MENU = [
   { path: '/admin/settings/audit-logs', label: '변경 이력', icon: '📜' }
 ];
 
+// ============================================
+// LNB (Left Navigation Bar) — Phase 14-3
+// ============================================
+
+const LNB_STYLES = `
+  /* LNB Logo */
+  .lnb-logo {
+    padding: 20px 16px;
+    border-bottom: 1px solid #334155;
+  }
+
+  .lnb-logo a {
+    color: #f8fafc;
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: opacity 0.2s;
+  }
+
+  .lnb-logo a:hover {
+    opacity: 0.85;
+  }
+
+  .lnb-logo .logo-sub {
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: 400;
+    margin-top: 4px;
+  }
+
+  /* LNB Menu Groups */
+  .lnb-group {
+    padding: 12px 0;
+    border-bottom: 1px solid #334155;
+  }
+
+  .lnb-group:last-child {
+    border-bottom: none;
+  }
+
+  .lnb-group-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 0 16px 8px;
+  }
+
+  .lnb-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .lnb-menu li a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 16px;
+    color: #cbd5e1;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+  }
+
+  .lnb-menu li a:hover {
+    background: #334155;
+    color: #f1f5f9;
+  }
+
+  .lnb-menu li a.active {
+    background: #1e40af;
+    color: #ffffff;
+    border-left-color: #60a5fa;
+    font-weight: 600;
+  }
+
+  .lnb-menu li a .menu-icon {
+    font-size: 16px;
+    width: 22px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  /* Settings group styling */
+  .lnb-group.settings-group .lnb-group-title {
+    color: #34d399;
+  }
+
+  .lnb-group.settings-group .lnb-menu li a.active {
+    background: #065f46;
+    border-left-color: #34d399;
+  }
+
+  .lnb-group.settings-group .lnb-menu li a:hover {
+    background: #1e3a3a;
+  }
+
+  /* Mobile toggle button */
+  .lnb-toggle {
+    display: none;
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 1001;
+    background: #1e293b;
+    color: #f8fafc;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 18px;
+    cursor: pointer;
+  }
+
+  @media (max-width: 768px) {
+    .lnb-toggle {
+      display: block;
+    }
+  }
+`;
+
 /**
- * Header HTML 생성
+ * LNB HTML 생성
+ * @param {string} currentPath - 현재 경로
+ * @returns {string} LNB HTML
+ */
+function createLNB(currentPath) {
+  currentPath = currentPath || window.location.pathname;
+
+  function menuItems(items, groupClass) {
+    return items.map(item => {
+      let isActive = false;
+      if (item.path === '/dashboard') {
+        isActive = currentPath === item.path || currentPath === '/';
+      } else {
+        isActive = currentPath.startsWith(item.path);
+      }
+      const activeClass = isActive ? 'active' : '';
+      return `<li><a href="${item.path}" class="${activeClass}"><span class="menu-icon">${item.icon}</span>${item.label}</a></li>`;
+    }).join('\n');
+  }
+
+  return `
+    <div class="lnb-logo">
+      <a href="/dashboard">
+        <span>Personal AI Brain</span>
+      </a>
+      <div class="logo-sub">Knowledge Management System</div>
+    </div>
+    <div class="lnb-group" data-menu-group="user-menu">
+      <div class="lnb-group-title">사용자 메뉴</div>
+      <ul class="lnb-menu user-menu">
+        ${menuItems(USER_MENU, 'user-menu')}
+      </ul>
+    </div>
+    <div class="lnb-group" data-menu-group="admin-menu">
+      <div class="lnb-group-title">지식 관리</div>
+      <ul class="lnb-menu admin-menu">
+        ${menuItems(ADMIN_MENU, 'admin-menu')}
+      </ul>
+    </div>
+    <div class="lnb-group settings-group" data-menu-group="settings-menu">
+      <div class="lnb-group-title">설정 관리</div>
+      <ul class="lnb-menu settings-menu">
+        ${menuItems(SETTINGS_MENU, 'settings-menu')}
+      </ul>
+    </div>
+  `;
+}
+
+/**
+ * LNB를 #lnb-sidebar에 렌더링 (Phase 14-3)
+ * @param {string} currentPath - 현재 경로
+ */
+function renderLNB(currentPath) {
+  // LNB 스타일 추가
+  if (!document.getElementById('lnb-component-styles')) {
+    const style = document.createElement('style');
+    style.id = 'lnb-component-styles';
+    style.textContent = LNB_STYLES;
+    document.head.appendChild(style);
+  }
+
+  const lnbEl = document.getElementById('lnb-sidebar');
+  if (!lnbEl) return;
+
+  // @trusted: 개발자 정의 메뉴 배열만 사용
+  lnbEl.innerHTML = createLNB(currentPath);
+
+  // 역할 기반 메뉴 필터링
+  fetchUserRole().then(role => applyMenuPermissions(role));
+}
+
+// ============================================
+// Header (Top Bar) — Phase 14-3 (심플 버전)
+// ============================================
+
+const HEADER_STYLES = `
+  .top-bar {
+    background: white;
+    padding: 16px 0;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .top-bar h2 {
+    color: #1e293b;
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  .top-bar .top-bar-separator {
+    color: #d1d5db;
+    font-size: 16px;
+    font-weight: 300;
+  }
+
+  .top-bar p.subtitle {
+    color: #6b7280;
+    margin: 0;
+    font-size: 14px;
+  }
+`;
+
+/**
+ * Header HTML 생성 (심플 상단 바 — Phase 14-3)
  * @param {object} options - 헤더 옵션
- * @param {string} options.title - 페이지 제목
- * @param {string} options.subtitle - 페이지 부제목
- * @param {string} options.currentPath - 현재 경로 (활성 메뉴 하이라이트용)
  * @returns {string} Header HTML
  */
 function createHeader(options = {}) {
-  const title = options.title || 'Personal AI Brain';
   const subtitle = options.subtitle || '';
   const currentPath = options.currentPath || window.location.pathname;
-  
+
   // 현재 경로에 해당하는 메뉴 라벨 찾기
-  // [활성 해석 순서] user → settings → admin
-  // 1) USER_MENU: /dashboard는 exact match, 나머지는 startsWith
-  // 2) SETTINGS_MENU: startsWith (더 구체적인 /admin/settings/* 경로 먼저 매칭)
-  // 3) ADMIN_MENU: startsWith (/admin/* 범용)
   let currentMenuLabel = '';
 
-  // 사용자 메뉴에서 찾기
   const userMenuItem = USER_MENU.find(item => {
     if (item.path === '/dashboard') {
-      return currentPath === item.path;
+      return currentPath === item.path || currentPath === '/';
     }
     return currentPath.startsWith(item.path);
   });
@@ -63,296 +305,115 @@ function createHeader(options = {}) {
   if (userMenuItem) {
     currentMenuLabel = `${userMenuItem.icon} ${userMenuItem.label}`;
   } else {
-    // 설정 관리 메뉴에서 찾기 (먼저 확인 - 더 구체적인 경로)
-    const settingsMenuItem = SETTINGS_MENU.find(item => {
-      return currentPath.startsWith(item.path);
-    });
-
+    const settingsMenuItem = SETTINGS_MENU.find(item => currentPath.startsWith(item.path));
     if (settingsMenuItem) {
       currentMenuLabel = `${settingsMenuItem.icon} ${settingsMenuItem.label}`;
     } else {
-      // 관리자 메뉴에서 찾기
-      const adminMenuItem = ADMIN_MENU.find(item => {
-        return currentPath.startsWith(item.path);
-      });
-
+      const adminMenuItem = ADMIN_MENU.find(item => currentPath.startsWith(item.path));
       if (adminMenuItem) {
         currentMenuLabel = `${adminMenuItem.icon} ${adminMenuItem.label}`;
       }
     }
   }
-  
-  // 사용자 메뉴 HTML 생성 (좌측)
-  const userMenuItems = USER_MENU.map(item => {
-    const isActive = currentPath === item.path || 
-                     (item.path !== '/dashboard' && currentPath.startsWith(item.path));
-    const activeClass = isActive ? 'active' : '';
-    return `<a href="${item.path}" class="${activeClass}">${item.icon} ${item.label}</a>`;
-  }).join('\n          ');
-  
-  // 관리자 메뉴 HTML 생성 (우측)
-  const adminMenuItems = ADMIN_MENU.map(item => {
-    const isActive = currentPath === item.path || currentPath.startsWith(item.path);
-    const activeClass = isActive ? 'active' : '';
-    return `<a href="${item.path}" class="${activeClass}"> ${item.icon} ${item.label}</a>`;
-  }).join('\n          ');
-
-  // 설정 관리 메뉴 HTML 생성 (Phase 11-3)
-  const settingsMenuItems = SETTINGS_MENU.map(item => {
-    const isActive = currentPath.startsWith(item.path);
-    const activeClass = isActive ? 'active' : '';
-    return `<a href="${item.path}" class="${activeClass}"> ${item.icon} ${item.label}</a>`;
-  }).join('\n          ');
 
   return `
-    <header>
-      <h1><a href="/dashboard">🧠 Personal AI Brain</a></h1>
-      <nav>
-        <div class="menu-group">
-          <div class="menu-group-title">사용자 메뉴</div>
-          <div class="menu-separator">|</div>
-          <div class="user-menu">
-            ${userMenuItems}
-          </div>
-        </div>
-        <div class="menu-group">
-          <div class="menu-group-title">관리자 메뉴</div>
-          <div class="menu-separator">|</div>
-          <div class="admin-menu">
-            ${adminMenuItems}
-          </div>
-        </div>
-        <div class="menu-group">
-          <div class="menu-group-title">설정 관리</div>
-          <div class="menu-separator">|</div>
-          <div class="settings-menu">
-            ${settingsMenuItems}
-          </div>
-        </div>
-      </nav>
-      <div class="subtitle-divider"></div>
-      <div class="subtitle-section"> 
-        ${currentMenuLabel ? `<h2>${currentMenuLabel}</h2>` : '<h2></h2>'}
-        <div class="subtitle-separator">|</div>
-        ${subtitle ? `<p class="subtitle">${subtitle}</p>` : '<p class="subtitle"></p>'}
-      </div>
-    </header>
+    <div class="top-bar">
+      ${currentMenuLabel ? `<h2>${currentMenuLabel}</h2>` : '<h2></h2>'}
+      ${subtitle ? `<div class="top-bar-separator">|</div><p class="subtitle">${subtitle}</p>` : ''}
+    </div>
   `;
 }
 
 /**
- * Header 스타일 CSS
- */
-const HEADER_STYLES = `
-  header {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-
-  header h1 {
-    margin-bottom: 15px;
-    font-size: 24px;
-  }
-
-  header h1 a {
-    color: #2563eb;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    transition: opacity 0.2s;
-  }
-
-  header h1 a:hover {
-    opacity: 0.8;
-  }
-
-  header .subtitle-divider {
-    border-top: 1px solid #e5e7eb;
-    margin-top: 15px;
-    margin-bottom: 8px;
-  }
-
-  header .subtitle-section {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  header p.subtitle {
-    color: #666;
-    margin: 0;
-    font-size: 14px;
-    min-width: 100px;
-  }
-
-  header .subtitle-separator {
-    color: #e5e7eb;
-    font-size: 16px;
-    font-weight: 300;
-  }
-
-  header .subtitle-section h2 {
-    color: #2563eb;
-    margin: 0;
-    font-size: 20px;
-    font-weight: 600;
-    flex: 1;
-  }
-
-  header nav {
-    margin-top: 15px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  header nav .menu-group {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  header nav .menu-group-title {
-    font-size: 12px;
-    font-weight: 600;
-    color: #666;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    min-width: 100px;
-  }
-
-  header nav .menu-separator {
-    color: #e5e7eb;
-    font-size: 16px;
-    font-weight: 300;
-  }
-
-  header nav .user-menu {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    flex: 1;
-  }
-
-  header nav .admin-menu {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    flex: 1;
-    border-top: 2px solid #e5e7eb;
-    padding-top: 15px;
-  }
-
-  header nav .settings-menu {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    flex: 1;
-    border-top: 2px solid #10b981;
-    padding-top: 15px;
-  }
-
-  header nav .settings-menu a {
-    color: #059669;
-  }
-
-  header nav .settings-menu a:hover {
-    background: #ecfdf5;
-  }
-
-  header nav .settings-menu a.active {
-    background: #059669;
-    color: white;
-  }
-
-  @media (max-width: 768px) {
-    header nav .admin-menu,
-    header nav .settings-menu {
-      width: 100%;
-    }
-  }
-
-  header nav a {
-    padding: 8px 16px;
-    text-decoration: none;
-    color: #2563eb;
-    font-weight: 500;
-    border-radius: 6px;
-    transition: all 0.2s;
-    font-size: 16px;
-  }
-
-  header nav a:hover {
-    background: #eff6ff;
-    text-decoration: none;
-  }
-
-  header nav a.active {
-    background: #2563eb;
-    color: white;
-  }
-`;
-
-/**
- * Header를 페이지에 렌더링
- * @param {object} options - 헤더 옵션
- * @param {string} options.containerSelector - 헤더를 삽입할 컨테이너 선택자 (기본: '.container')
- * @param {string} options.insertPosition - 삽입 위치 ('beforebegin' | 'afterbegin' | 'beforeend' | 'afterend', 기본: 'afterbegin')
+ * Header + LNB를 페이지에 렌더링 (Phase 14-3)
+ * @param {object} options - 옵션
  */
 function renderHeader(options = {}) {
   const containerSelector = options.containerSelector || '.container';
-  const insertPosition = options.insertPosition || 'afterbegin';
-  
-  // 스타일 추가 (이미 추가되어 있지 않은 경우)
+
+  // Header 스타일 추가
   if (!document.getElementById('header-component-styles')) {
     const style = document.createElement('style');
     style.id = 'header-component-styles';
     style.textContent = HEADER_STYLES;
     document.head.appendChild(style);
   }
-  
-  // Header HTML 생성
+
+  // Header HTML 생성 (심플 상단 바)
   const headerHTML = createHeader(options);
-  
-  // 컨테이너 찾기
+
+  // 컨테이너에 Header 삽입
   const container = document.querySelector(containerSelector);
-  if (!container) {
-    console.error(`Header 컴포넌트: 컨테이너를 찾을 수 없습니다: ${containerSelector}`);
-    return;
-  }
-  
-  // 기존 header 제거 (있다면)
-  const existingHeader = container.querySelector('header');
-  if (existingHeader) {
-    existingHeader.remove();
-  }
-  
-  // Header 삽입
-  if (insertPosition === 'afterbegin') {
+  if (container) {
+    // 기존 header 또는 top-bar 제거
+    const existing = container.querySelector('header, .top-bar');
+    if (existing) existing.remove();
+
     container.insertAdjacentHTML('afterbegin', headerHTML);
-  } else if (insertPosition === 'beforebegin') {
-    container.insertAdjacentHTML('beforebegin', headerHTML);
-  } else if (insertPosition === 'beforeend') {
-    container.insertAdjacentHTML('beforeend', headerHTML);
-  } else if (insertPosition === 'afterend') {
-    container.insertAdjacentHTML('afterend', headerHTML);
   }
+
+  // LNB 렌더링
+  renderLNB(options.currentPath);
+}
+
+// ============================================
+// 역할 기반 필터링 (Phase 14-1)
+// ============================================
+
+/**
+ * 사용자 역할 조회 (캐시 지원)
+ * @returns {Promise<string>} 사용자 역할
+ */
+async function fetchUserRole() {
+  if (_cachedUserRole !== null) return _cachedUserRole;
+
+  try {
+    const res = await fetch('/api/auth/status');
+    if (res.ok) {
+      const data = await res.json();
+      _cachedUserRole = data.role || 'user';
+    } else {
+      _cachedUserRole = 'user';
+    }
+  } catch (e) {
+    console.warn('사용자 역할 조회 실패, 기본 role=user 적용:', e);
+    _cachedUserRole = 'user';
+  }
+
+  return _cachedUserRole;
+}
+
+/**
+ * 역할 기반 메뉴 그룹 표시/숨김 (Phase 14-1, Phase 14-3 LNB 대응)
+ * @param {string} userRole - 사용자 역할
+ */
+function applyMenuPermissions(userRole) {
+  const roleLevel = ROLE_HIERARCHY[userRole] ?? 0;
+
+  Object.entries(MENU_REQUIRED_ROLE).forEach(([menuClass, requiredRole]) => {
+    const requiredLevel = ROLE_HIERARCHY[requiredRole] ?? 0;
+
+    // LNB에서 메뉴 그룹 찾기 (Phase 14-3)
+    const lnbGroup = document.querySelector(`.lnb-group[data-menu-group="${menuClass}"]`);
+    if (lnbGroup && roleLevel < requiredLevel) {
+      lnbGroup.style.display = 'none';
+    }
+  });
 }
 
 // 전역으로 export (브라우저 환경)
-// 중복 선언 방지: 이미 선언된 경우 재선언하지 않음
 if (typeof window !== 'undefined') {
   if (!window.renderHeader) {
     window.createHeader = createHeader;
     window.renderHeader = renderHeader;
+    window.renderLNB = renderLNB;
+    window.createLNB = createLNB;
+    window.fetchUserRole = fetchUserRole;
+    window.applyMenuPermissions = applyMenuPermissions;
     window.USER_MENU = USER_MENU;
     window.ADMIN_MENU = ADMIN_MENU;
     window.SETTINGS_MENU = SETTINGS_MENU;
+    window.ROLE_HIERARCHY = ROLE_HIERARCHY;
+    window.MENU_REQUIRED_ROLE = MENU_REQUIRED_ROLE;
   }
 }
-
-

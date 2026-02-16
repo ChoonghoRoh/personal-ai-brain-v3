@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from backend.models.database import get_db
 from backend.services.reasoning.reasoning_chain_service import get_reasoning_chain_service
 
-router = APIRouter(prefix="/api/reasoning-chain", tags=["reasoning-chain"])
+router = APIRouter(prefix="/api/reasoning-chain", tags=["Reasoning Chain"])
 
 
 class ReasoningChainRequest(BaseModel):

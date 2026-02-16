@@ -1,9 +1,6 @@
 /* Layout 스타일은 layout-component.js에서 관리 */
 /* Header 스타일은 header-component.js에서 관리 */
-/* Knowledge Studio는 더 넓은 컨테이너 필요 */
-.container {
-  max-width: 1400px;
-}
+/* Phase 14-3: container max-width는 layout-component.js에서 관리 */
 
 .main-layout {
   display: block;

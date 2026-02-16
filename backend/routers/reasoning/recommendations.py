@@ -6,7 +6,7 @@ from typing import List, Optional
 from backend.models.database import get_db
 from backend.services.reasoning.recommendation_service import get_recommendation_service
 
-router = APIRouter(prefix="/api/reason/recommendations", tags=["reason-recommendations"])
+router = APIRouter(prefix="/api/reason/recommendations", tags=["Recommendations"])
 
 
 @router.get("/chunks")

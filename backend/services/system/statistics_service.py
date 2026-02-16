@@ -17,6 +17,7 @@ from backend.models.models import (
     Document, KnowledgeChunk, Label, KnowledgeLabel,
     KnowledgeRelation, Project, ReasoningResult
 )
+from backend.models.admin_models import PageAccessLog
 
 logger = logging.getLogger(__name__)
 
@@ -128,6 +129,30 @@ class StatisticsService:
             "end_date": end_date.isoformat(),
             "data": trends
         }
+
+    def get_page_access_logs(self, limit: int = 50) -> List[Dict[str, Any]]:
+        """페이지 접근 로그 조회 (Phase 13-4-1)"""
+        try:
+            results = self.db.query(PageAccessLog).order_by(
+                PageAccessLog.accessed_at.desc()
+            ).limit(limit).all()
+
+            return [
+                {
+                    "id": log.id,
+                    "path": log.path,
+                    "method": log.method,
+                    "status_code": log.status_code,
+                    "response_time_ms": log.response_time_ms,
+                    "user_agent": log.user_agent,
+                    "ip_address": log.ip_address,
+                    "accessed_at": log.accessed_at.isoformat() if log.accessed_at else None
+                }
+                for log in results
+            ]
+        except Exception as e:
+            logger.error(f"페이지 접근 로그 조회 실패: {e}")
+            return []
 
     # ================== Private Methods ==================
 

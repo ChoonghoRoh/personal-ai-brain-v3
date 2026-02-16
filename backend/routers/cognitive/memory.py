@@ -8,7 +8,7 @@ from backend.models.database import get_db
 from backend.models.models import Memory
 from backend.services.cognitive.memory_service import get_memory_service
 
-router = APIRouter(prefix="/api/memory", tags=["memory"])
+router = APIRouter(prefix="/api/memory", tags=["Memory"])
 
 
 class MemoryCreate(BaseModel):

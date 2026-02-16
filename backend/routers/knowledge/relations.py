@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from backend.models.database import get_db
 from backend.models.models import KnowledgeRelation, KnowledgeChunk
 
-router = APIRouter(prefix="/api/relations", tags=["relations"])
+router = APIRouter(prefix="/api/relations", tags=["Relations"])
 
 
 class RelationCreate(BaseModel):

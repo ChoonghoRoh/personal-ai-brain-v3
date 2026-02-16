@@ -15,7 +15,7 @@ from backend.services.ai.ollama_client import ollama_generate, ollama_generate_s
 from backend.services.ai.context_manager import get_context_manager
 from backend.models.database import get_db
 
-router = APIRouter(prefix="/api/ask", tags=["ai"])
+router = APIRouter(prefix="/api/ask", tags=["AI"])
 
 logger = logging.getLogger(__name__)
 

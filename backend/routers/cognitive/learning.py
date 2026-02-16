@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from backend.models.database import get_db
 from backend.services.cognitive.learning_service import get_learning_service
 
-router = APIRouter(prefix="/api/learning", tags=["learning"])
+router = APIRouter(prefix="/api/learning", tags=["Learning"])
 
 
 class FeedbackRequest(BaseModel):

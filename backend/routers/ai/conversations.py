@@ -8,7 +8,7 @@ from datetime import datetime
 from backend.models.database import get_db
 from backend.models.models import Conversation
 
-router = APIRouter(prefix="/api/conversations", tags=["conversations"])
+router = APIRouter(prefix="/api/conversations", tags=["Conversations"])
 
 
 class ConversationCreate(BaseModel):

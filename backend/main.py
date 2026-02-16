@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 
 from fastapi import FastAPI, Request
+from fastapi.openapi.utils import get_openapi
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
@@ -44,13 +45,66 @@ from backend.middleware.error_handler import setup_error_handlers  # Phase 12-2-
 from backend.middleware.page_access_log import PageAccessLogMiddleware  # Phase 13-4
 from backend.models.database import init_db
 
+# ============================================
+# OpenAPI 태그 정의 (Phase 14-2)
+# ============================================
+openapi_tags = [
+    # Authentication
+    {"name": "Authentication", "description": "JWT 토큰 발급 및 API Key 인증"},
+    # User Features
+    {"name": "Search", "description": "문서 및 청크 검색 (의미·키워드·하이브리드)"},
+    {"name": "Documents", "description": "문서 관리 및 조회"},
+    {"name": "AI", "description": "AI 질의응답 (RAG 기반)"},
+    {"name": "Conversations", "description": "대화 기록 저장 및 검색"},
+    # Knowledge
+    {"name": "Knowledge", "description": "지식 청크 CRUD 및 조회"},
+    {"name": "Labels", "description": "라벨 및 키워드 그룹 관리"},
+    {"name": "Relations", "description": "청크 간 관계 관리"},
+    {"name": "Approval", "description": "청크 승인 워크플로우"},
+    {"name": "Suggestions", "description": "AI 기반 라벨/관계 추천"},
+    {"name": "Knowledge Integration", "description": "지식 통합 및 모순 해결"},
+    # Reasoning
+    {"name": "Reasoning", "description": "추론 엔진 (기본 질의)"},
+    {"name": "Reasoning Stream", "description": "스트리밍 추론 (SSE)"},
+    {"name": "Reasoning Store", "description": "추론 결과 공유 및 저장"},
+    {"name": "Reasoning Chain", "description": "다단계 추론 체인"},
+    {"name": "Reasoning Results", "description": "추론 결과 조회"},
+    {"name": "Recommendations", "description": "추론 기반 추천"},
+    # Cognitive
+    {"name": "Memory", "description": "장기/단기/작업 기억 시스템"},
+    {"name": "Context", "description": "맥락 이해 및 연결"},
+    {"name": "Learning", "description": "사용자 패턴 학습"},
+    {"name": "Personality", "description": "인격 프로필 관리"},
+    {"name": "Metacognition", "description": "신뢰도 및 불확실성 분석"},
+    # System
+    {"name": "System", "description": "시스템 상태 및 정보"},
+    {"name": "Logs", "description": "작업 로그 조회"},
+    {"name": "Backup", "description": "데이터 백업 및 복원"},
+    {"name": "Integrity", "description": "데이터 무결성 검증"},
+    {"name": "Error Logs", "description": "에러 로그 및 통계"},
+    {"name": "Statistics", "description": "시스템 통계 및 분석"},
+    # Automation
+    {"name": "Automation", "description": "자동화 작업 (라벨링 등)"},
+    {"name": "Workflow", "description": "워크플로우 실행 (n8n 연동)"},
+    {"name": "File Parser", "description": "파일 파싱 및 변환"},
+    # Admin Settings (require admin_system)
+    {"name": "Admin - Schemas", "description": "스키마 관리 (admin_system 권한)"},
+    {"name": "Admin - Templates", "description": "템플릿 관리 (admin_system 권한)"},
+    {"name": "Admin - Presets", "description": "프롬프트 프리셋 (admin_system 권한)"},
+    {"name": "Admin - RAG Profiles", "description": "RAG 프로필 (admin_system 권한)"},
+    {"name": "Admin - Policy Sets", "description": "정책 세트 (admin_system 권한)"},
+    {"name": "Admin - Audit Logs", "description": "변경 이력 (admin_system 권한)"},
+    {"name": "Admin - Page Access Logs", "description": "페이지 접근 로그 (admin_system 권한)"},
+    {"name": "Admin - Users", "description": "사용자 관리 (admin_system 권한)"},
+]
+
 app = FastAPI(
     title="Personal AI Brain API",
     description="""
     개인 AI 브레인 시스템 API
-    
+
     ## 주요 기능
-    
+
     * **검색**: 문서 검색 및 고급 검색
     * **지식 관리**: 청크, 라벨, 관계 관리
     * **AI 질의**: AI 기반 질의응답
@@ -59,12 +113,18 @@ app = FastAPI(
     * **기억 시스템**: 장기/단기/작업 기억
     * **백업/복원**: 데이터 백업 및 복원
     * **대화 기록**: 대화 기록 저장 및 검색
-    
+
     ## 인증 (Phase 9-1)
 
     - **JWT Bearer 토큰**: `Authorization: Bearer <token>`
     - **API Key**: `X-API-Key: <api_key>`
     - 개발 환경에서는 인증이 비활성화되어 있습니다 (AUTH_ENABLED=false)
+
+    ## 역할 기반 접근 제어 (Phase 14-1)
+
+    - **user**: 기본 사용자 (검색, AI 질의 등)
+    - **admin_knowledge**: 지식 관리 권한 (청크, 라벨, 관계 등)
+    - **admin_system**: 시스템 관리 권한 (설정, 스키마, 감사 로그 등)
     """,
     version="1.0.0",
     contact={
@@ -79,8 +139,63 @@ app = FastAPI(
             "url": f"http://localhost:{EXTERNAL_PORT}",
             "description": "로컬 개발 서버"
         },
-    ]
+    ],
+    openapi_tags=openapi_tags,
 )
+
+
+# ============================================
+# OpenAPI securitySchemes 커스터마이징 (Phase 14-2)
+# ============================================
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+        tags=openapi_tags,
+        servers=app.servers,
+        contact=app.contact,
+        license_info=app.license_info,
+    )
+
+    openapi_schema["components"]["securitySchemes"] = {
+        "BearerToken": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": "JWT Bearer 토큰. /api/auth/token에서 발급받은 토큰을 사용합니다.",
+        },
+        "APIKey": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "X-API-Key",
+            "description": "API Key 헤더. 환경변수 API_SECRET_KEY에 설정된 키를 사용합니다.",
+        },
+    }
+
+    # 전역 보안 적용 (모든 엔드포인트에 기본 적용, 개별 제외 가능)
+    openapi_schema["security"] = [
+        {"BearerToken": []},
+        {"APIKey": []},
+    ]
+
+    # 인증 불필요 경로에 security: [] 설정 (전역 security 제외)
+    auth_excluded_prefixes = ("/api/auth/token", "/api/auth/login", "/health")
+    for path, methods in openapi_schema.get("paths", {}).items():
+        if path.startswith(auth_excluded_prefixes):
+            for method_detail in methods.values():
+                if isinstance(method_detail, dict):
+                    method_detail["security"] = []
+
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi
 
 # ============================================
 # CORS 미들웨어 설정 (Phase 9-1-3)
@@ -224,6 +339,38 @@ def _llm_check_after_startup() -> None:
             log.debug("LLM 확인 중 예외: %s", e)
 
 
+def _seed_admin_user() -> None:
+    """Phase 14-5-2: 초기 관리자 계정이 없으면 생성"""
+    from backend.config import ADMIN_DEFAULT_USERNAME, ADMIN_DEFAULT_PASSWORD
+    from backend.models.database import SessionLocal
+    from backend.models.user_models import User
+    from passlib.context import CryptContext
+
+    log = logging.getLogger(__name__)
+    pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    db = SessionLocal()
+    try:
+        existing = db.query(User).filter(User.username == ADMIN_DEFAULT_USERNAME).first()
+        if not existing:
+            admin_user = User(
+                username=ADMIN_DEFAULT_USERNAME,
+                hashed_password=pwd_ctx.hash(ADMIN_DEFAULT_PASSWORD),
+                display_name="System Administrator",
+                role="admin_system",
+                is_active=True,
+            )
+            db.add(admin_user)
+            db.commit()
+            log.info("초기 관리자 계정 생성: %s (role=admin_system)", ADMIN_DEFAULT_USERNAME)
+        else:
+            log.debug("관리자 계정 이미 존재: %s", ADMIN_DEFAULT_USERNAME)
+    except Exception as e:
+        db.rollback()
+        log.warning("초기 관리자 시드 실패: %s", e)
+    finally:
+        db.close()
+
+
 @app.on_event("startup")
 async def on_startup():
     """앱 기동 시 DB 테이블이 없으면 생성 (labels 등). /knowledge 등 페이지 500 방지."""
@@ -231,6 +378,13 @@ async def on_startup():
         init_db()
     except Exception as e:
         logging.getLogger(__name__).warning("DB 초기화 실패 (테이블이 이미 있거나 DB 연결 문제): %s", e)
+
+    # Phase 14-5-2: 초기 관리자 계정 시드
+    try:
+        _seed_admin_user()
+    except Exception as e:
+        logging.getLogger(__name__).warning("초기 관리자 시드 중 오류: %s", e)
+
     threading.Thread(target=_llm_check_after_startup, daemon=True).start()
 
     # Phase 12-3-4: 만료 기억 자동 정리 스케줄러

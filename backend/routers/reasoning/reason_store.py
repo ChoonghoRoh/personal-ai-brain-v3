@@ -14,7 +14,7 @@ from backend.models.models import ReasoningResult
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/reason", tags=["reason-store"])
+router = APIRouter(prefix="/api/reason", tags=["Reasoning Store"])
 
 
 # ---------- 요청 스키마 ----------

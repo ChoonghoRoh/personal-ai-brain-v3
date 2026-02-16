@@ -1,6 +1,6 @@
 # AI Team — Architecture SSOT
 
-**버전**: 3.1
+**버전**: 3.2
 **최종 수정**: 2026-02-16
 
 ---
@@ -57,7 +57,7 @@ backend/
 ├── models/
 │   ├── database.py              # SQLAlchemy 엔진, 세션
 │   ├── models.py                # 핵심 ORM 모델
-│   ├── admin_models.py          # Admin 설정 모델 (Phase 11)
+│   ├── admin_models.py          # Admin 설정 모델 (Phase 11) + PageAccessLog (Phase 13-4)
 │   └── workflow_common.py       # 워크플로우 공통 모델
 ├── routers/                     # API 라우터 (도메인별)
 │   ├── auth/auth.py
@@ -69,7 +69,7 @@ backend/
 │   ├── system/{system,backup,integrity,logs,error_logs,statistics}.py
 │   ├── automation/{automation,workflow}.py
 │   ├── ingest/file_parser.py
-│   └── admin/{schema_crud,template_crud,preset_crud,rag_profile_crud,policy_set_crud,audit_log_crud}.py
+│   └── admin/{schema_crud,template_crud,preset_crud,rag_profile_crud,policy_set_crud,audit_log_crud,page_access_log_crud}.py
 ├── services/                    # 비즈니스 로직 (도메인별)
 │   ├── search/{search_service,hybrid_search,reranker,multi_hop_rag,document_sync_service}.py
 │   ├── ai/{ollama_client,context_manager}.py
@@ -84,6 +84,7 @@ backend/
     ├── rate_limit.py            # Rate Limiting (slowapi, X-Forwarded-For)
     ├── request_id.py            # Request ID 미들웨어 (UUID)
     ├── error_handler.py         # 전역 에러 핸들러 (표준 JSON)
+    ├── page_access_log.py       # 페이지 접근 로그 (Phase 13-4)
     └── auth.py                  # JWT/API Key 인증
 ```
 
@@ -290,11 +291,18 @@ web/
 | `policy_sets` | UUID | FK: projects, templates, presets, profiles |
 | `audit_logs` | UUID | JSONB old/new_values |
 
+### 4.2.1 운영 테이블 (Phase 13-4)
+
+| 테이블 | PK 타입 | 특징 |
+|--------|---------|------|
+| `page_access_logs` | SERIAL | path, status_code, response_time_ms, accessed_at |
+
 ### 4.3 DB 변경 규칙
 
 | 규칙 | 기준 |
 |------|------|
-| **마이그레이션** | SQL 파일은 `scripts/db/migrate_*.sql`에 저장 |
+| **마이그레이션 (레거시)** | Phase 11 이전: `scripts/db/migrate_*.sql` |
+| **마이그레이션 (현행)** | Phase 12 이후: `scripts/migrations/NNN_*.sql` (순번제, README 관리) |
 | **시드 데이터** | `scripts/db/seed_*.sql`에 저장 |
 | **인덱스** | FK 컬럼, 자주 조회되는 컬럼에 반드시 생성 |
 | **제약조건** | FK, NOT NULL, UNIQUE 적극 활용 |
@@ -503,3 +511,4 @@ RATE_LIMIT_LLM_PER_MINUTE=10
 | 2.0 | 2026-02-09 | 프론트엔드 구조 추가, 보안/검증 기준 분리, 공통 AI 팀 언어로 전환 | Claude Code (Backend & Logic Expert) |
 | 3.0 | 2026-02-15 | Claude Code 내부 에이전트 팀 전환: 검증 기준 문구를 Verifier 서브에이전트(Task tool) 기반으로 수정 | Claude Code (Backend & Logic Expert) |
 | 3.1 | 2026-02-16 | Phase 12 반영: Redis 컨테이너 추가, CDN 5개 로컬 전환 완료, HSTS 환경변수 활성화, middleware(request_id, error_handler) 추가, Rate Limit X-Forwarded-For, memory_scheduler/transaction_manager/chunk_sync_service 추가 | Claude Code (Backend & Logic Expert) |
+| 3.2 | 2026-02-16 | Phase 13-4 반영: page_access_log 미들웨어·page_access_log_crud 라우터·page_access_logs 테이블 추가, 마이그레이션 경로 이원화(레거시 scripts/db/ + 현행 scripts/migrations/) 반영 | Claude Code (Backend & Logic Expert) |

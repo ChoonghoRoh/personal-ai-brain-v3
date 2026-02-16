@@ -7,7 +7,7 @@ import os
 
 from backend.services.ingest.file_parser_service import get_file_parser_service
 
-router = APIRouter(prefix="/api/file-parser", tags=["file-parser"])
+router = APIRouter(prefix="/api/file-parser", tags=["File Parser"])
 
 
 @router.post("/parse")

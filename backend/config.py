@@ -156,6 +156,10 @@ API_SECRET_KEY = get_env("API_SECRET_KEY")
 # 인증 활성화 여부 (개발 환경에서 비활성화 가능)
 AUTH_ENABLED = get_env_bool("AUTH_ENABLED", ENVIRONMENT == "production")
 
+# 초기 관리자 계정 (Phase 14-5-2: 첫 실행 시 자동 생성)
+ADMIN_DEFAULT_USERNAME = get_env("ADMIN_DEFAULT_USERNAME", "admin")
+ADMIN_DEFAULT_PASSWORD = get_env("ADMIN_DEFAULT_PASSWORD", "admin1234")
+
 # ============================================
 # CORS Configuration (Phase 9-1)
 # ============================================

@@ -6,7 +6,7 @@ from pathlib import Path
 from backend.services.system.system_service import get_system_service
 from backend.config import SYSTEM_DIR
 
-router = APIRouter(prefix="/api/system", tags=["system"])
+router = APIRouter(prefix="/api/system", tags=["System"])
 
 
 @router.get("/status")

@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from backend.models.database import get_db
 from backend.services.automation.automation_service import get_automation_service
 
-router = APIRouter(prefix="/api/automation", tags=["automation"])
+router = APIRouter(prefix="/api/automation", tags=["Automation"])
 
 
 class AutoLabelRequest(BaseModel):

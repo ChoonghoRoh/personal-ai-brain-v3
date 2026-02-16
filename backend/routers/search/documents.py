@@ -10,7 +10,7 @@ from qdrant_client import QdrantClient
 
 BRAIN_DIR = PROJECT_ROOT / "brain"
 
-router = APIRouter(prefix="/api/documents", tags=["documents"])
+router = APIRouter(prefix="/api/documents", tags=["Documents"])
 
 
 @router.get("/work-log")

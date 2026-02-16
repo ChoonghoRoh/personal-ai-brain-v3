@@ -1,15 +1,19 @@
-"""인증 API 라우터 (Phase 9-1-1)
+"""인증 API 라우터 (Phase 9-1-1, Phase 14-5-2 로그인 구현)
 
-JWT 토큰 발급 및 사용자 정보 조회 API
+JWT 토큰 발급, 사용자 로그인/로그아웃 API
 """
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
+from passlib.context import CryptContext
 from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
 
 from backend.config import JWT_EXPIRE_MINUTES, AUTH_ENABLED, API_SECRET_KEY
+from backend.models.database import get_db
+from backend.models.user_models import User
 from backend.middleware.auth import (
     create_access_token,
     verify_api_key,
@@ -17,7 +21,12 @@ from backend.middleware.auth import (
     get_current_user,
     UserInfo,
     TokenResponse,
+    ROLE_ADMIN_SYSTEM,
+    ROLE_USER,
 )
+
+# 비밀번호 해싱 컨텍스트 (Phase 14-5-2)
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +54,7 @@ class AuthStatusResponse(BaseModel):
     authenticated: bool
     username: Optional[str] = None
     auth_type: Optional[str] = None
+    role: Optional[str] = None
 
 
 class MessageResponse(BaseModel):
@@ -94,9 +104,9 @@ async def get_token(request: TokenRequest):
             detail="Invalid API key"
         )
 
-    # JWT 토큰 생성
+    # JWT 토큰 생성 (API Key 사용자는 admin_system 권한)
     access_token = create_access_token(
-        data={"sub": "api_user"},
+        data={"sub": "api_user", "role": ROLE_ADMIN_SYSTEM},
         expires_delta=timedelta(minutes=JWT_EXPIRE_MINUTES)
     )
 
@@ -109,23 +119,44 @@ async def get_token(request: TokenRequest):
     )
 
 
-@router.post("/login", response_model=TokenResponse, summary="로그인 (확장용)")
-async def login(request: LoginRequest):
+@router.post("/login", response_model=TokenResponse, summary="사용자 로그인")
+async def login(request: LoginRequest, db: Session = Depends(get_db)):
     """
-    사용자명/비밀번호로 로그인 (확장용)
+    사용자명/비밀번호로 로그인 (Phase 14-5-2)
 
-    현재는 간단한 검증만 수행하며, 향후 사용자 DB 연동 가능
-
-    **참고:** 현재 구현에서는 모든 로그인 시도가 실패합니다.
-    실제 사용자 인증이 필요한 경우 이 엔드포인트를 확장하세요.
+    - users 테이블에서 사용자 조회
+    - bcrypt 비밀번호 검증
+    - 성공 시 JWT 액세스 토큰 반환
     """
-    # TODO: 실제 사용자 DB 연동 시 구현
-    # 현재는 사용자 DB가 없으므로 항상 실패
-    logger.warning(f"로그인 시도: {request.username} (사용자 DB 미구현)")
+    user = db.query(User).filter(
+        User.username == request.username,
+        User.is_active == True,
+    ).first()
 
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="User authentication is not implemented yet. Use /api/auth/token with API key."
+    if not user or not pwd_context.verify(request.password, user.hashed_password):
+        logger.warning(f"로그인 실패: {request.username}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # JWT 토큰 생성
+    access_token = create_access_token(
+        data={"sub": user.username, "role": user.role},
+        expires_delta=timedelta(minutes=JWT_EXPIRE_MINUTES),
+    )
+
+    # last_login_at 갱신
+    user.last_login_at = datetime.now(timezone.utc)
+    db.commit()
+
+    logger.info(f"로그인 성공: {user.username} (role={user.role})")
+
+    return TokenResponse(
+        access_token=access_token,
+        token_type="bearer",
+        expires_in=JWT_EXPIRE_MINUTES * 60,
     )
 
 
@@ -165,14 +196,26 @@ async def get_me(
             auth_enabled=AUTH_ENABLED,
             authenticated=True,
             username=user.username,
-            auth_type=user.auth_type
+            auth_type=user.auth_type,
+            role=user.role,
+        )
+
+    # 인증 비활성화 시 admin_system 권한 반환 (개발 편의)
+    if not AUTH_ENABLED:
+        return AuthStatusResponse(
+            auth_enabled=False,
+            authenticated=False,
+            username=None,
+            auth_type=None,
+            role=ROLE_ADMIN_SYSTEM,
         )
 
     return AuthStatusResponse(
         auth_enabled=AUTH_ENABLED,
         authenticated=False,
         username=None,
-        auth_type=None
+        auth_type=None,
+        role=None,
     )
 
 
@@ -199,11 +242,23 @@ async def auth_status():
     """
     인증 시스템 활성화 상태 확인
 
-    클라이언트가 인증이 필요한지 확인할 때 사용
+    클라이언트가 인증이 필요한지 확인할 때 사용.
+    AUTH_ENABLED=false 시 role=admin_system 반환 (개발 환경에서 전체 메뉴 노출).
     """
+    # 인증 비활성화 시 admin_system 권한 반환
+    if not AUTH_ENABLED:
+        return AuthStatusResponse(
+            auth_enabled=False,
+            authenticated=False,
+            username=None,
+            auth_type=None,
+            role=ROLE_ADMIN_SYSTEM,
+        )
+
     return AuthStatusResponse(
         auth_enabled=AUTH_ENABLED,
         authenticated=False,
         username=None,
-        auth_type=None
+        auth_type=None,
+        role=None,
     )

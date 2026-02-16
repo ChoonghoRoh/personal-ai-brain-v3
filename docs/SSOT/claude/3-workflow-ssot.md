@@ -64,6 +64,7 @@ Phase 실행의 **단일 진입점**은 `phase-X-Y-status.md` 파일이다.
 | `TESTING` | 테스트 | 테스트 실행 (도메인별 레벨 적용) | VERIFYING 통과 |
 | `INTEGRATION` | 통합 테스트 | Phase 전체 통합 검증 (API↔UI 연동 포함) | 모든 Task TESTING 통과 |
 | `E2E` | E2E 테스트 | 사용자 시나리오 기반 전체 테스트 | INTEGRATION 통과 |
+| `E2E_REPORT` | E2E 리포트 | Verification Report + E2E 실행 리포트 작성 | E2E 통과 |
 | `BLOCKED` | 차단 | Blocker 이슈 발생 | 어떤 상태에서든 진입 가능 |
 | `REWINDING` | 리와인드 | 이전 상태로 롤백 중 | FAIL 판정 시 |
 | `DONE` | 완료 | Phase 종료 | E2E 통과 + Final Gate PASS |
@@ -105,7 +106,10 @@ INTEGRATION ─── FAIL ──► REWINDING ──► BUILDING│
   ▼                                            │
 E2E ──────────── FAIL ──► REWINDING ──► BUILDING
   │
-  │ PASS → E2E 리포트 + Verification Report 작성
+  │ PASS
+  ▼
+E2E_REPORT (Verification Report + E2E 리포트 작성)
+  │
   ▼
 DONE (G4 Final Gate)
 
@@ -132,9 +136,10 @@ DONE (G4 Final Gate)
 | INTEGRATION | FAIL (회귀) | REWINDING→BUILDING | 기존 API 회귀 실패 — 변경사항에 의한 기존 기능 깨짐 |
 | INTEGRATION | FAIL (신규) | REWINDING→BUILDING | 새/변경 API 실패 — 구현 결함 |
 | INTEGRATION | FAIL (연동) | REWINDING→BUILDING | API↔UI 연동 실패 — 도메인 간 불일치 |
-| E2E | PASS (회귀+신규) | DONE | 기존 E2E 회귀 PASS + 현재 E2E PASS + 리포트 작성 완료 |
+| E2E | PASS (회귀+신규) | E2E_REPORT | 기존 E2E 회귀 PASS + 현재 E2E PASS |
 | E2E | FAIL (회귀) | REWINDING→BUILDING | 기존 E2E 깨짐 — 변경사항에 의한 회귀 |
 | E2E | FAIL (신규) | REWINDING→BUILDING | 현재 Phase E2E 실패 — 구현/셀렉터 결함 |
+| E2E_REPORT | 리포트 작성 완료 | DONE | Verification Report + E2E 리포트 작성 완료 |
 | BLOCKED | 이슈 해결 | (이전 상태) | Blocker 제거 |
 | BLOCKED | SSOT 변경 완료 | (이전 상태) | SSOT 리로드 완료 (LOCK-3) |
 | REWINDING | 롤백 완료 | (대상 상태) | — |

@@ -7,7 +7,7 @@ from datetime import datetime
 
 from backend.config import PROJECT_ROOT, SYSTEM_DIR
 
-router = APIRouter(prefix="/api/logs", tags=["logs"])
+router = APIRouter(prefix="/api/logs", tags=["Logs"])
 
 
 @router.get("")

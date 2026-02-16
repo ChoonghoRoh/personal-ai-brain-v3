@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from backend.models.database import get_db
 from backend.services.cognitive.personality_service import get_personality_service
 
-router = APIRouter(prefix="/api/personality", tags=["personality"])
+router = APIRouter(prefix="/api/personality", tags=["Personality"])
 
 
 class PersonalityProfileRequest(BaseModel):

@@ -8,7 +8,7 @@ from backend.models.database import get_db
 from backend.models.models import KnowledgeChunk
 from backend.services.cognitive.context_service import get_context_service
 
-router = APIRouter(prefix="/api/context", tags=["context"])
+router = APIRouter(prefix="/api/context", tags=["Context"])
 
 
 @router.get("/chunks/{chunk_id}/semantic-connections")

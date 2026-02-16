@@ -1,6 +1,7 @@
-"""인증 미들웨어 (Phase 9-1-1)
+"""인증 미들웨어 (Phase 9-1-1, Phase 14-1 권한 확장)
 
 JWT 토큰 및 API Key 기반 인증을 지원합니다.
+역할(role) 기반 접근 제어를 포함합니다.
 """
 import logging
 from datetime import datetime, timedelta, timezone
@@ -22,19 +23,36 @@ from backend.config import (
 logger = logging.getLogger(__name__)
 
 # ============================================
+# 역할(Role) 정의 (Phase 14-1)
+# ============================================
+
+ROLE_USER = "user"
+ROLE_ADMIN_KNOWLEDGE = "admin_knowledge"
+ROLE_ADMIN_SYSTEM = "admin_system"
+
+# 역할 계층: admin_system > admin_knowledge > user
+ROLE_HIERARCHY = {
+    ROLE_USER: 0,
+    ROLE_ADMIN_KNOWLEDGE: 1,
+    ROLE_ADMIN_SYSTEM: 2,
+}
+
+# ============================================
 # Pydantic 모델
 # ============================================
 
 class TokenData(BaseModel):
     """토큰 페이로드 데이터"""
     username: Optional[str] = None
+    role: str = ROLE_USER
     exp: Optional[datetime] = None
 
 
 class UserInfo(BaseModel):
     """인증된 사용자 정보"""
     username: str
-    auth_type: str  # "jwt" | "api_key"
+    auth_type: str  # "jwt" | "api_key" | "none"
+    role: str = ROLE_USER
 
 
 class TokenResponse(BaseModel):
@@ -96,12 +114,17 @@ def verify_jwt_token(token: str) -> Optional[TokenData]:
     try:
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
         username: str = payload.get("sub")
+        role: str = payload.get("role", ROLE_USER)
         exp = payload.get("exp")
 
         if username is None:
             return None
 
-        return TokenData(username=username, exp=datetime.fromtimestamp(exp, tz=timezone.utc) if exp else None)
+        return TokenData(
+            username=username,
+            role=role,
+            exp=datetime.fromtimestamp(exp, tz=timezone.utc) if exp else None,
+        )
 
     except JWTError as e:
         logger.debug(f"JWT 검증 실패: {e}")
@@ -154,13 +177,13 @@ async def get_current_user(
     if bearer_credentials:
         token_data = verify_jwt_token(bearer_credentials.credentials)
         if token_data and token_data.username:
-            user = UserInfo(username=token_data.username, auth_type="jwt")
+            user = UserInfo(username=token_data.username, auth_type="jwt", role=token_data.role)
             request.state.user = user
             return user
 
-    # API Key 확인
+    # API Key 확인 (API Key 사용자는 admin_system 권한)
     if api_key and verify_api_key(api_key):
-        user = UserInfo(username="api_user", auth_type="api_key")
+        user = UserInfo(username="api_user", auth_type="api_key", role=ROLE_ADMIN_SYSTEM)
         request.state.user = user
         return user
 
@@ -189,9 +212,9 @@ async def require_auth(
     Raises:
         HTTPException: 인증 실패 시 401 Unauthorized
     """
-    # 인증 비활성화 시 더미 사용자 반환
+    # 인증 비활성화 시 더미 사용자 반환 (개발 편의: admin_system 권한)
     if not AUTH_ENABLED:
-        return UserInfo(username="anonymous", auth_type="none")
+        return UserInfo(username="anonymous", auth_type="none", role=ROLE_ADMIN_SYSTEM)
 
     user = await get_current_user(request, bearer_credentials, api_key)
 
@@ -201,6 +224,59 @@ async def require_auth(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",
             headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return user
+
+
+# ============================================
+# 역할 기반 권한 검증 의존성 (Phase 14-1)
+# ============================================
+
+async def require_admin_knowledge(
+    user: UserInfo = Depends(require_auth),
+) -> UserInfo:
+    """
+    지식 관리(Knowledge) 권한 필수 의존성
+
+    admin_knowledge 이상의 역할이 필요합니다.
+    (admin_knowledge, admin_system 허용)
+
+    Raises:
+        HTTPException: 권한 부족 시 403 Forbidden
+    """
+    user_level = ROLE_HIERARCHY.get(user.role, 0)
+    required_level = ROLE_HIERARCHY[ROLE_ADMIN_KNOWLEDGE]
+
+    if user_level < required_level:
+        logger.warning(f"권한 부족: {user.username} (role={user.role}) → admin_knowledge 필요")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Knowledge management permission required. Role 'admin_knowledge' or higher is needed.",
+        )
+
+    return user
+
+
+async def require_admin_system(
+    user: UserInfo = Depends(require_auth),
+) -> UserInfo:
+    """
+    시스템 관리(System) 권한 필수 의존성
+
+    admin_system 역할이 필요합니다.
+
+    Raises:
+        HTTPException: 권한 부족 시 403 Forbidden
+    """
+    user_level = ROLE_HIERARCHY.get(user.role, 0)
+    required_level = ROLE_HIERARCHY[ROLE_ADMIN_SYSTEM]
+
+    if user_level < required_level:
+        logger.warning(f"권한 부족: {user.username} (role={user.role}) → admin_system 필요")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="System administration permission required. Role 'admin_system' is needed.",
         )
 
     return user

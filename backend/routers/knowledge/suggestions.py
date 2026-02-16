@@ -10,7 +10,7 @@ from backend.services.search.search_service import get_search_service
 from backend.services.reasoning.recommendation_service import get_recommendation_service
 from backend.services.ai.ollama_client import ollama_connection_check
 
-router = APIRouter(prefix="/api/knowledge", tags=["suggestions"])
+router = APIRouter(prefix="/api/knowledge", tags=["Suggestions"])
 
 
 class LabelSuggestion(BaseModel):

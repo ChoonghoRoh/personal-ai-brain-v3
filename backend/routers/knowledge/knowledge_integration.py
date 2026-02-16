@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from backend.models.database import get_db
 from backend.services.knowledge.knowledge_integration_service import get_knowledge_integration_service
 
-router = APIRouter(prefix="/api/knowledge-integration", tags=["knowledge-integration"])
+router = APIRouter(prefix="/api/knowledge-integration", tags=["Knowledge Integration"])
 
 
 class KnowledgeIntegrationRequest(BaseModel):

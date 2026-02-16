@@ -10,11 +10,7 @@ body {
   color: #333;
 }
 
-.container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 20px;
-}
+/* Phase 14-3: container max-width는 layout-component.js에서 관리 */
 
 /* Header 스타일은 header-component.js에서 관리 */
 

@@ -9,7 +9,7 @@ from backend.models.models import KnowledgeChunk, Label, KnowledgeLabel, Documen
 from backend.config import AUTO_STRUCTURE_MATCHING_ENABLED
 from backend.services.knowledge.structure_matcher import get_structure_matcher
 
-router = APIRouter(prefix="/api/knowledge", tags=["knowledge"])
+router = APIRouter(prefix="/api/knowledge", tags=["Knowledge"])
 
 
 class ChunkResponse(BaseModel):

@@ -131,3 +131,21 @@ async def get_trends(
     """
     service = get_statistics_service(db)
     return service.get_trends(days=days)
+
+
+@router.get("/access-logs")
+async def get_page_access_logs(
+    limit: int = Query(default=50, ge=1, le=200, description="조회할 로그 수 (1-200)"),
+    db: Session = Depends(get_db)
+):
+    """
+    페이지 접근 로그 조회 (Phase 13-4-1)
+
+    Args:
+        limit: 조회할 로그 수 (기본 50개)
+
+    Returns:
+        - List of access logs (id, path, method, status_code, time, user_agent, ip, date)
+    """
+    service = get_statistics_service(db)
+    return service.get_page_access_logs(limit=limit)

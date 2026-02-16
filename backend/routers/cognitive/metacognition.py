@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from backend.models.database import get_db
 from backend.services.cognitive.metacognition_service import get_metacognition_service
 
-router = APIRouter(prefix="/api/metacognition", tags=["metacognition"])
+router = APIRouter(prefix="/api/metacognition", tags=["Metacognition"])
 
 
 @router.get("/confidence/{chunk_id}")

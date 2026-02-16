@@ -11,7 +11,7 @@ from backend.config import AUTO_STRUCTURE_MATCHING_ENABLED
 from backend.services.knowledge.structure_matcher import get_structure_matcher
 
 # prefix를 /api/approval/chunks로 변경하여 knowledge.router와의 경로 충돌 방지
-router = APIRouter(prefix="/api/approval/chunks", tags=["approval"])
+router = APIRouter(prefix="/api/approval/chunks", tags=["Approval"])
 
 
 class ApproveRequest(BaseModel):

@@ -6,7 +6,7 @@ from typing import Dict
 from backend.models.database import get_db
 from backend.services.system.integrity_service import get_integrity_service
 
-router = APIRouter(prefix="/api/integrity", tags=["integrity"])
+router = APIRouter(prefix="/api/integrity", tags=["Integrity"])
 
 
 @router.get("/check")

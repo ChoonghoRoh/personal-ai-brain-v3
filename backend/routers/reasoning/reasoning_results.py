@@ -9,7 +9,7 @@ import json
 from backend.models.database import get_db
 from backend.models.models import ReasoningResult
 
-router = APIRouter(prefix="/api/reasoning-results", tags=["reasoning-results"])
+router = APIRouter(prefix="/api/reasoning-results", tags=["Reasoning Results"])
 
 
 class ReasoningResultCreate(BaseModel):
