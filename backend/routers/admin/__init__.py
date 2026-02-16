@@ -1,13 +1,15 @@
-"""Phase 11-2/11-3: Admin 설정 관리 API
+"""Admin 설정 관리 API
 
 Admin 설정 CRUD API 모듈:
 - Task 11-2-1: Schema, Template, PromptPreset CRUD
 - Task 11-2-2: RAG Profile, Policy Set CRUD
 - Task 11-3: Audit Log 조회 API
+- Task 13-4: Page Access Log 조회 API
 """
 from fastapi import APIRouter
 
 from . import schema_crud, template_crud, preset_crud, rag_profile_crud, policy_set_crud, audit_log_crud
+from . import page_access_log_crud  # Phase 13-4
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -21,3 +23,5 @@ router.include_router(rag_profile_crud.router, prefix="/rag-profiles", tags=["ad
 router.include_router(policy_set_crud.router, prefix="/policy-sets", tags=["admin-policy-sets"])
 # Task 11-3
 router.include_router(audit_log_crud.router, prefix="/audit-logs", tags=["admin-audit-logs"])
+# Phase 13-4
+router.include_router(page_access_log_crud.router, prefix="/page-access-logs", tags=["admin-page-access-logs"])

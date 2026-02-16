@@ -1,9 +1,7 @@
-"""Phase 11-1: Admin 설정 관리 테이블 모델
+"""Admin 설정 관리 테이블 모델
 
-7종 Admin 설정 테이블:
-- Task 11-1-1: schemas, templates, prompt_presets
-- Task 11-1-2: rag_profiles, context_rules, policy_sets
-- Task 11-1-3: audit_logs
+- Phase 11-1: schemas, templates, prompt_presets, rag_profiles, context_rules, policy_sets, audit_logs
+- Phase 13-4: page_access_logs
 """
 from sqlalchemy import (
     Column, String, Text, Integer, Boolean, DateTime, Numeric,
@@ -170,3 +168,29 @@ class AdminAuditLog(Base):
     old_values = Column(JSONB, nullable=True)
     new_values = Column(JSONB, nullable=True)
     created_at = Column(DateTime, server_default=text("NOW()"))
+
+
+# ---------------------------------------------------------------------------
+# Phase 13-4: page_access_logs
+# ---------------------------------------------------------------------------
+
+class PageAccessLog(Base):
+    """페이지 접근 로그 (page_access_logs 테이블)
+
+    HTML 페이지 요청만 기록 (API/정적 파일 제외).
+    고빈도 INSERT 대상이므로 Integer PK 사용.
+    """
+    __tablename__ = "page_access_logs"
+    __table_args__ = (
+        Index("idx_page_access_logs_path", "path"),
+        Index("idx_page_access_logs_date", "accessed_at"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    path = Column(String(255), nullable=False)
+    method = Column(String(10), nullable=False, server_default=text("'GET'"))
+    status_code = Column(Integer, nullable=False)
+    response_time_ms = Column(Integer, nullable=True)
+    user_agent = Column(Text, nullable=True)
+    ip_address = Column(String(45), nullable=True)
+    accessed_at = Column(DateTime, server_default=text("NOW()"), nullable=False)

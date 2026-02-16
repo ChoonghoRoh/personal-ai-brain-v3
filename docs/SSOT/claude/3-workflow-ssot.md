@@ -263,8 +263,8 @@ Step 6: INTEGRATION (Dev API 검사 + 통합 테스트)
   │   ├── 대상: 이전 Phase에서 구현한 API 엔드포인트 전체
   │   ├── 방법: curl + HTTP 상태 코드 + JSON 응답 구조 검증
   │   │   ```bash
-  │   │   # 예: 전체 API 헬스체크
-  │   │   curl -s -o /dev/null -w "%{http_code}" http://localhost:8001/api/health
+  │   │   # 예: 헬스체크 (루트 라우트)
+  │   │   curl -s -o /dev/null -w "%{http_code}" http://localhost:8001/health
   │   │   # 예: API 응답 구조 검증
   │   │   curl -s http://localhost:8001/api/labels | python3 -c \
   │   │     "import sys,json; d=json.load(sys.stdin); assert isinstance(d,list)"
@@ -285,8 +285,15 @@ Step 6: INTEGRATION (Dev API 검사 + 통합 테스트)
   │   ├── 페이지 로드 검사: 모든 HTML 라우트 HTTP 200 확인
   │   │   ```bash
   │   │   # Phase 13-3 패턴: 전 메뉴 path 일괄 확인
+  │   │   # 실제 등록 라우트는 backend/main.py _HTML_ROUTES 참조
   │   │   for path in /dashboard /search /knowledge /reason /ask /logs \
-  │   │     /admin/knowledge/chunks /admin/knowledge/labels ...; do
+  │   │     /admin/labels /admin/groups /admin/approval \
+  │   │     /admin/chunk-labels /admin/chunk-create /admin/statistics \
+  │   │     /admin/settings/presets /admin/settings/templates \
+  │   │     /admin/settings/rag-profiles /admin/settings/policy-sets \
+  │   │     /admin/settings/audit-logs \
+  │   │     /knowledge-admin /knowledge-detail \
+  │   │     /knowledge-label-matching /knowledge-relation-matching; do
   │   │     code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8001${path}")
   │   │     echo "${path}: ${code}"
   │   │   done

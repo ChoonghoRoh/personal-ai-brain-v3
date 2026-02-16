@@ -301,17 +301,21 @@ npx playwright test e2e/smoke.spec.js e2e/phase-12-qc.spec.js \
 python3 scripts/webtest.py X-Y start
 
 # Dev API 검사: 전 메뉴 path HTTP 200 일괄 확인
+# 실제 등록 라우트는 backend/main.py _HTML_ROUTES 참조
 for path in /dashboard /search /knowledge /reason /ask /logs \
-  /admin/knowledge/chunks /admin/knowledge/labels /admin/knowledge/groups \
-  /admin/knowledge/relations /admin/knowledge/categories /admin/knowledge/statistics \
-  /admin/settings/templates /admin/settings/presets /admin/settings/rag-profiles \
-  /admin/settings/policies /admin/settings/system; do
+  /admin/labels /admin/groups /admin/approval \
+  /admin/chunk-labels /admin/chunk-create /admin/statistics \
+  /admin/settings/presets /admin/settings/templates \
+  /admin/settings/rag-profiles /admin/settings/policy-sets \
+  /admin/settings/audit-logs \
+  /knowledge-admin /knowledge-detail \
+  /knowledge-label-matching /knowledge-relation-matching; do
   code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8001${path}")
   echo "${path}: ${code}"
 done
 
 # Dev API 검사: 주요 API 엔드포인트 상태 확인
-curl -s http://localhost:8001/api/health | python3 -c "import sys,json; print(json.load(sys.stdin))"
+curl -s http://localhost:8001/health | python3 -c "import sys,json; print(json.load(sys.stdin))"
 curl -s http://localhost:8001/api/labels | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'labels: {len(d)}개')" 2>/dev/null
 ```
 

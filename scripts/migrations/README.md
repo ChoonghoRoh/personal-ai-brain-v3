@@ -23,6 +23,7 @@ psql -h localhost -p 5433 -U brain -d knowledge -f scripts/migrations/001_add_gi
 | 번호 | 파일명 | 설명 | Phase |
 |------|--------|------|-------|
 | 001 | `001_add_gin_indexes.sql` | GIN 인덱스 4개 추가 (knowledge_chunks, conversations, memories) | 12-2-3 |
+| 002 | `002_create_page_access_log.sql` | page_access_logs 테이블 생성 + 인덱스 (path, accessed_at) | 13-4 |
 
 ## 주의사항
 

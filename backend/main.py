@@ -41,6 +41,7 @@ from backend.middleware.security import SecurityHeadersMiddleware
 from backend.middleware.request_id import RequestIDMiddleware  # Phase 12-2-4
 from backend.middleware.rate_limit import setup_rate_limiting
 from backend.middleware.error_handler import setup_error_handlers  # Phase 12-2-4
+from backend.middleware.page_access_log import PageAccessLogMiddleware  # Phase 13-4
 from backend.models.database import init_db
 
 app = FastAPI(
@@ -111,6 +112,9 @@ app.add_middleware(SecurityHeadersMiddleware)
 
 # Request ID 미들웨어 (Phase 12-2-4)
 app.add_middleware(RequestIDMiddleware)
+
+# 페이지 접근 로그 미들웨어 (Phase 13-4)
+app.add_middleware(PageAccessLogMiddleware)
 
 # ============================================
 # Rate Limiting 설정 (Phase 9-1-4)
