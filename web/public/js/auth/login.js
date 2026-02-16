@@ -59,6 +59,10 @@ async function handleLogin(e) {
 
     const data = await res.json();
     localStorage.setItem('auth_token', data.access_token);
+    // Phase 15-6-1: Refresh Token 저장
+    if (data.refresh_token) {
+      localStorage.setItem('refresh_token', data.refresh_token);
+    }
 
     const returnTo = new URLSearchParams(window.location.search).get('return_to');
     window.location.href = returnTo || '/dashboard';

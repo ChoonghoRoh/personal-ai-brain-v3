@@ -1430,6 +1430,27 @@ details[open] > .detail-toggle::before {
   background: #6d28d9 !important;
 }
 
+/* Phase 15-3: 문서 컨텍스트 뱃지 */
+.document-context-badge { margin: 8px 0 16px; }
+.doc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1e40af;
+}
+.doc-badge-icon { font-size: 18px; }
+.doc-badge-close {
+  background: none; border: none;
+  font-size: 18px; color: #6b7280;
+  cursor: pointer; padding: 0 2px; line-height: 1;
+}
+.doc-badge-close:hover { color: #dc2626; }
+
 /* ========================================
    Phase 10-4-3: 의사결정 저장 모달
    ======================================== */

@@ -1,0 +1,67 @@
+# Phase 15-7-2: Docker Production 오버라이드
+# 사용법: docker compose -f docker-compose.yml -f docker-compose.production.yml up -d
+#
+# 프로덕션 환경 설정:
+# - AUTH_ENABLED=true
+# - JWT_SECRET_KEY 변경 필수
+# - DEBUG=false
+# - 리소스 제한 (memory, cpu)
+# - 헬스체크 강화
+# - Redis AOF 영속성
+
+services:
+  postgres:
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+        reservations:
+          memory: 256M
+
+  qdrant:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "1.0"
+        reservations:
+          memory: 512M
+
+  redis:
+    restart: always
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+        reservations:
+          memory: 128M
+
+  backend:
+    restart: always
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - AUTH_ENABLED=true
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:?JWT_SECRET_KEY is required for production}
+      - HSTS_ENABLED=true
+      - RATE_LIMIT_ENABLED=true
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2.0"
+        reservations:
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/live')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s

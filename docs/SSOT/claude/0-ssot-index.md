@@ -1,6 +1,6 @@
 # AI Team SSOT Index
 
-**버전**: 4.2
+**버전**: 4.3
 **작성일**: 2026-02-09
 **최종 수정**: 2026-02-16
 **관리 주체**: Team Lead (메인 세션)
@@ -161,6 +161,7 @@ SSOT 문서와 Phase 문서 간의 권위 체계를 정의한다.
 | 1 | `1-project-ssot.md` | 팀 구성, 역할 정의, 품질 게이트, 테스트 전략 |
 | 2 | `2-architecture-ssot.md` | 기술 스택, 백엔드/프론트엔드 코드 구조, 검증 기준 |
 | 3 | `3-workflow-ssot.md` | 워크플로우 상태 머신, 에러 처리, 리와인드, 완료 판정 |
+| — | Phase Chain | `3-workflow-ssot.md` Section 9 — 복수 Phase 자동 순차 실행 프로토콜 |
 
 ### 역할별 SSOT (팀원용)
 
@@ -295,3 +296,4 @@ SSOT는 4개 파일로 구성되며, 각 파일은 개별 버전 히스토리를
 | 4.0 | 2026-02-16 | **Agent Teams 전환**: TeamCreate/SendMessage/TaskList 기반 팀 운영 체계로 전면 개편. Backend Developer·Frontend Developer를 general-purpose 에이전트로 승격 (코드 편집 가능). 팀 라이프사이클·통신 프로토콜 추가. role-backend-dev-ssot·role-frontend-dev-ssot 신규 |
 | 4.1 | 2026-02-16 | Hub-and-Spoke 통신 모델 (Peer DM 제거, 모든 통신 Team Lead 경유). Team Lead 코드 수정 금지 명시. 모델 지정: planner=opus, 나머지=sonnet. 불필요 섹션 정리 |
 | 4.2 | 2026-02-16 | 자원 및 비용 관리 섹션 신설 (모델 혼합 운영 근거, 컨텍스트 최적화 전략) |
+| 4.3 | 2026-02-16 | Phase Chain 참조 추가 (`3-workflow-ssot.md` Section 9) |

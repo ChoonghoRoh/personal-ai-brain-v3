@@ -25,6 +25,10 @@ from backend.models.models import Project, Document, KnowledgeChunk, Label, Know
 from backend.services.search.search_service import get_search_service
 from backend.services.reasoning.dynamic_reasoning_service import get_dynamic_reasoning_service
 from backend.services.reasoning.recommendation_service import get_recommendation_service
+from backend.routers.reasoning.reason import (
+    collect_chunks_by_document_ids,
+    collect_chunks_by_question_in_documents,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -34,11 +38,12 @@ router = APIRouter(prefix="/api/reason", tags=["Reasoning Stream"])
 active_tasks: Dict[str, Dict] = {}
 
 
-class ReasonFilters(BaseModel):
+class ReasonFilters(BaseModel):  # Phase 15-3
     project_ids: Optional[List[int]] = None
     category_label_ids: Optional[List[int]] = None
     keyword_group_ids: Optional[List[int]] = None
     keyword_ids: Optional[List[int]] = None
+    document_ids: Optional[List[int]] = None  # Phase 15-3
 
 
 class ReasonStreamRequest(BaseModel):
@@ -201,6 +206,8 @@ async def execute_reasoning_with_progress(
         label_names = request.inputs.get("labels", [])
         filter_label_ids = []
 
+        # Phase 15-3: document_ids 파싱
+        document_ids = []
         if request.filters:
             if request.filters.category_label_ids:
                 filter_label_ids.extend(request.filters.category_label_ids)
@@ -210,6 +217,8 @@ async def execute_reasoning_with_progress(
                 filter_label_ids.extend(request.filters.keyword_ids)
             if request.filters.project_ids:
                 project_ids = list(set(project_ids + request.filters.project_ids))
+            if request.filters.document_ids:
+                document_ids = request.filters.document_ids
 
         question = (request.question or "").strip()
         await asyncio.sleep(0.1)  # UI 업데이트를 위한 짧은 대기
@@ -229,7 +238,25 @@ async def execute_reasoning_with_progress(
             return
 
         chunks = []
-        if question:
+
+        # Phase 15-3: 문서 기반 수집 우선
+        if document_ids:
+            if question:
+                chunks = collect_chunks_by_question_in_documents(
+                    db, question, document_ids, top_k=20, reasoning_steps=reasoning_steps
+                )
+                if len(chunks) < 5:
+                    doc_chunks = collect_chunks_by_document_ids(db, document_ids)
+                    seen = {c.id for c in chunks}
+                    for c in doc_chunks:
+                        if c.id not in seen:
+                            seen.add(c.id)
+                            chunks.append(c)
+                    reasoning_steps.append(f"문서 전체 청크 보강: 총 {len(chunks)}개")
+            else:
+                chunks = collect_chunks_by_document_ids(db, document_ids)
+                reasoning_steps.append(f"문서에서 {len(chunks)}개 청크 수집")
+        elif question:
             reasoning_steps.append("질문 기반 의미 검색 중...")
             search_service = get_search_service()
             search_results = search_service.search_simple(question.strip(), top_k=20, use_cache=False)
@@ -245,36 +272,37 @@ async def execute_reasoning_with_progress(
                     chunks.append(chunk)
             reasoning_steps.append(f"의미 검색으로 {len(chunks)}개 청크 수집")
 
-        # 보조 필터 적용
-        if project_ids:
-            project_chunks = collect_knowledge_from_projects(db, project_ids)
-            seen = {c.id for c in chunks}
-            for c in project_chunks:
-                if c.id not in seen:
-                    seen.add(c.id)
-                    chunks.append(c)
-            reasoning_steps.append(f"프로젝트에서 {len(project_chunks)}개 청크 수집")
+        # 보조 필터 적용 (문서 필터가 아닌 경우)
+        if not document_ids:
+            if project_ids:
+                project_chunks = collect_knowledge_from_projects(db, project_ids)
+                seen = {c.id for c in chunks}
+                for c in project_chunks:
+                    if c.id not in seen:
+                        seen.add(c.id)
+                        chunks.append(c)
+                reasoning_steps.append(f"프로젝트에서 {len(project_chunks)}개 청크 수집")
 
-        if label_names:
-            label_chunks = collect_knowledge_from_labels(db, label_names)
-            seen = {c.id for c in chunks}
-            for c in label_chunks:
-                if c.id not in seen:
-                    seen.add(c.id)
-                    chunks.append(c)
-            reasoning_steps.append(f"라벨에서 {len(label_chunks)}개 청크 수집")
+            if label_names:
+                label_chunks = collect_knowledge_from_labels(db, label_names)
+                seen = {c.id for c in chunks}
+                for c in label_chunks:
+                    if c.id not in seen:
+                        seen.add(c.id)
+                        chunks.append(c)
+                reasoning_steps.append(f"라벨에서 {len(label_chunks)}개 청크 수집")
 
-        if filter_label_ids:
-            filter_chunks = collect_knowledge_from_label_ids(db, filter_label_ids)
-            seen = {c.id for c in chunks}
-            for c in filter_chunks:
-                if c.id not in seen:
-                    seen.add(c.id)
-                    chunks.append(c)
-            reasoning_steps.append(f"키워드 필터에서 {len(filter_chunks)}개 청크 수집")
+            if filter_label_ids:
+                filter_chunks = collect_knowledge_from_label_ids(db, filter_label_ids)
+                seen = {c.id for c in chunks}
+                for c in filter_chunks:
+                    if c.id not in seen:
+                        seen.add(c.id)
+                        chunks.append(c)
+                reasoning_steps.append(f"키워드 필터에서 {len(filter_chunks)}개 청크 수집")
 
         # 질문 없이 필터도 없을 때 폴백
-        if not chunks and not question:
+        if not chunks and not question and not document_ids:
             fallback = db.query(KnowledgeChunk).filter(
                 KnowledgeChunk.status == "approved"
             ).order_by(KnowledgeChunk.id.desc()).limit(100).all()

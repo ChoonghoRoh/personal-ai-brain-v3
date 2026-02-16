@@ -299,3 +299,22 @@
   font-family: monospace;
   font-size: 12px;
 }
+
+/* Phase 15-3: Reasoning 버튼 */
+.btn-reasoning {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #7c3aed;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  border-radius: 4px;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-reasoning:hover {
+  background: #7c3aed;
+  color: #fff;
+}

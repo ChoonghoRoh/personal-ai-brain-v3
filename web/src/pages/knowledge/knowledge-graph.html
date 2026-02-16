@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/css/admin/admin-styles.css" />
+    <link rel="stylesheet" href="/static/css/knowledge-graph.css" />
+    <title>Personal AI Brain - 지식 그래프</title>
+  </head>
+  <body>
+    <div class="container">
+      <div id="header-placeholder"></div>
+
+      <div id="error-message" class="error" style="display: none"></div>
+
+      <div class="graph-container">
+        <div class="graph-controls">
+          <h3>지식 그래프</h3>
+          <div class="control-group">
+            <label for="node-limit">노드 수</label>
+            <select id="node-limit">
+              <option value="50">50</option>
+              <option value="100" selected>100</option>
+              <option value="200">200</option>
+              <option value="500">500</option>
+            </select>
+            <label for="min-confidence">최소 신뢰도</label>
+            <input type="range" id="min-confidence" min="0" max="1" step="0.1" value="0" />
+            <span id="confidence-value">0.0</span>
+            <button type="button" id="refresh-btn" class="btn btn-primary btn-small">새로고침</button>
+          </div>
+          <div class="graph-info">
+            <span id="node-count">노드: 0</span>
+            <span id="link-count">링크: 0</span>
+          </div>
+        </div>
+
+        <div class="graph-canvas-wrapper">
+          <svg id="graph-svg"></svg>
+        </div>
+
+        <!-- 노드 상세 패널 -->
+        <div id="node-detail" class="node-detail" style="display: none;">
+          <h4 id="detail-title">-</h4>
+          <p id="detail-document">문서: -</p>
+          <p id="detail-group">그룹: -</p>
+          <button type="button" class="btn btn-secondary btn-small" onclick="document.getElementById('node-detail').style.display='none'">닫기</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/js/components/layout-component.js"></script>
+    <script src="/static/js/components/header-component.js"></script>
+    <script src="/static/js/admin/admin-common.js"></script>
+    <script src="/static/js/vendor/d3.v7.min.js"></script>
+    <script src="/static/js/knowledge/knowledge-graph.js"></script>
+  </body>
+</html>

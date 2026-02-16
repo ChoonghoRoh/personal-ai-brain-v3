@@ -151,7 +151,7 @@ async function loadFileList() {
   const tbody = document.getElementById('files-table-body');
   if (!tbody) return;
 
-  tbody.innerHTML = '<tr><td colspan="6" class="loading">파일 목록을 불러오는 중...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" class="loading">파일 목록을 불러오는 중...</td></tr>';
 
   try {
     const maxDepth = document.getElementById('files-max-depth')?.value || '3';
@@ -175,7 +175,7 @@ async function loadFileList() {
   } catch (error) {
     console.error('파일 목록 로드 실패:', error);
     showError(error.message);
-    tbody.innerHTML = '<tr><td colspan="6" class="error-cell">파일 목록을 불러오는 데 실패했습니다.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="error-cell">파일 목록을 불러오는 데 실패했습니다.</td></tr>';
   }
 }
 
@@ -191,7 +191,7 @@ function renderFileList(items, totalCount) {
   if (!tbody) return;
 
   if (items.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">파일이 없습니다.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">파일이 없습니다.</td></tr>';
     if (paginationInfo) paginationInfo.textContent = '';
     return;
   }
@@ -215,6 +215,12 @@ function renderFileList(items, totalCount) {
       statusBadge = `<span class="status-badge status-unknown">${status}</span>`;
     }
 
+    let actionHtml = '';
+    if (item.document_id && chunkCount > 0 && (status === 'indexed' || status === 'synced')) {
+      actionHtml = '<a href="/reason?document_id=' + encodeURIComponent(item.document_id) +
+        '" class="btn-reasoning" title="이 문서로 Reasoning 실행">🧠 Reasoning</a>';
+    }
+
     return `
       <tr>
         <td title="${esc(item.relative_path || '')}">${fileName}</td>
@@ -223,6 +229,7 @@ function renderFileList(items, totalCount) {
         <td>${docId}</td>
         <td>${chunkCount}</td>
         <td>${statusBadge}</td>
+        <td>${actionHtml}</td>
       </tr>
     `;
   }).join('');

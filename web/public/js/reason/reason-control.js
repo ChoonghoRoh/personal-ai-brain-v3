@@ -79,11 +79,18 @@
     var modelSelect = document.getElementById("reason-model");
     var model = modelSelect && modelSelect.value ? modelSelect.value.trim() : null;
 
+    // Phase 15-3: 문서 필터
+    var filters = null;
+    if (window.__reasonDocumentIds && window.__reasonDocumentIds.length > 0) {
+      filters = { document_ids: window.__reasonDocumentIds };
+    }
+
     return {
       mode: mode,
       inputs: { projects: projects, labels: labels },
       question: question || null,
       model: model || null,
+      filters: filters,
     };
   }
 

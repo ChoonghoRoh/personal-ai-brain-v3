@@ -1,14 +1,21 @@
-"""Phase 14-6: DB 샘플 데이터 시드 스크립트
+"""Phase 14-6 / 15-4: DB 샘플 데이터 시드 스크립트
 
 사용법:
     docker compose exec backend python scripts/db/seed_sample_data.py
+    docker compose exec backend python scripts/db/seed_sample_data.py --with-knowledge
 
-기준 문서: docs/planning/260210-1400-db-sample-data-and-high-level-strategy.md
+옵션:
+    --with-knowledge   지식관리 지정 폴더(brain/knowledge/) 파일도 시드 대상에 포함
+
+기준 문서:
+    - docs/planning/260210-1400-db-sample-data-and-high-level-strategy.md
+    - docs/phases/phase-15-4/mapping-rules.md
 """
 import os
 import sys
 import random
 import hashlib
+import argparse
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from uuid import uuid4
@@ -659,11 +666,114 @@ def seed_audit_logs(db: Session):
 
 
 # ============================================
+# 12. 지식관리 폴더 시드 (Phase 15-4-2)
+# ============================================
+KNOWLEDGE_ALLOWED_EXTENSIONS = {
+    '.md', '.txt', '.pdf', '.docx', '.hwp', '.hwpx',
+    '.xlsx', '.xls', '.pptx', '.ppt'
+}
+
+
+def seed_knowledge_folder_documents(
+    db: Session,
+    project_map: dict,
+    label_map: dict,
+    folder_path: str = "brain/knowledge"
+) -> dict:
+    """지식관리 폴더 내 파일을 Documents로 시드 (Phase 15-4-2)."""
+    abs_folder = PROJECT_ROOT / folder_path
+    if not abs_folder.exists():
+        log(f"Knowledge folder not found: {abs_folder}, creating...")
+        abs_folder.mkdir(parents=True, exist_ok=True)
+        return {}
+
+    existing_paths = {d.file_path for d in db.query(Document).all()}
+
+    # 카테고리 분류 (mapping-rules.md §4.1)
+    def classify(path_str: str) -> str:
+        p = path_str.lower()
+        if "phase" in p and ("task" in p or "plan" in p):
+            return "development"
+        if "planning" in p or "master-plan" in p or "roadmap" in p:
+            return "planning"
+        if "qc" in p or "verification" in p or "test-report" in p:
+            return "review"
+        if "rules" in p or "ssot" in p or "policy" in p:
+            return "rules"
+        if "llm" in p or "reasoning" in p or "prompt" in p or "ai" in p:
+            return "ai"
+        return "general"
+
+    # 1단계 하위 폴더명 → Project 매핑 (mapping-rules.md §3)
+    def get_project_id(file_path: Path) -> int | None:
+        try:
+            rel = file_path.relative_to(abs_folder)
+            parts = rel.parts
+            if len(parts) >= 2:
+                subfolder = parts[0]
+                return project_map.get(subfolder)
+        except ValueError:
+            pass
+        return None
+
+    created = 0
+    doc_map = {}
+
+    for file in sorted(abs_folder.rglob("*")):
+        if not file.is_file():
+            continue
+        if file.suffix.lower() not in KNOWLEDGE_ALLOWED_EXTENSIONS:
+            continue
+
+        abs_path_str = str(file)
+        if abs_path_str in existing_paths:
+            doc = db.query(Document).filter(Document.file_path == abs_path_str).first()
+            if doc:
+                doc_map[abs_path_str] = doc.id
+            continue
+
+        try:
+            file_size = file.stat().st_size
+        except OSError:
+            file_size = 0
+
+        category = classify(abs_path_str)
+        cat_label_id = label_map.get((category, "category"))
+
+        doc = Document(
+            project_id=get_project_id(file),
+            file_path=abs_path_str,
+            file_name=file.name,
+            file_type=file.suffix.lstrip('.'),
+            size=file_size,
+            category_label_id=cat_label_id,
+        )
+        db.add(doc)
+        db.flush()
+        doc_map[abs_path_str] = doc.id
+        created += 1
+
+    db.commit()
+    log(f"Knowledge Folder Documents: {created} created from {abs_folder}")
+    return doc_map
+
+
+# ============================================
 # Main
 # ============================================
 def main():
+    parser = argparse.ArgumentParser(description="DB 샘플 데이터 시드")
+    parser.add_argument(
+        "--with-knowledge",
+        action="store_true",
+        help="지식관리 지정 폴더(brain/knowledge/) 파일도 시드 대상에 포함"
+    )
+    args = parser.parse_args()
+
     log("=" * 60)
-    log("Phase 14-6: 샘플 데이터 시드 시작")
+    log("Phase 14-6 / 15-4: 샘플 데이터 시드 시작")
+    if args.with_knowledge:
+        log("  옵션: --with-knowledge (지식관리 폴더 포함)")
     log("=" * 60)
 
     db = SessionLocal()
@@ -676,6 +786,11 @@ def main():
 
         # Step 3: Documents
         doc_map = seed_documents(db, project_map, label_map)
+
+        # Step 3.5: Knowledge Folder Documents (Phase 15-4-2)
+        if args.with_knowledge:
+            kf_doc_map = seed_knowledge_folder_documents(db, project_map, label_map)
+            doc_map.update(kf_doc_map)
 
         # Step 4: Knowledge Chunks
         chunk_ids = seed_chunks(db, doc_map)

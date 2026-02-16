@@ -1,6 +1,6 @@
 # AI Team — Workflow SSOT
 
-**버전**: 4.2
+**버전**: 4.3
 **최종 수정**: 2026-02-16
 
 ---
@@ -921,7 +921,94 @@ AI 세션이 끊기고 새 세션에서 재개할 때:
 
 ---
 
-## 9. 참조 문서 매핑
+## 9. Phase Chain (자동 순차 실행)
+
+### 9.1 개요
+
+Phase Chain은 복수의 Phase를 사전 정의된 순서로 자동 순차 실행하는 프로토콜이다.
+각 Phase 완료(DONE) 후 `/clear`로 컨텍스트를 초기화하고, 다음 Phase를 자동 시작한다.
+
+### 9.2 Phase Chain 정의 파일
+
+```yaml
+# docs/phases/phase-chain-{name}.md
+---
+chain_name: "phase-15-fullstack"
+phases: ["15-4", "15-5", "15-6", "15-7", "15-8"]
+current_index: 0          # 현재 실행 중인 Phase 인덱스
+status: "running"          # pending | running | completed | aborted
+ssot_version: "4.3"
+created_at: "2026-02-16T..."
+---
+```
+
+### 9.3 Phase Chain 실행 프로토콜
+
+```
+[1] Chain 파일 생성 (phase-chain-{name}.md)
+     │
+     ▼
+[2] Phase[current_index] Cold Start (Section 8.1)
+     │  ├── SSOT 리로드 (FRESH-1)
+     │  ├── TeamCreate + 팀원 스폰
+     │  └── 워크플로우 실행 (PLANNING → ... → DONE)
+     │
+     ▼
+[3] Phase DONE 도달
+     │  ├── TEAM_SHUTDOWN + TeamDelete
+     │  ├── Chain 파일 업데이트: current_index += 1
+     │  └── 사용자에게 Phase 완료 리포트 출력
+     │
+     ▼
+[4] 토큰 최적화: `/clear` 실행
+     │  ├── 컨텍스트 윈도우 초기화
+     │  └── Chain 파일은 디스크에 유지 (컨텍스트 독립)
+     │
+     ▼
+[5] 다음 Phase 자동 시작
+     │  ├── Chain 파일 읽기 → phases[current_index]
+     │  ├── current_index >= len(phases)? → Chain 완료
+     │  └── Phase Cold Start (Step 2로 복귀)
+```
+
+### 9.4 `/clear` 후 컨텍스트 복구
+
+`/clear` 이후 새 세션에서 Chain을 이어가는 부트로더:
+
+```
+1. Chain 파일 읽기 (phase-chain-{name}.md)
+2. current_index 확인
+3. current_index < len(phases)?
+   YES → phases[current_index]의 status.md 확인
+         ├── DONE이 아님 → Warm Start (Section 8.2)
+         └── DONE → current_index += 1, 다음 Phase
+   NO  → Chain 완료
+4. SSOT 리로드 (FRESH-1)
+5. Phase Cold Start 실행
+```
+
+### 9.5 Chain 중단·재개
+
+| 상황 | 처리 |
+|------|------|
+| Phase 실패 (retry >= 3) | Chain 일시정지, 사용자 판단 대기 |
+| 사용자 중단 요청 | chain status = "aborted", 현재 Phase TEAM_SHUTDOWN |
+| 세션 끊김 | Chain 파일로 재개 가능 (Section 9.4) |
+| SSOT 변경 필요 | LOCK-2 절차 후 Chain 재개 |
+
+### 9.6 Phase Chain 규칙
+
+| 규칙 ID | 규칙 | 설명 |
+|---------|------|------|
+| **CHAIN-1** | Phase 독립성 | 각 Phase는 독립 실행 가능해야 함 (Chain 없이도 동작) |
+| **CHAIN-2** | `/clear` 필수 | Phase 간 전환 시 `/clear`로 토큰 초기화 |
+| **CHAIN-3** | Chain 파일 유지 | `/clear` 후에도 Chain 파일은 디스크에 영속 |
+| **CHAIN-4** | 순차 보장 | phases 배열 순서대로만 실행 (건너뛰기 금지) |
+| **CHAIN-5** | 완료 리포트 | 각 Phase DONE 시 1줄 요약을 Chain 파일에 기록 |
+
+---
+
+## 10. 참조 문서 매핑
 
 | 워크플로우 단계 | 참조 규칙 문서 | 참조 Charter | 담당 팀원 |
 |---------------|--------------|-------------|----------|
@@ -950,7 +1037,7 @@ AI 세션이 끊기고 새 세션에서 재개할 때:
 
 ---
 
-## 10. 버전 히스토리
+## 11. 버전 히스토리
 
 | 버전 | 날짜 | 변경 내용 | 작성자 |
 |------|------|----------|--------|
@@ -962,3 +1049,4 @@ AI 세션이 끊기고 새 세션에서 재개할 때:
 | 4.0 | 2026-02-16 | **Agent Teams 전환**: TEAM_SETUP/TEAM_SHUTDOWN 상태 추가, 모든 워크플로우를 SendMessage 기반 팀 통신으로 전환, 부트로더에 TeamCreate/팀원 스폰 추가 | Claude Code (Backend & Logic Expert) |
 | 4.1 | 2026-02-16 | Hub-and-Spoke 통신 모델 (Peer DM 제거). 모델 지정: planner=opus, 나머지=sonnet. 자동화 주기 점검 | Claude Code (Backend & Logic Expert) |
 | 4.2 | 2026-02-16 | 자동화 트리거 추가: TaskCompleted hook (품질 자동 검사) + `/verify-implementation` skill (G2 심층 리뷰) | Claude Code (Backend & Logic Expert) |
+| 4.3 | 2026-02-16 | Phase Chain (자동 순차 실행) 프로토콜 추가: Section 9 신설. `/clear` 기반 토큰 최적화, Chain 파일 정의, 중단·재개 규칙 | Claude Code (Backend & Logic Expert) |

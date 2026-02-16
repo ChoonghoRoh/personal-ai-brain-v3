@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/css/admin/admin-styles.css" />
+    <link rel="stylesheet" href="/static/css/admin/admin-users.css" />
+    <title>Personal AI Brain - 사용자 관리</title>
+  </head>
+  <body>
+    <div class="container">
+      <div id="header-placeholder"></div>
+
+      <div id="error-message" class="error" style="display: none"></div>
+      <div id="success-message" class="success" style="display: none"></div>
+
+      <div class="admin-container users-container">
+        <!-- 사용자 목록 -->
+        <div class="admin-panel users-list-panel">
+          <div class="panel-header">
+            <h3>사용자 목록</h3>
+            <button type="button" id="add-user-btn" class="btn btn-primary btn-small">+ 사용자 추가</button>
+          </div>
+
+          <!-- 필터 -->
+          <div class="users-filter">
+            <input type="text" id="search-input" placeholder="이름 또는 사용자명 검색..." />
+            <select id="role-filter">
+              <option value="">전체 역할</option>
+              <option value="user">일반 사용자</option>
+              <option value="admin_knowledge">지식 관리자</option>
+              <option value="admin_system">시스템 관리자</option>
+            </select>
+            <select id="status-filter">
+              <option value="">전체 상태</option>
+              <option value="true">활성</option>
+              <option value="false">비활성</option>
+            </select>
+          </div>
+
+          <!-- 테이블 -->
+          <table class="table users-table">
+            <thead>
+              <tr>
+                <th style="width: 8%;">ID</th>
+                <th style="width: 18%;">사용자명</th>
+                <th style="width: 18%;">표시 이름</th>
+                <th style="width: 15%;">역할</th>
+                <th style="width: 10%;">상태</th>
+                <th style="width: 15%;">최종 로그인</th>
+                <th style="width: 16%;">액션</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body">
+              <tr>
+                <td colspan="7" class="loading">사용자 목록을 불러오는 중...</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="pagination-info" id="pagination-info"></div>
+        </div>
+
+        <!-- 사용자 편집 폼 -->
+        <div class="admin-panel users-form-panel" id="user-form-panel" style="display: none;">
+          <h3 id="form-title">사용자 추가</h3>
+          <form id="user-form">
+            <input type="hidden" id="form-user-id" />
+            <div class="form-group">
+              <label for="form-username">사용자명 *</label>
+              <input type="text" id="form-username" required minlength="3" maxlength="100" />
+            </div>
+            <div class="form-group" id="password-group">
+              <label for="form-password">비밀번호 * <small>(8자 이상)</small></label>
+              <input type="password" id="form-password" minlength="8" maxlength="72" />
+            </div>
+            <div class="form-group">
+              <label for="form-display-name">표시 이름</label>
+              <input type="text" id="form-display-name" maxlength="200" />
+            </div>
+            <div class="form-group">
+              <label for="form-email">이메일</label>
+              <input type="email" id="form-email" maxlength="255" />
+            </div>
+            <div class="form-group">
+              <label for="form-role">역할 *</label>
+              <select id="form-role" required>
+                <option value="user">일반 사용자 (user)</option>
+                <option value="admin_knowledge">지식 관리자 (admin_knowledge)</option>
+                <option value="admin_system">시스템 관리자 (admin_system)</option>
+              </select>
+            </div>
+            <div class="form-group" id="active-group" style="display: none;">
+              <label>
+                <input type="checkbox" id="form-is-active" checked /> 활성 상태
+              </label>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="form-submit-btn">저장</button>
+              <button type="button" class="btn btn-secondary" id="form-cancel-btn">취소</button>
+            </div>
+          </form>
+
+          <!-- 비밀번호 초기화 (수정 모드) -->
+          <div id="reset-password-section" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <h4>비밀번호 초기화</h4>
+            <div class="form-group">
+              <input type="password" id="reset-new-password" placeholder="새 비밀번호 (8자 이상)" minlength="8" />
+            </div>
+            <button type="button" id="reset-password-btn" class="btn btn-warning">비밀번호 초기화</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/js/components/layout-component.js"></script>
+    <script src="/static/js/components/header-component.js"></script>
+    <script src="/static/js/admin/admin-common.js"></script>
+    <script src="/static/js/components/utils.js"></script>
+    <script type="module" src="/static/js/admin/users.js"></script>
+  </body>
+</html>

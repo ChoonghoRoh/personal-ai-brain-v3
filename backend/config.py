@@ -181,6 +181,18 @@ RATE_LIMIT_AUTH_PER_MINUTE = get_env_int("RATE_LIMIT_AUTH_PER_MINUTE", 5)
 # Redis (Rate Limiting 분산 환경용)
 REDIS_URL = get_env("REDIS_URL")
 
+# Redis Search Cache (Phase 15-4)
+REDIS_SEARCH_CACHE_TTL = get_env_int("REDIS_SEARCH_CACHE_TTL", 3600)  # 1시간
+REDIS_SEARCH_CACHE_DB = get_env_int("REDIS_SEARCH_CACHE_DB", 1)       # DB 1 (Rate Limit은 DB 0)
+
+# Redis 확장 캐싱 (Phase 15-8-2)
+REDIS_REASONING_CACHE_TTL = get_env_int("REDIS_REASONING_CACHE_TTL", 1800)  # 30분
+REDIS_GRAPH_CACHE_TTL = get_env_int("REDIS_GRAPH_CACHE_TTL", 600)           # 10분
+
+# Qdrant 벡터 양자화 (Phase 15-8-2)
+QDRANT_QUANTIZATION_ENABLED = get_env_bool("QDRANT_QUANTIZATION_ENABLED", False)
+QDRANT_QUANTIZATION_TYPE = get_env("QDRANT_QUANTIZATION_TYPE", "scalar")  # scalar (8bit) | product
+
 # ============================================
 # HSTS Configuration (Phase 12-1-3)
 # ============================================

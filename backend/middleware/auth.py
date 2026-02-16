@@ -1,9 +1,14 @@
-"""인증 미들웨어 (Phase 9-1-1, Phase 14-1 권한 확장)
+"""인증 미들웨어 (Phase 9-1-1, Phase 14-1, Phase 15-6)
 
 JWT 토큰 및 API Key 기반 인증을 지원합니다.
 역할(role) 기반 접근 제어를 포함합니다.
+
+Phase 15-6:
+- Refresh Token 지원
+- 토큰 블랙리스트 (Redis)
 """
 import logging
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -18,7 +23,12 @@ from backend.config import (
     JWT_EXPIRE_MINUTES,
     API_SECRET_KEY,
     AUTH_ENABLED,
+    REDIS_URL,
 )
+
+# Phase 15-6: Refresh Token 설정
+REFRESH_TOKEN_EXPIRE_DAYS = 7
+BLACKLIST_PREFIX = "token_blacklist:"
 
 logger = logging.getLogger(__name__)
 
@@ -56,10 +66,11 @@ class UserInfo(BaseModel):
 
 
 class TokenResponse(BaseModel):
-    """토큰 응답"""
+    """토큰 응답 (Phase 15-6: refresh_token 추가)"""
     access_token: str
     token_type: str = "bearer"
     expires_in: int  # 초 단위
+    refresh_token: Optional[str] = None
 
 
 # ============================================
@@ -131,6 +142,106 @@ def verify_jwt_token(token: str) -> Optional[TokenData]:
         return None
 
 
+# ============================================
+# Refresh Token (Phase 15-6-1)
+# ============================================
+
+def create_refresh_token(data: dict) -> str:
+    """
+    Refresh Token 생성 (Phase 15-6-1)
+
+    Access Token보다 긴 만료 시간을 가진 JWT 토큰.
+    jti(JWT ID)를 포함하여 개별 토큰 무효화 가능.
+    """
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    to_encode.update({
+        "exp": expire,
+        "type": "refresh",
+        "jti": str(uuid.uuid4()),
+    })
+    return jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+
+
+def verify_refresh_token(token: str) -> Optional[TokenData]:
+    """
+    Refresh Token 검증 (Phase 15-6-1)
+
+    type="refresh" 클레임이 있어야 유효.
+    """
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        if payload.get("type") != "refresh":
+            return None
+        username = payload.get("sub")
+        role = payload.get("role", ROLE_USER)
+        if username is None:
+            return None
+        return TokenData(
+            username=username,
+            role=role,
+            exp=datetime.fromtimestamp(payload["exp"], tz=timezone.utc),
+        )
+    except JWTError:
+        return None
+
+
+# ============================================
+# 토큰 블랙리스트 (Phase 15-6-2, Redis)
+# ============================================
+
+_redis_client = None
+
+
+def _get_redis():
+    """Redis 클라이언트 (lazy init)"""
+    global _redis_client
+    if _redis_client is not None:
+        return _redis_client
+    if not REDIS_URL:
+        return None
+    try:
+        import redis
+        _redis_client = redis.from_url(REDIS_URL, decode_responses=True)
+        _redis_client.ping()
+        return _redis_client
+    except Exception as e:
+        logger.warning(f"Redis 연결 실패 (블랙리스트 비활성): {e}")
+        return None
+
+
+# 메모리 기반 폴백 (Redis 미사용 시)
+_memory_blacklist: set[str] = set()
+
+
+def blacklist_token(token: str, expires_in_seconds: int = 3600) -> bool:
+    """
+    토큰을 블랙리스트에 추가 (Phase 15-6-2)
+
+    Redis 사용 가능 시 Redis에 저장, 아니면 메모리.
+    """
+    r = _get_redis()
+    if r:
+        try:
+            r.setex(f"{BLACKLIST_PREFIX}{token}", expires_in_seconds, "1")
+            return True
+        except Exception as e:
+            logger.warning(f"Redis 블랙리스트 저장 실패: {e}")
+    _memory_blacklist.add(token)
+    return True
+
+
+def is_token_blacklisted(token: str) -> bool:
+    """토큰이 블랙리스트에 있는지 확인 (Phase 15-6-2)"""
+    r = _get_redis()
+    if r:
+        try:
+            return r.exists(f"{BLACKLIST_PREFIX}{token}") > 0
+        except Exception:
+            pass
+    return token in _memory_blacklist
+
+
 def verify_api_key(api_key: str) -> bool:
     """
     API Key 검증
@@ -175,7 +286,11 @@ async def get_current_user(
 
     # JWT Bearer 토큰 확인
     if bearer_credentials:
-        token_data = verify_jwt_token(bearer_credentials.credentials)
+        raw_token = bearer_credentials.credentials
+        # Phase 15-6-2: 블랙리스트 체크
+        if is_token_blacklisted(raw_token):
+            return None
+        token_data = verify_jwt_token(raw_token)
         if token_data and token_data.username:
             user = UserInfo(username=token_data.username, auth_type="jwt", role=token_data.role)
             request.state.user = user
@@ -297,6 +412,8 @@ AUTH_EXCLUDE_PATHS = [
     "/api/auth/token",
     "/api/auth/status",
     "/api/auth/me",
+    "/api/auth/register",
+    "/api/auth/refresh",
     # 웹 페이지 (HTML)
     "/login",
     "/dashboard",

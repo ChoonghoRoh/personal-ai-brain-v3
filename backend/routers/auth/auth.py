@@ -1,6 +1,6 @@
-"""인증 API 라우터 (Phase 9-1-1, Phase 14-5-2 로그인 구현)
+"""인증 API 라우터 (Phase 9-1-1, Phase 14-5-2, Phase 15-5-2)
 
-JWT 토큰 발급, 사용자 로그인/로그아웃 API
+JWT 토큰 발급, 사용자 로그인/로그아웃/회원가입/프로필 API
 """
 import logging
 from datetime import datetime, timedelta, timezone
@@ -8,7 +8,8 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from passlib.context import CryptContext
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.config import JWT_EXPIRE_MINUTES, AUTH_ENABLED, API_SECRET_KEY
@@ -16,9 +17,12 @@ from backend.models.database import get_db
 from backend.models.user_models import User
 from backend.middleware.auth import (
     create_access_token,
+    create_refresh_token,
+    verify_refresh_token,
     verify_api_key,
     require_auth,
     get_current_user,
+    blacklist_token,
     UserInfo,
     TokenResponse,
     ROLE_ADMIN_SYSTEM,
@@ -147,6 +151,11 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
         expires_delta=timedelta(minutes=JWT_EXPIRE_MINUTES),
     )
 
+    # Phase 15-6-1: Refresh Token 생성
+    refresh_token = create_refresh_token(
+        data={"sub": user.username, "role": user.role}
+    )
+
     # last_login_at 갱신
     user.last_login_at = datetime.now(timezone.utc)
     db.commit()
@@ -157,6 +166,7 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
         access_token=access_token,
         token_type="bearer",
         expires_in=JWT_EXPIRE_MINUTES * 60,
+        refresh_token=refresh_token,
     )
 
 
@@ -220,19 +230,27 @@ async def get_me(
 
 
 @router.post("/logout", response_model=MessageResponse, summary="로그아웃")
-async def logout(user: UserInfo = Depends(require_auth)):
+async def logout(
+    request: Request,
+    user: UserInfo = Depends(require_auth),
+):
     """
-    로그아웃
+    로그아웃 (Phase 15-6-2: 서버 측 토큰 블랙리스트)
 
-    JWT는 stateless이므로 서버 측 세션 무효화는 없습니다.
-    클라이언트에서 토큰을 삭제하여 로그아웃 처리합니다.
-
-    향후 토큰 블랙리스트 구현 시 서버 측 무효화 가능
+    - Authorization 헤더의 토큰을 블랙리스트에 추가
+    - Redis 사용 가능 시 Redis, 아니면 메모리 폴백
+    - 클라이언트에서도 토큰 삭제 권장
     """
-    logger.info(f"로그아웃: {user.username}")
+    # Authorization 헤더에서 토큰 추출
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        token = auth_header[7:]
+        blacklist_token(token, expires_in_seconds=JWT_EXPIRE_MINUTES * 60)
+
+    logger.info(f"로그아웃 (블랙리스트 등록): {user.username}")
 
     return MessageResponse(
-        message="Successfully logged out. Please delete the token on client side.",
+        message="Successfully logged out. Token has been invalidated.",
         success=True
     )
 
@@ -262,3 +280,173 @@ async def auth_status():
         auth_type=None,
         role=None,
     )
+
+
+# ============================================
+# Refresh Token API (Phase 15-6-1)
+# ============================================
+
+class RefreshRequest(BaseModel):
+    """Refresh Token 갱신 요청"""
+    refresh_token: str = Field(..., description="Refresh Token")
+
+
+@router.post("/refresh", response_model=TokenResponse, summary="토큰 갱신")
+async def refresh_token(request: RefreshRequest):
+    """
+    Refresh Token으로 새 Access Token 발급 (Phase 15-6-1)
+
+    - Refresh Token 검증
+    - 새 Access Token + (선택) 새 Refresh Token 발급
+    """
+    token_data = verify_refresh_token(request.refresh_token)
+    if not token_data:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token",
+        )
+
+    # 새 Access Token 생성
+    new_access_token = create_access_token(
+        data={"sub": token_data.username, "role": token_data.role},
+        expires_delta=timedelta(minutes=JWT_EXPIRE_MINUTES),
+    )
+
+    logger.info(f"토큰 갱신: {token_data.username}")
+
+    return TokenResponse(
+        access_token=new_access_token,
+        token_type="bearer",
+        expires_in=JWT_EXPIRE_MINUTES * 60,
+    )
+
+
+# ============================================
+# 셀프 서비스 API (Phase 15-5-2)
+# ============================================
+
+class RegisterRequest(BaseModel):
+    """회원 가입 요청"""
+    username: str = Field(..., min_length=3, max_length=100, description="사용자명 (3자 이상)")
+    password: str = Field(..., min_length=8, max_length=72, description="비밀번호 (8자 이상)")
+    display_name: Optional[str] = Field(None, max_length=200, description="표시 이름")
+    email: Optional[str] = Field(None, max_length=255, description="이메일")
+
+
+class ProfileResponse(BaseModel):
+    """프로필 응답"""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    username: str
+    display_name: Optional[str] = None
+    email: Optional[str] = None
+    role: str
+    is_active: bool
+    last_login_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+
+
+class ProfileUpdateRequest(BaseModel):
+    """프로필 수정 요청"""
+    display_name: Optional[str] = Field(None, max_length=200)
+    email: Optional[str] = Field(None, max_length=255)
+
+
+class ChangePasswordRequest(BaseModel):
+    """비밀번호 변경 요청"""
+    current_password: str = Field(..., description="현재 비밀번호")
+    new_password: str = Field(..., min_length=8, max_length=72, description="새 비밀번호 (8자 이상)")
+
+
+@router.post("/register", response_model=ProfileResponse, status_code=201, summary="회원 가입")
+async def register(request: RegisterRequest, db: Session = Depends(get_db)):
+    """
+    새 사용자 회원 가입 (Phase 15-5-2)
+
+    - 기본 역할: user
+    - username 중복 시 409 Conflict
+    - 비밀번호: bcrypt 해싱
+    """
+    user = User(
+        username=request.username,
+        hashed_password=pwd_context.hash(request.password),
+        display_name=request.display_name,
+        email=request.email,
+        role=ROLE_USER,
+    )
+    db.add(user)
+    try:
+        db.commit()
+        db.refresh(user)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Username already exists",
+        )
+
+    logger.info(f"회원 가입: {user.username} (id={user.id})")
+    return user
+
+
+@router.get("/profile", response_model=ProfileResponse, summary="내 프로필 조회")
+async def get_profile(
+    user: UserInfo = Depends(require_auth),
+    db: Session = Depends(get_db),
+):
+    """현재 로그인한 사용자의 프로필 조회 (Phase 15-5-2)"""
+    db_user = db.query(User).filter(User.username == user.username).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return db_user
+
+
+@router.put("/profile", response_model=ProfileResponse, summary="내 프로필 수정")
+async def update_profile(
+    data: ProfileUpdateRequest,
+    user: UserInfo = Depends(require_auth),
+    db: Session = Depends(get_db),
+):
+    """현재 로그인한 사용자의 프로필 수정 (Phase 15-5-2)"""
+    db_user = db.query(User).filter(User.username == user.username).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if data.display_name is not None:
+        db_user.display_name = data.display_name
+    if data.email is not None:
+        db_user.email = data.email
+
+    db_user.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(db_user)
+
+    logger.info(f"프로필 수정: {user.username}")
+    return db_user
+
+
+@router.post("/change-password", response_model=MessageResponse, summary="비밀번호 변경")
+async def change_password(
+    data: ChangePasswordRequest,
+    user: UserInfo = Depends(require_auth),
+    db: Session = Depends(get_db),
+):
+    """현재 로그인한 사용자의 비밀번호 변경 (Phase 15-5-2)"""
+    db_user = db.query(User).filter(User.username == user.username).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # 현재 비밀번호 검증
+    if not pwd_context.verify(data.current_password, db_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect",
+        )
+
+    db_user.hashed_password = pwd_context.hash(data.new_password)
+    db_user.updated_at = datetime.now(timezone.utc)
+    db.commit()
+
+    logger.info(f"비밀번호 변경: {user.username}")
+    return MessageResponse(message="Password changed successfully")

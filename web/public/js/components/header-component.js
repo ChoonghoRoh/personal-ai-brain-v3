@@ -15,6 +15,7 @@ const ROLE_HIERARCHY = {
 const MENU_REQUIRED_ROLE = {
   'user-menu': 'user',
   'admin-menu': 'admin_knowledge',
+  'system-menu': 'admin_system',
   'settings-menu': 'admin_system',
 };
 
@@ -40,7 +41,13 @@ const ADMIN_MENU = [
   { path: '/admin/chunk-labels', label: '청크 관리', icon: '📝' },
   { path: '/admin/knowledge-files', label: '파일관리', icon: '📁' },
   { path: '/admin/ai-automation', label: 'AI 자동화', icon: '🤖' },
+  { path: '/knowledge-graph', label: '지식 그래프', icon: '🕸️' },
   { path: '/admin/statistics', label: '통계', icon: '📈' }
+];
+
+// 시스템 관리 메뉴 (Phase 15-5-3)
+const SYSTEM_MENU = [
+  { path: '/admin/users', label: '사용자 관리', icon: '👥' }
 ];
 
 // 설정 관리 메뉴 (Phase 11-3)
@@ -218,6 +225,12 @@ function createLNB(currentPath) {
         ${menuItems(ADMIN_MENU, 'admin-menu')}
       </ul>
     </div>
+    <div class="lnb-group system-group" data-menu-group="system-menu">
+      <div class="lnb-group-title">시스템 관리</div>
+      <ul class="lnb-menu system-menu">
+        ${menuItems(SYSTEM_MENU, 'system-menu')}
+      </ul>
+    </div>
     <div class="lnb-group settings-group" data-menu-group="settings-menu">
       <div class="lnb-group-title">설정 관리</div>
       <ul class="lnb-menu settings-menu">
@@ -385,10 +398,12 @@ async function fetchUserRole() {
     if (res.ok) {
       const data = await res.json();
 
-      // 프로덕션(auth_enabled=true) + 비인증 → admin 페이지 접근 시 로그인 리다이렉트
+      // Phase 15-6-3: 비인증 시 보호 페이지 접근 → 로그인 리다이렉트
       if (data.auth_enabled && !data.authenticated) {
         const path = window.location.pathname;
-        if (path.startsWith('/admin')) {
+        // 공개 페이지: /, /login, /dashboard 외 모든 페이지는 보호 대상
+        const publicPaths = ['/', '/login', '/dashboard'];
+        if (!publicPaths.includes(path)) {
           window.location.href = '/login?return_to=' + encodeURIComponent(path);
           return 'user';
         }

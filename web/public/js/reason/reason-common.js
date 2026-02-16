@@ -93,13 +93,90 @@
   }
 
   /**
-   * URL 쿼리에서 seed_chunk 파라미터를 읽어 있으면 loadSeedChunk 호출
+   * 문서 컨텍스트 로드 (Phase 15-3)
+   * @param {string} documentId - 문서 ID
+   */
+  async function loadDocumentContext(documentId) {
+    try {
+      var response = await fetch("/api/knowledge/documents/" + documentId);
+      if (!response.ok) throw new Error("문서 정보 로드 실패");
+      var doc = await response.json();
+      var questionEl = document.getElementById("question");
+      if (questionEl && !questionEl.value.trim()) {
+        questionEl.placeholder =
+          "'" + (doc.file_name || "문서") + "' 문서에 대해 질문하세요";
+      }
+      showDocumentBadge(doc);
+      window.__reasonDocumentIds = [parseInt(documentId, 10)];
+      return doc;
+    } catch (error) {
+      console.error("문서 컨텍스트 로드 실패:", error);
+      return null;
+    }
+  }
+
+  /**
+   * 문서 정보 뱃지 표시 (Phase 15-3)
+   * @param {object} doc - 문서 정보 객체
+   */
+  function showDocumentBadge(doc) {
+    var existing = document.getElementById("document-context-badge");
+    if (existing) existing.remove();
+
+    var escapeFn = typeof escapeHtml === "function" ? escapeHtml : function (s) { return String(s); };
+    var fileName = escapeFn(doc.file_name || "문서");
+
+    var badge = document.createElement("div");
+    badge.id = "document-context-badge";
+    badge.className = "document-context-badge";
+    badge.innerHTML =
+      '<span class="doc-badge">' +
+      '<span class="doc-badge-icon">📄</span>' +
+      '<span>' + fileName + '</span>' +
+      '<button type="button" class="doc-badge-close" title="문서 필터 해제">&times;</button>' +
+      '</span>';
+
+    badge.querySelector(".doc-badge-close").addEventListener("click", function () {
+      clearDocumentContext();
+    });
+
+    var form = document.querySelector(".reasoning-form");
+    if (form) {
+      var firstFormGroup = form.querySelector(".form-group");
+      if (firstFormGroup) {
+        form.insertBefore(badge, firstFormGroup);
+      } else {
+        form.prepend(badge);
+      }
+    }
+  }
+
+  /**
+   * 문서 컨텍스트 초기화 (Phase 15-3)
+   */
+  function clearDocumentContext() {
+    window.__reasonDocumentIds = null;
+    var badge = document.getElementById("document-context-badge");
+    if (badge) badge.remove();
+    var questionEl = document.getElementById("question");
+    if (questionEl) {
+      questionEl.placeholder = "질문을 입력하세요 (선택사항)";
+    }
+  }
+
+  /**
+   * URL 쿼리에서 seed_chunk / document_id 파라미터를 읽어 처리 (Phase 15-3 확장)
    */
   function initSeedFromUrl() {
     var urlParams = new URLSearchParams(window.location.search);
     var seedChunkId = urlParams.get("seed_chunk");
     if (seedChunkId) {
       loadSeedChunk(seedChunkId);
+      return;
+    }
+    var documentId = urlParams.get("document_id");
+    if (documentId) {
+      loadDocumentContext(documentId);
     }
   }
 
@@ -108,5 +185,8 @@
     loadReasoningOptions: loadReasoningOptions,
     loadSeedChunk: loadSeedChunk,
     initSeedFromUrl: initSeedFromUrl,
+    loadDocumentContext: loadDocumentContext,
+    showDocumentBadge: showDocumentBadge,
+    clearDocumentContext: clearDocumentContext,
   };
 })();

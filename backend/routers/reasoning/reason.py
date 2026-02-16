@@ -13,11 +13,12 @@ from backend.services.reasoning.recommendation_service import get_recommendation
 router = APIRouter(prefix="/api/reason", tags=["Reasoning"])
 
 
-class ReasonFilters(BaseModel):  # Phase 7.7
+class ReasonFilters(BaseModel):  # Phase 7.7, 15-3
     project_ids: Optional[List[int]] = None
     category_label_ids: Optional[List[int]] = None
     keyword_group_ids: Optional[List[int]] = None
     keyword_ids: Optional[List[int]] = None
+    document_ids: Optional[List[int]] = None  # Phase 15-3
 
 
 class ReasonRequest(BaseModel):
@@ -108,6 +109,51 @@ def collect_knowledge_from_category(db: Session, category_label_ids: List[int]) 
     return chunks
 
 
+def collect_chunks_by_document_ids(
+    db: Session, document_ids: List[int],
+) -> List[KnowledgeChunk]:
+    """문서 ID 목록으로 승인된 청크 수집 (Phase 15-3)"""
+    if not document_ids:
+        return []
+    return (
+        db.query(KnowledgeChunk)
+        .filter(
+            KnowledgeChunk.document_id.in_(document_ids),
+            KnowledgeChunk.status == "approved",
+        )
+        .order_by(KnowledgeChunk.document_id, KnowledgeChunk.chunk_index.asc())
+        .all()
+    )
+
+
+def collect_chunks_by_question_in_documents(
+    db: Session, question: str, document_ids: List[int],
+    top_k: int = 20, reasoning_steps: Optional[List[str]] = None,
+) -> List[KnowledgeChunk]:
+    """문서 범위 내 질문 기반 의미 검색 (Phase 15-3)"""
+    if not question or not question.strip() or not document_ids:
+        return []
+    steps = reasoning_steps or []
+    steps.append(f"문서 {document_ids} 내 의미 검색 중...")
+    search_service = get_search_service()
+    search_results = search_service.search_simple(question.strip(), top_k=top_k * 3, use_cache=False)
+    chunks, seen = [], set()
+    for result in search_results:
+        qdrant_id = result.get("document_id")
+        chunk = db.query(KnowledgeChunk).filter(
+            KnowledgeChunk.qdrant_point_id == str(qdrant_id),
+            KnowledgeChunk.status == "approved",
+            KnowledgeChunk.document_id.in_(document_ids),
+        ).first()
+        if chunk and chunk.id not in seen:
+            seen.add(chunk.id)
+            chunks.append(chunk)
+            if len(chunks) >= top_k:
+                break
+    steps.append(f"문서 내 의미 검색으로 {len(chunks)}개 청크 수집")
+    return chunks
+
+
 def trace_relations(db: Session, chunks: List[KnowledgeChunk], depth: int = 2) -> List[KnowledgeChunk]:
     """관계를 따라 지식 청크 추적 (승인된 청크만, 최적화된 버전)"""
     all_chunks = {chunk.id: chunk for chunk in chunks}
@@ -159,9 +205,10 @@ def parse_reasoning_inputs(request: ReasonRequest) -> tuple:
     """입력 파싱"""
     project_ids = request.inputs.get("projects", [])
     label_names = request.inputs.get("labels", [])
-    
+
     # Phase 7.7: 필터 파싱
     filter_label_ids = []
+    document_ids = []  # Phase 15-3
     if request.filters:
         if request.filters.category_label_ids:
             filter_label_ids.extend(request.filters.category_label_ids)
@@ -171,8 +218,10 @@ def parse_reasoning_inputs(request: ReasonRequest) -> tuple:
             filter_label_ids.extend(request.filters.keyword_ids)
         if request.filters.project_ids:
             project_ids = list(set(project_ids + request.filters.project_ids))
-    
-    return project_ids, label_names, filter_label_ids
+        if request.filters.document_ids:
+            document_ids = request.filters.document_ids
+
+    return project_ids, label_names, filter_label_ids, document_ids
 
 
 def collect_knowledge_chunks(
@@ -468,12 +517,32 @@ async def reason(request: ReasonRequest, db: Session = Depends(get_db)):
     
     # 1. 입력 파싱
     reasoning_steps.append("입력 파싱 중...")
-    project_ids, label_names, filter_label_ids = parse_reasoning_inputs(request)
+    project_ids, label_names, filter_label_ids, document_ids = parse_reasoning_inputs(request)
     question = (request.question or "").strip()
-    
-    # 2. 지식 수집: 질문 우선 → 보조로 프로젝트/라벨 병합 (캐시 미사용으로 질문별 결과 반영)
+
+    # 2. 지식 수집
     chunks = []
-    if question:
+
+    # Phase 15-3: 문서 기반 수집 우선
+    if document_ids:
+        if question:
+            chunks = collect_chunks_by_question_in_documents(
+                db, question, document_ids, top_k=20, reasoning_steps=reasoning_steps
+            )
+            if len(chunks) < 5:
+                doc_chunks = collect_chunks_by_document_ids(db, document_ids)
+                seen = {c.id for c in chunks}
+                for c in doc_chunks:
+                    if c.id not in seen:
+                        seen.add(c.id)
+                        chunks.append(c)
+                reasoning_steps.append(f"문서 전체 청크 보강: 총 {len(chunks)}개")
+        else:
+            chunks = collect_chunks_by_document_ids(db, document_ids)
+            reasoning_steps.append(f"문서에서 {len(chunks)}개 청크 수집")
+        if not chunks:
+            raise HTTPException(status_code=400, detail="선택한 문서에 승인된 청크가 없습니다.")
+    elif question:
         # 기본: 질문 기반 의미 검색 (use_cache=False 로 매 요청마다 질문에 맞는 결과)
         chunks = collect_chunks_by_question(
             db, question, top_k=20, reasoning_steps=reasoning_steps, use_cache=False
@@ -493,7 +562,7 @@ async def reason(request: ReasonRequest, db: Session = Depends(get_db)):
         # 질문에 대한 관련 지식이 없을 때: 전체 폴백 없이 0건 유지 → LLM이 질문에 맞게 "관련 지식 없음" 안내
         if not chunks:
             reasoning_steps.append("질문과 관련된 지식이 수집되지 않았습니다. 질문에 맞는 안내를 생성합니다.")
-    if not chunks and not question:
+    if not chunks and not question and not document_ids:
         # 질문 없을 때만: 프로젝트/라벨 기반 수집(또는 전체 폴백)
         chunks = collect_knowledge_chunks(
             db, project_ids, label_names, filter_label_ids, request, reasoning_steps

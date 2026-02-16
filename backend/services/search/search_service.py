@@ -1,11 +1,17 @@
 """검색 서비스"""
 import hashlib
+import json
 import time
 from typing import List, Dict, Optional
 from functools import lru_cache
 from qdrant_client import QdrantClient
 from qdrant_client.models import Filter, FieldCondition, MatchValue
 from sentence_transformers import SentenceTransformer
+
+try:
+    import redis as redis_lib
+except ImportError:
+    redis_lib = None
 
 from backend.config import QDRANT_HOST, QDRANT_PORT, COLLECTION_NAME, EMBEDDING_MODEL
 
@@ -38,18 +44,79 @@ class SearchCache:
     def get_stats(self) -> Dict:
         """캐시 통계"""
         return {
+            'backend': 'memory',
             'size': len(self.cache),
             'ttl': self.ttl
         }
 
 
+class RedisSearchCache:
+    """Redis 기반 검색 캐시 (Phase 15-4)"""
+
+    def __init__(self, redis_url: str, ttl: int = 3600, db: int = 1):
+        if redis_lib is None:
+            raise ImportError("redis 패키지가 설치되지 않았습니다")
+        self.ttl = ttl
+        self.prefix = "search_cache:"
+        base_url = redis_url.rsplit("/", 1)[0] if "/" in redis_url else redis_url
+        url_with_db = f"{base_url}/{db}"
+        self._redis = redis_lib.from_url(url_with_db, decode_responses=True)
+        self._redis.ping()
+
+    def get(self, key: str) -> Optional[Dict]:
+        raw = self._redis.get(self.prefix + key)
+        if raw is not None:
+            return json.loads(raw)
+        return None
+
+    def set(self, key: str, value: Dict):
+        self._redis.setex(
+            self.prefix + key,
+            self.ttl,
+            json.dumps(value, ensure_ascii=False, default=str),
+        )
+
+    def clear(self):
+        cursor = 0
+        while True:
+            cursor, keys = self._redis.scan(cursor, match=self.prefix + "*", count=100)
+            if keys:
+                self._redis.delete(*keys)
+            if cursor == 0:
+                break
+
+    def get_stats(self) -> Dict:
+        cursor, count = 0, 0
+        while True:
+            cursor, keys = self._redis.scan(cursor, match=self.prefix + "*", count=100)
+            count += len(keys)
+            if cursor == 0:
+                break
+        return {"backend": "redis", "size": count, "ttl": self.ttl}
+
+
+def _create_search_cache(ttl: int = 3600):
+    """Redis 우선, 실패 시 메모리 폴백 (Phase 15-4)"""
+    from backend.config import REDIS_URL, REDIS_SEARCH_CACHE_DB
+    if REDIS_URL:
+        try:
+            cache = RedisSearchCache(REDIS_URL, ttl=ttl, db=REDIS_SEARCH_CACHE_DB)
+            print(f"[SearchCache] Redis 캐시 활성화 (TTL={ttl}s, DB={REDIS_SEARCH_CACHE_DB})")
+            return cache
+        except Exception as e:
+            print(f"[SearchCache] Redis 연결 실패, 메모리 캐시 폴백: {e}")
+    return SearchCache(ttl=ttl)
+
+
 class SearchService:
     """검색 서비스 클래스"""
     
-    def __init__(self, enable_cache: bool = True, cache_ttl: int = 3600):
+    def __init__(self, enable_cache: bool = True, cache_ttl: int = None):
+        from backend.config import REDIS_SEARCH_CACHE_TTL
         self.client = None
         self.model = None
-        self.cache = SearchCache(ttl=cache_ttl) if enable_cache else None
+        ttl = cache_ttl if cache_ttl is not None else REDIS_SEARCH_CACHE_TTL
+        self.cache = _create_search_cache(ttl) if enable_cache else None
         self._initialize()
     
     def _initialize(self):
