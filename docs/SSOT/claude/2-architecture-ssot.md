@@ -1,6 +1,6 @@
 # AI Team — Architecture SSOT
 
-**버전**: 3.2
+**버전**: 4.0
 **최종 수정**: 2026-02-16
 
 ---
@@ -453,7 +453,7 @@ RATE_LIMIT_LLM_PER_MINUTE=10
 
 ## 8. 검증 기준 요약
 
-코드 리뷰 시 적용하는 기준 체크리스트. Verifier 서브에이전트(Task tool → subagent_type: "Explore")가 사용한다.
+코드 리뷰 시 적용하는 기준 체크리스트. `verifier` 팀원(Agent Teams, subagent_type: "Explore")이 사용한다.
 
 ### 8.1 백엔드 검증 기준
 
@@ -512,3 +512,4 @@ RATE_LIMIT_LLM_PER_MINUTE=10
 | 3.0 | 2026-02-15 | Claude Code 내부 에이전트 팀 전환: 검증 기준 문구를 Verifier 서브에이전트(Task tool) 기반으로 수정 | Claude Code (Backend & Logic Expert) |
 | 3.1 | 2026-02-16 | Phase 12 반영: Redis 컨테이너 추가, CDN 5개 로컬 전환 완료, HSTS 환경변수 활성화, middleware(request_id, error_handler) 추가, Rate Limit X-Forwarded-For, memory_scheduler/transaction_manager/chunk_sync_service 추가 | Claude Code (Backend & Logic Expert) |
 | 3.2 | 2026-02-16 | Phase 13-4 반영: page_access_log 미들웨어·page_access_log_crud 라우터·page_access_logs 테이블 추가, 마이그레이션 경로 이원화(레거시 scripts/db/ + 현행 scripts/migrations/) 반영 | Claude Code (Backend & Logic Expert) |
+| 4.0 | 2026-02-16 | Agent Teams 전환: Verifier 참조를 팀원 기반으로 변경 | Claude Code (Backend & Logic Expert) |

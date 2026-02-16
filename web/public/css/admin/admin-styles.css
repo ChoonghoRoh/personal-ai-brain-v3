@@ -95,6 +95,15 @@
   background: #059669;
 }
 
+.btn-secondary {
+  background: #6b7280;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #4b5563;
+}
+
 .btn-small {
   padding: 5px 10px;
   font-size: 12px;

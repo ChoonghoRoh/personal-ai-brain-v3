@@ -38,6 +38,7 @@ const ADMIN_MENU = [
   { path: '/admin/chunk-create', label: '청크 생성', icon: '➕' },
   { path: '/admin/approval', label: '청크 승인', icon: '✅' },
   { path: '/admin/chunk-labels', label: '청크 관리', icon: '📝' },
+  { path: '/admin/knowledge-files', label: '파일관리', icon: '📁' },
   { path: '/admin/statistics', label: '통계', icon: '📈' }
 ];
 

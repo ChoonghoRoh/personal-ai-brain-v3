@@ -223,6 +223,11 @@ MAX_SIMILAR_DOCUMENTS = get_env_int("MAX_SIMILAR_DOCUMENTS", 5)
 ANTHROPIC_API_KEY = get_env("ANTHROPIC_API_KEY")
 
 # ============================================
+# Knowledge Folder Configuration (Phase 15-1)
+# ============================================
+KNOWLEDGE_FOLDER_PATH = get_env("KNOWLEDGE_FOLDER_PATH", "brain/knowledge")
+
+# ============================================
 # 설정 검증 (프로덕션 환경)
 # ============================================
 def validate_production_config() -> None:

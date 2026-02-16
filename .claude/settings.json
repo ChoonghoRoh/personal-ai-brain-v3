@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(mkdir:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(python3 -m pytest:*)",
+      "Bash(python3:*)",
+      "Bash(docker-compose ps:*)",
+      "Bash(docker-compose logs:*)",
+      "Bash(docker compose:*)",
+      "Bash(curl:*)",
+      "Bash(chmod:*)",
+      "Bash(docker exec:*)",
+      "Bash(node -c:*)",
+      "Bash(git checkout:*)",
+      "Bash(docker logs:*)",
+      "Bash(./scripts/backup/backup.sh:*)",
+      "Bash(ls:*)",
+      "Bash(git log:*)"
+    ]
+  },
+  "hooks": {
+    "TaskCompleted": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/on-task-completed.sh",
+            "timeout": 30,
+            "statusMessage": "Task 완료 품질 검사 실행 중..."
+          }
+        ]
+      }
+    ]
+  },
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "teammateMode": "tmux"
+}

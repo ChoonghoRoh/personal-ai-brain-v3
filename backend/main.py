@@ -20,7 +20,7 @@ from backend.routers.search import search, documents
 from backend.routers.system import system, backup, integrity, logs, error_logs, statistics
 from backend.routers.system.backup import legacy_router as backup_legacy_router
 from backend.routers.ai import ai, conversations
-from backend.routers.knowledge import knowledge, labels, relations, approval, suggestions, knowledge_integration
+from backend.routers.knowledge import knowledge, labels, relations, approval, suggestions, knowledge_integration, folder_management
 from backend.routers.reasoning import reason, reasoning_chain, reasoning_results, recommendations, reason_stream, reason_store
 from backend.routers.cognitive import memory, context, learning, personality, metacognition
 from backend.routers.automation import automation, workflow
@@ -263,6 +263,7 @@ app.include_router(reason_store.router)  # Phase 10-4-2/3: 결과 공유·의사
 # approval.router를 knowledge.router보다 먼저 등록 (경로 충돌 방지)
 app.include_router(approval.router)
 app.include_router(knowledge.router)
+app.include_router(folder_management.router)  # Phase 15-1-1: 지정 폴더 경로 설정
 app.include_router(suggestions.router)
 app.include_router(context.router)
 app.include_router(memory.router)
@@ -421,6 +422,7 @@ _HTML_ROUTES = [
     ("/admin/approval", "admin/approval.html", "청크 승인 센터"),
     ("/admin/chunk-labels", "admin/chunk-labels.html", "청크 관리"),
     ("/admin/chunk-create", "admin/chunk-create.html", "청크 생성"),
+    ("/admin/knowledge-files", "admin/knowledge-files.html", "파일관리"),
     ("/admin/statistics", "admin/statistics.html", "통계 대시보드"),
     ("/admin/settings/templates", "admin/settings/templates.html", "템플릿 관리"),
     ("/admin/settings/presets", "admin/settings/presets.html", "프리셋 관리"),

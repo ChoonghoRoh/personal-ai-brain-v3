@@ -194,3 +194,26 @@ class PageAccessLog(Base):
     user_agent = Column(Text, nullable=True)
     ip_address = Column(String(45), nullable=True)
     accessed_at = Column(DateTime, server_default=text("NOW()"), nullable=False)
+
+
+# ---------------------------------------------------------------------------
+# Phase 15-1: system_settings (지정 폴더 경로 등 시스템 설정)
+# ---------------------------------------------------------------------------
+
+class AdminSystemSetting(Base):
+    """시스템 설정 (system_settings 테이블)
+
+    Key-Value 방식으로 시스템 전역 설정을 저장.
+    환경변수 기본값을 DB에서 오버라이드 가능.
+    """
+    __tablename__ = "system_settings"
+    __table_args__ = (
+        Index("idx_system_settings_key", "key", unique=True),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    key = Column(String(100), unique=True, nullable=False)
+    value = Column(Text, nullable=False)
+    description = Column(Text, nullable=True)
+    created_at = Column(DateTime, server_default=text("NOW()"))
+    updated_at = Column(DateTime, server_default=text("NOW()"))
