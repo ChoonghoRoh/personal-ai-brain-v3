@@ -17,9 +17,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initHeader() {
+  if (typeof initLayout === 'function') initLayout();
   if (typeof renderHeader === 'function') {
     renderHeader({
-      subtitle: 'Admin Prompt Preset Manager',
+      subtitle: '프롬프트 프리셋 관리',
       currentPath: '/admin/settings/presets'
     });
   }
@@ -66,7 +67,7 @@ async function loadPresets() {
   const tableBody = document.getElementById('preset-table');
   if (!tableBody) return;
 
-  tableBody.innerHTML = '<tr><td colspan="4" class="loading">Loading...</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="4" class="loading">로딩 중...</td></tr>';
 
   try {
     const params = {
@@ -84,7 +85,7 @@ async function loadPresets() {
     const presets = data.items || [];
 
     if (presets.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="4" class="loading">No presets found</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="4" class="loading">프리셋이 없습니다</td></tr>';
       return;
     }
 
@@ -106,8 +107,8 @@ async function loadPresets() {
     });
 
   } catch (error) {
-    tableBody.innerHTML = '<tr><td colspan="4" class="loading">Error loading presets</td></tr>';
-    showError('Failed to load presets: ' + error.message);
+    tableBody.innerHTML = '<tr><td colspan="4" class="loading">프리셋 로딩 오류</td></tr>';
+    showError('프리셋 로딩 실패: ' + error.message);
   }
 }
 
@@ -124,9 +125,9 @@ async function selectPreset(id) {
     const preset = await adminApiCall(`/presets/${id}`);
     populateForm(preset);
     enableEditorButtons(preset.status);
-    document.getElementById('editor-title').textContent = 'Edit Preset';
+    document.getElementById('editor-title').textContent = '프리셋 수정';
   } catch (error) {
-    showError('Failed to load preset: ' + error.message);
+    showError('프리셋 로딩 실패: ' + error.message);
   }
 }
 
@@ -152,7 +153,7 @@ function createNewPreset() {
   document.getElementById('publish-btn').disabled = true;
   document.getElementById('delete-btn').disabled = true;
 
-  document.getElementById('editor-title').textContent = 'New Preset';
+  document.getElementById('editor-title').textContent = '새 프리셋';
 }
 
 function populateForm(preset) {
@@ -197,7 +198,7 @@ async function saveDraft() {
   const data = getFormData();
 
   if (!data.name || !data.task_type || !data.model_name) {
-    showError('Please fill in all required fields');
+    showError('필수 항목을 모두 입력해주세요');
     return;
   }
 
@@ -209,13 +210,13 @@ async function saveDraft() {
       });
       selectedPresetId = created.id;
       isNewPreset = false;
-      showSuccess('Preset created successfully');
+      showSuccess('프리셋이 생성되었습니다');
     } else {
       await adminApiCall(`/presets/${selectedPresetId}`, {
         method: 'PUT',
         body: JSON.stringify(data),
       });
-      showSuccess('Preset saved successfully');
+      showSuccess('프리셋이 저장되었습니다');
     }
 
     loadPresets();
@@ -223,16 +224,16 @@ async function saveDraft() {
       selectPreset(selectedPresetId);
     }
   } catch (error) {
-    showError('Failed to save preset: ' + error.message);
+    showError('프리셋 저장 실패: ' + error.message);
   }
 }
 
 async function publishPreset() {
   if (!selectedPresetId) return;
 
-  const reason = prompt('Enter change reason for publishing:');
+  const reason = prompt('게시 사유를 입력하세요:');
   if (!reason) {
-    showError('Change reason is required for publishing');
+    showError('게시 사유는 필수입니다');
     return;
   }
 
@@ -241,18 +242,18 @@ async function publishPreset() {
       method: 'POST',
       body: JSON.stringify({ change_reason: reason }),
     });
-    showSuccess('Preset published successfully');
+    showSuccess('프리셋이 게시되었습니다');
     loadPresets();
     selectPreset(selectedPresetId);
   } catch (error) {
-    showError('Failed to publish preset: ' + error.message);
+    showError('프리셋 게시 실패: ' + error.message);
   }
 }
 
 async function deletePreset() {
   if (!selectedPresetId) return;
 
-  if (!confirmAction('Are you sure you want to delete this preset?')) {
+  if (!confirmAction('이 프리셋을 삭제하시겠습니까?')) {
     return;
   }
 
@@ -260,12 +261,12 @@ async function deletePreset() {
     await adminApiCall(`/presets/${selectedPresetId}`, {
       method: 'DELETE',
     });
-    showSuccess('Preset deleted successfully');
+    showSuccess('프리셋이 삭제되었습니다');
     selectedPresetId = null;
     createNewPreset();
     loadPresets();
   } catch (error) {
-    showError('Failed to delete preset: ' + error.message);
+    showError('프리셋 삭제 실패: ' + error.message);
   }
 }
 

@@ -23,9 +23,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initHeader() {
+  if (typeof initLayout === 'function') initLayout();
   if (typeof renderHeader === 'function') {
     renderHeader({
-      subtitle: 'Admin Policy Set Manager',
+      subtitle: '정책 관리',
       currentPath: '/admin/settings/policy-sets'
     });
   }
@@ -76,7 +77,7 @@ async function loadDropdownOptions() {
 
     populateDropdowns();
   } catch (error) {
-    console.error('Failed to load dropdown options:', error);
+    console.error('드롭다운 옵션 로딩 실패:', error);
   }
 }
 
@@ -84,21 +85,21 @@ function populateDropdowns() {
   // Templates dropdown
   const templateSelect = document.getElementById('policy-template');
   if (templateSelect) {
-    templateSelect.innerHTML = '<option value="">Select template</option>' +
+    templateSelect.innerHTML = '<option value="">템플릿 선택</option>' +
       templatesCache.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
   }
 
   // Presets dropdown
   const presetSelect = document.getElementById('policy-preset');
   if (presetSelect) {
-    presetSelect.innerHTML = '<option value="">Select preset</option>' +
+    presetSelect.innerHTML = '<option value="">프리셋 선택</option>' +
       presetsCache.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
   }
 
   // RAG Profiles dropdown
   const ragProfileSelect = document.getElementById('policy-rag-profile');
   if (ragProfileSelect) {
-    ragProfileSelect.innerHTML = '<option value="">Select RAG profile</option>' +
+    ragProfileSelect.innerHTML = '<option value="">RAG 프로필 선택</option>' +
       ragProfilesCache.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
   }
 }
@@ -107,7 +108,7 @@ async function loadPolicies() {
   const tableBody = document.getElementById('policy-table');
   if (!tableBody) return;
 
-  tableBody.innerHTML = '<tr><td colspan="4" class="loading">Loading...</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="4" class="loading">로딩 중...</td></tr>';
 
   try {
     const params = {
@@ -124,14 +125,14 @@ async function loadPolicies() {
     const policies = data.items || [];
 
     if (policies.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="4" class="loading">No policies found</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="4" class="loading">정책이 없습니다</td></tr>';
       return;
     }
 
     tableBody.innerHTML = policies.map(p => {
       const effectiveStr = p.effective_from || p.effective_until
-        ? `${formatDate(p.effective_from) || 'N/A'} - ${formatDate(p.effective_until) || 'N/A'}`
-        : 'Always';
+        ? `${formatDate(p.effective_from) || '미정'} - ${formatDate(p.effective_until) || '미정'}`
+        : '항상';
       return `
         <tr data-id="${p.id}" class="${p.id === selectedPolicyId ? 'selected' : ''}" onclick="selectPolicy('${p.id}')">
           <td>${truncateText(p.name, 30)}</td>
@@ -151,8 +152,8 @@ async function loadPolicies() {
     });
 
   } catch (error) {
-    tableBody.innerHTML = '<tr><td colspan="4" class="loading">Error loading policies</td></tr>';
-    showError('Failed to load policies: ' + error.message);
+    tableBody.innerHTML = '<tr><td colspan="4" class="loading">정책 로딩 오류</td></tr>';
+    showError('정책 로딩 실패: ' + error.message);
   }
 }
 
@@ -169,9 +170,9 @@ async function selectPolicy(id) {
     const policy = await adminApiCall(`/policy-sets/${id}`);
     populateForm(policy);
     enableEditorButtons();
-    document.getElementById('editor-title').textContent = 'Edit Policy';
+    document.getElementById('editor-title').textContent = '정책 수정';
   } catch (error) {
-    showError('Failed to load policy: ' + error.message);
+    showError('정책 로딩 실패: ' + error.message);
   }
 }
 
@@ -194,7 +195,7 @@ function createNewPolicy() {
   document.getElementById('save-btn').disabled = false;
   document.getElementById('delete-btn').disabled = true;
 
-  document.getElementById('editor-title').textContent = 'New Policy';
+  document.getElementById('editor-title').textContent = '새 정책';
 }
 
 function populateForm(policy) {
@@ -240,7 +241,7 @@ async function savePolicy() {
   const data = getFormData();
 
   if (!data.name) {
-    showError('Please fill in the policy name');
+    showError('정책 이름을 입력해주세요');
     return;
   }
 
@@ -252,13 +253,13 @@ async function savePolicy() {
       });
       selectedPolicyId = created.id;
       isNewPolicy = false;
-      showSuccess('Policy created successfully');
+      showSuccess('정책이 생성되었습니다');
     } else {
       await adminApiCall(`/policy-sets/${selectedPolicyId}`, {
         method: 'PUT',
         body: JSON.stringify(data),
       });
-      showSuccess('Policy saved successfully');
+      showSuccess('정책이 저장되었습니다');
     }
 
     loadPolicies();
@@ -266,14 +267,14 @@ async function savePolicy() {
       selectPolicy(selectedPolicyId);
     }
   } catch (error) {
-    showError('Failed to save policy: ' + error.message);
+    showError('정책 저장 실패: ' + error.message);
   }
 }
 
 async function deletePolicy() {
   if (!selectedPolicyId) return;
 
-  if (!confirmAction('Are you sure you want to delete this policy?')) {
+  if (!confirmAction('이 정책을 삭제하시겠습니까?')) {
     return;
   }
 
@@ -281,12 +282,12 @@ async function deletePolicy() {
     await adminApiCall(`/policy-sets/${selectedPolicyId}`, {
       method: 'DELETE',
     });
-    showSuccess('Policy deleted successfully');
+    showSuccess('정책이 삭제되었습니다');
     selectedPolicyId = null;
     createNewPolicy();
     loadPolicies();
   } catch (error) {
-    showError('Failed to delete policy: ' + error.message);
+    showError('정책 삭제 실패: ' + error.message);
   }
 }
 

@@ -15,9 +15,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initHeader() {
+  if (typeof initLayout === 'function') initLayout();
   if (typeof renderHeader === 'function') {
     renderHeader({
-      subtitle: 'Admin Audit Log Viewer',
+      subtitle: '변경 이력 조회',
       currentPath: '/admin/settings/audit-logs'
     });
   }
@@ -61,7 +62,7 @@ async function loadAuditLogs() {
   const tableBody = document.getElementById('audit-table');
   if (!tableBody) return;
 
-  tableBody.innerHTML = '<tr><td colspan="7" class="loading">Loading...</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="7" class="loading">로딩 중...</td></tr>';
 
   try {
     const params = {
@@ -81,7 +82,7 @@ async function loadAuditLogs() {
     const logs = data.items || [];
 
     if (logs.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="7" class="loading">No audit logs found</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="7" class="loading">변경 이력이 없습니다</td></tr>';
       document.getElementById('pagination-controls').style.display = 'none';
       return;
     }
@@ -96,7 +97,7 @@ async function loadAuditLogs() {
         <td>${truncateText(log.change_reason, 30) || '-'}</td>
         <td>
           <button class="btn btn-outline btn-small detail-btn" onclick="showDetail('${log.id}')">
-            View
+            상세
           </button>
         </td>
       </tr>
@@ -112,8 +113,8 @@ async function loadAuditLogs() {
     });
 
   } catch (error) {
-    tableBody.innerHTML = '<tr><td colspan="7" class="loading">Error loading audit logs</td></tr>';
-    showError('Failed to load audit logs: ' + error.message);
+    tableBody.innerHTML = '<tr><td colspan="7" class="loading">변경 이력 로딩 오류</td></tr>';
+    showError('변경 이력 로딩 실패: ' + error.message);
   }
 }
 
@@ -124,28 +125,28 @@ async function showDetail(logId) {
     // Populate basic info
     document.getElementById('detail-basic').innerHTML = `
       <table class="table">
-        <tr><th>Timestamp</th><td>${formatDate(log.created_at)}</td></tr>
-        <tr><th>Table</th><td>${log.table_name}</td></tr>
-        <tr><th>Action</th><td>${createActionBadge(log.action)}</td></tr>
-        <tr><th>Record ID</th><td><code>${log.record_id}</code></td></tr>
-        <tr><th>Changed By</th><td>${log.changed_by || '-'}</td></tr>
-        <tr><th>Reason</th><td>${log.change_reason || '-'}</td></tr>
+        <tr><th>일시</th><td>${formatDate(log.created_at)}</td></tr>
+        <tr><th>테이블</th><td>${log.table_name}</td></tr>
+        <tr><th>작업</th><td>${createActionBadge(log.action)}</td></tr>
+        <tr><th>레코드 ID</th><td><code>${log.record_id}</code></td></tr>
+        <tr><th>변경자</th><td>${log.changed_by || '-'}</td></tr>
+        <tr><th>사유</th><td>${log.change_reason || '-'}</td></tr>
       </table>
     `;
 
     // Populate old values
     document.getElementById('detail-old-values').textContent =
-      log.old_values ? JSON.stringify(log.old_values, null, 2) : '(empty)';
+      log.old_values ? JSON.stringify(log.old_values, null, 2) : '(없음)';
 
     // Populate new values
     document.getElementById('detail-new-values').textContent =
-      log.new_values ? JSON.stringify(log.new_values, null, 2) : '(empty)';
+      log.new_values ? JSON.stringify(log.new_values, null, 2) : '(없음)';
 
     // Show modal
     document.getElementById('detail-modal').style.display = 'flex';
 
   } catch (error) {
-    showError('Failed to load audit log detail: ' + error.message);
+    showError('변경 이력 상세 로딩 실패: ' + error.message);
   }
 }
 

@@ -17,9 +17,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initHeader() {
+  if (typeof initLayout === 'function') initLayout();
   if (typeof renderHeader === 'function') {
     renderHeader({
-      subtitle: 'Admin Template Manager',
+      subtitle: '템플릿 관리',
       currentPath: '/admin/settings/templates'
     });
   }
@@ -60,7 +61,7 @@ async function loadTemplates() {
   const tableBody = document.getElementById('template-table');
   if (!tableBody) return;
 
-  tableBody.innerHTML = '<tr><td colspan="4" class="loading">Loading...</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="4" class="loading">로딩 중...</td></tr>';
 
   try {
     const params = {
@@ -78,7 +79,7 @@ async function loadTemplates() {
     const templates = data.items || [];
 
     if (templates.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="4" class="loading">No templates found</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="4" class="loading">템플릿이 없습니다</td></tr>';
       return;
     }
 
@@ -100,8 +101,8 @@ async function loadTemplates() {
     });
 
   } catch (error) {
-    tableBody.innerHTML = '<tr><td colspan="4" class="loading">Error loading templates</td></tr>';
-    showError('Failed to load templates: ' + error.message);
+    tableBody.innerHTML = '<tr><td colspan="4" class="loading">템플릿 로딩 오류</td></tr>';
+    showError('템플릿 로딩 실패: ' + error.message);
   }
 }
 
@@ -118,9 +119,9 @@ async function selectTemplate(id) {
     const template = await adminApiCall(`/templates/${id}`);
     populateForm(template);
     enableEditorButtons(template.status);
-    document.getElementById('editor-title').textContent = 'Edit Template';
+    document.getElementById('editor-title').textContent = '템플릿 수정';
   } catch (error) {
-    showError('Failed to load template: ' + error.message);
+    showError('템플릿 로딩 실패: ' + error.message);
   }
 }
 
@@ -136,14 +137,14 @@ function createNewTemplate() {
   // Clear form
   document.getElementById('template-form')?.reset();
   document.getElementById('template-status').value = 'draft';
-  document.getElementById('template-variables').innerHTML = '<span class="hint">Variables will be detected from content: {{variable_name}}</span>';
+  document.getElementById('template-variables').innerHTML = '<span class="hint">내용에서 변수가 자동 감지됩니다: {{변수명}}</span>';
 
   // Enable save button
   document.getElementById('save-draft-btn').disabled = false;
   document.getElementById('publish-btn').disabled = true;
   document.getElementById('delete-btn').disabled = true;
 
-  document.getElementById('editor-title').textContent = 'New Template';
+  document.getElementById('editor-title').textContent = '새 템플릿';
 }
 
 function populateForm(template) {
@@ -187,7 +188,7 @@ async function saveDraft() {
   const data = getFormData();
 
   if (!data.name || !data.template_type || !data.content) {
-    showError('Please fill in all required fields');
+    showError('필수 항목을 모두 입력해주세요');
     return;
   }
 
@@ -199,13 +200,13 @@ async function saveDraft() {
       });
       selectedTemplateId = created.id;
       isNewTemplate = false;
-      showSuccess('Template created successfully');
+      showSuccess('템플릿이 생성되었습니다');
     } else {
       await adminApiCall(`/templates/${selectedTemplateId}`, {
         method: 'PUT',
         body: JSON.stringify(data),
       });
-      showSuccess('Template saved successfully');
+      showSuccess('템플릿이 저장되었습니다');
     }
 
     loadTemplates();
@@ -213,16 +214,16 @@ async function saveDraft() {
       selectTemplate(selectedTemplateId);
     }
   } catch (error) {
-    showError('Failed to save template: ' + error.message);
+    showError('템플릿 저장 실패: ' + error.message);
   }
 }
 
 async function publishTemplate() {
   if (!selectedTemplateId) return;
 
-  const reason = prompt('Enter change reason for publishing:');
+  const reason = prompt('게시 사유를 입력하세요:');
   if (!reason) {
-    showError('Change reason is required for publishing');
+    showError('게시 사유는 필수입니다');
     return;
   }
 
@@ -231,18 +232,18 @@ async function publishTemplate() {
       method: 'POST',
       body: JSON.stringify({ change_reason: reason }),
     });
-    showSuccess('Template published successfully');
+    showSuccess('템플릿이 게시되었습니다');
     loadTemplates();
     selectTemplate(selectedTemplateId);
   } catch (error) {
-    showError('Failed to publish template: ' + error.message);
+    showError('템플릿 게시 실패: ' + error.message);
   }
 }
 
 async function deleteTemplate() {
   if (!selectedTemplateId) return;
 
-  if (!confirmAction('Are you sure you want to delete this template?')) {
+  if (!confirmAction('이 템플릿을 삭제하시겠습니까?')) {
     return;
   }
 
@@ -250,12 +251,12 @@ async function deleteTemplate() {
     await adminApiCall(`/templates/${selectedTemplateId}`, {
       method: 'DELETE',
     });
-    showSuccess('Template deleted successfully');
+    showSuccess('템플릿이 삭제되었습니다');
     selectedTemplateId = null;
     createNewTemplate();
     loadTemplates();
   } catch (error) {
-    showError('Failed to delete template: ' + error.message);
+    showError('템플릿 삭제 실패: ' + error.message);
   }
 }
 

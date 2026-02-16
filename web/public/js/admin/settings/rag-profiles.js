@@ -17,9 +17,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initHeader() {
+  if (typeof initLayout === 'function') initLayout();
   if (typeof renderHeader === 'function') {
     renderHeader({
-      subtitle: 'Admin RAG Profile Manager',
+      subtitle: 'RAG 프로필 관리',
       currentPath: '/admin/settings/rag-profiles'
     });
   }
@@ -74,7 +75,7 @@ async function loadProfiles() {
   const tableBody = document.getElementById('profile-table');
   if (!tableBody) return;
 
-  tableBody.innerHTML = '<tr><td colspan="4" class="loading">Loading...</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="4" class="loading">로딩 중...</td></tr>';
 
   try {
     const params = {
@@ -91,7 +92,7 @@ async function loadProfiles() {
     const profiles = data.items || [];
 
     if (profiles.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="4" class="loading">No profiles found</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="4" class="loading">프로필이 없습니다</td></tr>';
       return;
     }
 
@@ -113,8 +114,8 @@ async function loadProfiles() {
     });
 
   } catch (error) {
-    tableBody.innerHTML = '<tr><td colspan="4" class="loading">Error loading profiles</td></tr>';
-    showError('Failed to load profiles: ' + error.message);
+    tableBody.innerHTML = '<tr><td colspan="4" class="loading">프로필 로딩 오류</td></tr>';
+    showError('프로필 로딩 실패: ' + error.message);
   }
 }
 
@@ -131,9 +132,9 @@ async function selectProfile(id) {
     const profile = await adminApiCall(`/rag-profiles/${id}`);
     populateForm(profile);
     enableEditorButtons(profile.status);
-    document.getElementById('editor-title').textContent = 'Edit RAG Profile';
+    document.getElementById('editor-title').textContent = 'RAG 프로필 수정';
   } catch (error) {
-    showError('Failed to load profile: ' + error.message);
+    showError('프로필 로딩 실패: ' + error.message);
   }
 }
 
@@ -161,7 +162,7 @@ function createNewProfile() {
   document.getElementById('publish-btn').disabled = true;
   document.getElementById('delete-btn').disabled = true;
 
-  document.getElementById('editor-title').textContent = 'New RAG Profile';
+  document.getElementById('editor-title').textContent = '새 RAG 프로필';
 }
 
 function populateForm(profile) {
@@ -222,7 +223,7 @@ async function saveDraft() {
   const data = getFormData();
 
   if (!data.name) {
-    showError('Please fill in the profile name');
+    showError('프로필 이름을 입력해주세요');
     return;
   }
 
@@ -234,13 +235,13 @@ async function saveDraft() {
       });
       selectedProfileId = created.id;
       isNewProfile = false;
-      showSuccess('RAG Profile created successfully');
+      showSuccess('RAG 프로필이 생성되었습니다');
     } else {
       await adminApiCall(`/rag-profiles/${selectedProfileId}`, {
         method: 'PUT',
         body: JSON.stringify(data),
       });
-      showSuccess('RAG Profile saved successfully');
+      showSuccess('RAG 프로필이 저장되었습니다');
     }
 
     loadProfiles();
@@ -248,16 +249,16 @@ async function saveDraft() {
       selectProfile(selectedProfileId);
     }
   } catch (error) {
-    showError('Failed to save profile: ' + error.message);
+    showError('프로필 저장 실패: ' + error.message);
   }
 }
 
 async function publishProfile() {
   if (!selectedProfileId) return;
 
-  const reason = prompt('Enter change reason for publishing:');
+  const reason = prompt('게시 사유를 입력하세요:');
   if (!reason) {
-    showError('Change reason is required for publishing');
+    showError('게시 사유는 필수입니다');
     return;
   }
 
@@ -266,18 +267,18 @@ async function publishProfile() {
       method: 'POST',
       body: JSON.stringify({ change_reason: reason }),
     });
-    showSuccess('RAG Profile published successfully');
+    showSuccess('RAG 프로필이 게시되었습니다');
     loadProfiles();
     selectProfile(selectedProfileId);
   } catch (error) {
-    showError('Failed to publish profile: ' + error.message);
+    showError('프로필 게시 실패: ' + error.message);
   }
 }
 
 async function deleteProfile() {
   if (!selectedProfileId) return;
 
-  if (!confirmAction('Are you sure you want to delete this RAG profile?')) {
+  if (!confirmAction('이 RAG 프로필을 삭제하시겠습니까?')) {
     return;
   }
 
@@ -285,12 +286,12 @@ async function deleteProfile() {
     await adminApiCall(`/rag-profiles/${selectedProfileId}`, {
       method: 'DELETE',
     });
-    showSuccess('RAG Profile deleted successfully');
+    showSuccess('RAG 프로필이 삭제되었습니다');
     selectedProfileId = null;
     createNewProfile();
     loadProfiles();
   } catch (error) {
-    showError('Failed to delete profile: ' + error.message);
+    showError('프로필 삭제 실패: ' + error.message);
   }
 }
 

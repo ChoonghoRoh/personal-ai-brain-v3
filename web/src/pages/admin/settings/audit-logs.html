@@ -6,7 +6,7 @@
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/static/css/admin/admin-styles.css" />
     <link rel="stylesheet" href="/static/css/admin/settings-common.css" />
-    <title>Personal AI Brain - Audit Log</title>
+    <title>Personal AI Brain - 변경 이력</title>
   </head>
   <body>
     <div class="container">
@@ -20,9 +20,9 @@
       <div class="admin-container audit-layout">
         <div class="admin-panel full-width">
           <div class="panel-header">
-            <h3>Audit Log Viewer</h3>
+            <h3>변경 이력 조회</h3>
             <button type="button" id="refresh-btn" class="btn btn-secondary btn-small">
-              Refresh
+              새로고침
             </button>
           </div>
 
@@ -30,30 +30,30 @@
           <div class="settings-filters">
             <div class="filter-row">
               <select id="filter-table" class="filter-select">
-                <option value="">All Tables</option>
-                <option value="templates">Templates</option>
-                <option value="prompt_presets">Prompt Presets</option>
-                <option value="rag_profiles">RAG Profiles</option>
-                <option value="policy_sets">Policy Sets</option>
-                <option value="schemas">Schemas</option>
+                <option value="">전체 테이블</option>
+                <option value="templates">템플릿</option>
+                <option value="prompt_presets">프롬프트 프리셋</option>
+                <option value="rag_profiles">RAG 프로필</option>
+                <option value="policy_sets">정책</option>
+                <option value="schemas">스키마</option>
               </select>
               <select id="filter-action" class="filter-select">
-                <option value="">All Actions</option>
-                <option value="create">Create</option>
-                <option value="update">Update</option>
-                <option value="delete">Delete</option>
-                <option value="publish">Publish</option>
-                <option value="rollback">Rollback</option>
+                <option value="">전체 작업</option>
+                <option value="create">생성</option>
+                <option value="update">수정</option>
+                <option value="delete">삭제</option>
+                <option value="publish">게시</option>
+                <option value="rollback">롤백</option>
               </select>
-              <input type="text" id="filter-changed-by" class="filter-input" placeholder="Changed by..." />
+              <input type="text" id="filter-changed-by" class="filter-input" placeholder="변경자..." />
             </div>
             <div class="filter-row">
-              <label for="filter-from-date">From:</label>
+              <label for="filter-from-date">시작일:</label>
               <input type="date" id="filter-from-date" class="filter-date" />
-              <label for="filter-to-date">To:</label>
+              <label for="filter-to-date">종료일:</label>
               <input type="date" id="filter-to-date" class="filter-date" />
-              <button type="button" id="filter-apply-btn" class="btn btn-secondary btn-small">Apply Filter</button>
-              <button type="button" id="filter-clear-btn" class="btn btn-outline btn-small">Clear</button>
+              <button type="button" id="filter-apply-btn" class="btn btn-secondary btn-small">필터 적용</button>
+              <button type="button" id="filter-clear-btn" class="btn btn-outline btn-small">초기화</button>
             </div>
           </div>
 
@@ -61,18 +61,18 @@
           <table class="table audit-table">
             <thead>
               <tr>
-                <th>Timestamp</th>
-                <th>Table</th>
-                <th>Action</th>
-                <th>Record ID</th>
-                <th>Changed By</th>
-                <th>Reason</th>
-                <th>Details</th>
+                <th>일시</th>
+                <th>테이블</th>
+                <th>작업</th>
+                <th>레코드 ID</th>
+                <th>변경자</th>
+                <th>사유</th>
+                <th>상세</th>
               </tr>
             </thead>
             <tbody id="audit-table">
               <tr>
-                <td colspan="7" class="loading">Loading...</td>
+                <td colspan="7" class="loading">로딩 중...</td>
               </tr>
             </tbody>
           </table>
@@ -82,7 +82,7 @@
             <div class="pagination-row">
               <span id="pagination-info" class="pagination-info"></span>
               <label>
-                Items per page:
+                페이지당 항목:
                 <select id="items-per-page" class="items-per-page">
                   <option value="20">20</option>
                   <option value="50" selected>50</option>
@@ -98,21 +98,21 @@
         <div id="detail-modal" class="modal" style="display: none">
           <div class="modal-content">
             <div class="modal-header">
-              <h3>Change Details</h3>
+              <h3>변경 상세</h3>
               <button type="button" class="modal-close" onclick="closeDetailModal()">&times;</button>
             </div>
             <div class="modal-body">
               <div class="detail-section">
-                <h4>Basic Info</h4>
+                <h4>기본 정보</h4>
                 <div id="detail-basic"></div>
               </div>
               <div class="detail-row">
                 <div class="detail-section">
-                  <h4>Before (Old Values)</h4>
+                  <h4>변경 전 (이전 값)</h4>
                   <pre id="detail-old-values" class="json-display"></pre>
                 </div>
                 <div class="detail-section">
-                  <h4>After (New Values)</h4>
+                  <h4>변경 후 (새 값)</h4>
                   <pre id="detail-new-values" class="json-display"></pre>
                 </div>
               </div>
