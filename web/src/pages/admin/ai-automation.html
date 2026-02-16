@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/css/admin/admin-styles.css" />
+    <link rel="stylesheet" href="/static/css/admin/admin-ai-automation.css" />
+    <title>Personal AI Brain - AI 자동화</title>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header는 JavaScript로 동적 생성 -->
+      <div id="header-placeholder"></div>
+
+      <div id="error-message" class="error" style="display: none"></div>
+      <div id="success-message" class="success" style="display: none"></div>
+
+      <!-- AI 자동화 콘텐츠 (3-Column 레이아웃) -->
+      <div class="automation-container">
+        <!-- 좌측: 문서 선택 패널 -->
+        <div class="automation-panel document-selector">
+          <h3>📄 문서 선택</h3>
+          <div class="document-filter">
+            <input type="text" id="document-search" placeholder="파일명으로 검색..." />
+          </div>
+          <div class="document-list" id="document-list">
+            <div class="loading">문서 목록을 불러오는 중...</div>
+          </div>
+          <div class="document-actions">
+            <button type="button" id="select-all-btn" class="btn btn-secondary btn-small">전체 선택</button>
+            <button type="button" id="deselect-all-btn" class="btn btn-secondary btn-small">선택 해제</button>
+          </div>
+          <div class="selected-count">
+            선택된 문서: <span id="selected-count">0</span>개
+          </div>
+        </div>
+
+        <!-- 중앙: 워크플로우 실행 패널 -->
+        <div class="automation-panel workflow-control">
+          <h3>🤖 워크플로우 실행</h3>
+
+          <!-- 실행 옵션 -->
+          <div class="workflow-options">
+            <label class="checkbox-label">
+              <input type="checkbox" id="auto-approve-checkbox" />
+              <span>자동 승인 모드 (사용자 개입 없이 자동 처리)</span>
+            </label>
+          </div>
+
+          <!-- 실행 버튼 -->
+          <div class="workflow-actions">
+            <button type="button" id="run-workflow-btn" class="btn btn-primary btn-large">
+              ▶️ 워크플로우 실행
+            </button>
+            <button type="button" id="cancel-workflow-btn" class="btn btn-danger btn-large" style="display: none;">
+              ⏸️ 실행 취소
+            </button>
+          </div>
+
+          <!-- 진행 상태 -->
+          <div class="workflow-progress" id="workflow-progress" style="display: none;">
+            <div class="progress-header">
+              <span class="progress-stage" id="progress-stage">대기 중...</span>
+              <span class="progress-percent" id="progress-percent">0%</span>
+            </div>
+            <div class="progress-bar-container">
+              <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            <div class="progress-stages">
+              <div class="stage-item" data-stage="1">
+                <span class="stage-number">1</span>
+                <span class="stage-label">텍스트 추출</span>
+              </div>
+              <div class="stage-item" data-stage="2">
+                <span class="stage-number">2</span>
+                <span class="stage-label">청크 생성</span>
+              </div>
+              <div class="stage-item" data-stage="3">
+                <span class="stage-number">3</span>
+                <span class="stage-label">키워드 추출</span>
+              </div>
+              <div class="stage-item" data-stage="4">
+                <span class="stage-number">4</span>
+                <span class="stage-label">라벨 매칭</span>
+              </div>
+              <div class="stage-item" data-stage="5">
+                <span class="stage-number">5</span>
+                <span class="stage-label">승인 처리</span>
+              </div>
+              <div class="stage-item" data-stage="6">
+                <span class="stage-number">6</span>
+                <span class="stage-label">임베딩</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 태스크 이력 -->
+          <div class="task-history" id="task-history">
+            <h4>최근 실행 이력</h4>
+            <div class="task-list" id="task-list">
+              <div class="loading">이력을 불러오는 중...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 우측: 결과 패널 -->
+        <div class="automation-panel results-panel">
+          <h3>📊 실행 결과</h3>
+          <div class="results-container" id="results-container">
+            <div class="empty-state">
+              워크플로우를 실행하면 결과가 여기에 표시됩니다.
+            </div>
+          </div>
+
+          <!-- 승인 대기 항목 (auto_approve=false일 때) -->
+          <div class="pending-approvals" id="pending-approvals" style="display: none;">
+            <h4>승인 대기 항목</h4>
+            <div class="pending-list" id="pending-list"></div>
+            <button type="button" id="approve-pending-btn" class="btn btn-success">
+              ✅ 승인 처리
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/js/components/layout-component.js"></script>
+    <script src="/static/js/components/header-component.js"></script>
+    <script src="/static/js/admin/admin-common.js"></script>
+    <script src="/static/js/components/utils.js"></script>
+    <script type="module" src="/static/js/admin/ai-automation.js"></script>
+  </body>
+</html>

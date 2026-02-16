@@ -423,6 +423,7 @@ _HTML_ROUTES = [
     ("/admin/chunk-labels", "admin/chunk-labels.html", "청크 관리"),
     ("/admin/chunk-create", "admin/chunk-create.html", "청크 생성"),
     ("/admin/knowledge-files", "admin/knowledge-files.html", "파일관리"),
+    ("/admin/ai-automation", "admin/ai-automation.html", "AI 자동화"),
     ("/admin/statistics", "admin/statistics.html", "통계 대시보드"),
     ("/admin/settings/templates", "admin/settings/templates.html", "템플릿 관리"),
     ("/admin/settings/presets", "admin/settings/presets.html", "프리셋 관리"),
