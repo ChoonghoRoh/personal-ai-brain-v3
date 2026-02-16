@@ -366,6 +366,51 @@ Verdict: FAIL (2 failures)
 
 ---
 
+## 6.5 Task 문서 생성 표준
+
+### 6.5.1 Task 문서 생성 절차 (TASK_SPEC)
+
+워크플로우 Step 2.5(TASK_SPEC) 진입 시, todo-list 기반으로 Task별 실행 계획 문서를 일괄 생성한다.
+
+| 항목 | 내용 |
+|------|------|
+| **트리거** | PLAN_REVIEW 통과 후 (또는 `[task-x-y:make]` 명령) |
+| **입력** | `docs/phases/phase-X-Y/phase-X-Y-todo-list.md` |
+| **출력** | `docs/phases/phase-X-Y/tasks/task-X-Y-N-{topic}.md` (todo-list Task 수만큼) |
+| **참조 규칙** | `docs/rules/ai/references/ai-rule-task-creation.md` |
+
+### 6.5.2 Task 문서 필수 구조
+
+```
+# Task X-Y-N: <Task 명>
+
+**우선순위**: X-Y 내 N순위
+**예상 작업량**: <todo-list에서 추출>
+**의존성**: <todo-list에서 추출>
+**상태**: ⏳ 대기
+
+§1. 개요 (목표)
+§2. 파일 변경 계획 (신규 생성 / 수정 대상 파일 목록)
+§3. 작업 체크리스트 (완료 기준 = Done Definition)
+§4. (선택) 참조·비고
+```
+
+### 6.5.3 Task 문서 파일명 규칙
+
+| 패턴 | 예시 |
+|------|------|
+| `task-X-Y-N-{topic}.md` | `task-13-4-1-access-log.md` |
+| topic = Task 명에서 유도한 kebab-case | "True Streaming" → `true-streaming` |
+
+### 6.5.4 Task 문서 검증 기준
+
+- [ ] todo-list Task 수 == tasks/ 디렉토리 문서 수
+- [ ] Task ID·Task 명이 todo-list와 일치
+- [ ] §3 작업 체크리스트가 todo-list 해당 블록과 대응
+- [ ] 기반 문서 링크(plan, todo-list) 존재
+
+---
+
 ## 7. 산출물 저장 위치
 
 | 산출물 | 경로 | 작성 주체 |
@@ -395,6 +440,9 @@ Verdict: FAIL (2 failures)
 | 검증 템플릿 | Verification report 형식 | `docs/rules/templates/verification-report-template.md` |
 | 실행 워크플로우 | 전체 실행 순서 | `docs/rules/ai-execution-workflow.md` |
 | 통합 테스트 가이드 | 테스트 작성법 | `docs/devtest/integration-test-guide.md` |
+| Task 생성 규칙 | Task 문서 생성·명명·검증 | `docs/rules/ai/references/ai-rule-task-creation.md` |
+| Task 검사 규칙 | Task 완료 검사·산출물 | `docs/rules/ai/references/ai-rule-task-inspection.md` |
+| Plan·Todo 생성 규칙 | Phase plan/todo 생성 순서 | `docs/rules/ai/references/ai-rule-phase-plan-todo-generation.md` |
 
 ---
 
@@ -406,3 +454,4 @@ Verdict: FAIL (2 failures)
 | 2.0 | 2026-02-09 | 프론트엔드 구조 추가, 보안/검증 기준 분리, 공통 AI 팀 언어로 전환 | Claude Code (Backend & Logic Expert) |
 | 3.0 | 2026-02-15 | Claude Code 내부 에이전트 팀 전환: 외부 AI 참조(Cursor/Gemini/Copilot) 제거, Task tool subagent_type 기반 구조로 재구성, Backend Builder를 Orchestrator에 통합, 섹션 6.3(전담 AI Gemini) 삭제 | Claude Code (Backend & Logic Expert) |
 | 3.1 | 2026-02-16 | §5.2 테스트 필수 요건에 E2E 회귀/Dev API 회귀/메뉴 라우트 검사 추가, §5.3 테스트 실행 명령에 E2E 회귀·Dev API 검사 명령 추가, §7 산출물에 E2E 실행 리포트·회귀 시나리오 추가. Phase 13-3 E2E 패턴 반영 | Claude Code (Backend & Logic Expert) |
+| 3.2 | 2026-02-16 | §6.5 Task 문서 생성 표준 신규 추가 (생성 절차·필수 구조·파일명 규칙·검증 기준), §8 참조 문서에 Task 생성/검사/Plan 규칙 3건 추가. Phase 13 Task 문서 16건 전수 검증 기반 | Claude Code (Backend & Logic Expert) |
