@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/css/login.css" />
+    <title>Personal AI Brain - 로그인</title>
+  </head>
+  <body>
+    <div class="login-container">
+      <div class="login-card">
+        <div class="login-logo">
+          <h1>Personal AI Brain</h1>
+          <p>Knowledge Management System</p>
+        </div>
+
+        <form id="login-form">
+          <div class="form-group">
+            <label for="username">사용자명</label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              required
+              autocomplete="username"
+              placeholder="사용자명을 입력하세요"
+            />
+          </div>
+          <div class="form-group">
+            <label for="password">비밀번호</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              required
+              autocomplete="current-password"
+              placeholder="비밀번호를 입력하세요"
+            />
+          </div>
+          <div id="login-error" class="error-message" style="display: none"></div>
+          <button type="submit" class="login-btn">로그인</button>
+        </form>
+
+        <div class="login-footer">
+          <p>API Key 인증은 <a href="/docs" target="_blank">API 문서</a>를 참조하세요</p>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/js/auth/login.js"></script>
+  </body>
+</html>

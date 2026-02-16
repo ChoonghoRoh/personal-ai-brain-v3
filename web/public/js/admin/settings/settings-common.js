@@ -15,6 +15,12 @@ async function adminApiCall(endpoint, options = {}) {
     'Content-Type': 'application/json',
   };
 
+  // JWT 토큰 첨부 (Phase 14 QC 4.1)
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    defaultHeaders['Authorization'] = 'Bearer ' + token;
+  }
+
   try {
     const response = await fetch(url, {
       ...options,

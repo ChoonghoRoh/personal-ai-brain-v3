@@ -295,7 +295,10 @@ AUTH_EXCLUDE_PATHS = [
     "/openapi.json",
     "/api/auth/login",
     "/api/auth/token",
+    "/api/auth/status",
+    "/api/auth/me",
     # 웹 페이지 (HTML)
+    "/login",
     "/dashboard",
     "/search",
     "/ask",

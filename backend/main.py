@@ -405,6 +405,7 @@ async def on_shutdown():
 # (path, template_path, fallback_title)
 _HTML_ROUTES = [
     ("/", "dashboard.html", "Personal AI Brain"),
+    ("/login", "login.html", "로그인"),
     ("/dashboard", "dashboard.html", "대시보드"),
     ("/search", "search.html", "검색"),
     ("/ask", "ask.html", "AI 질의"),

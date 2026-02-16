@@ -193,7 +193,7 @@ function createLNB(currentPath) {
         isActive = currentPath.startsWith(item.path);
       }
       const activeClass = isActive ? 'active' : '';
-      return `<li><a href="${item.path}" class="${activeClass}"><span class="menu-icon">${item.icon}</span>${item.label}</a></li>`;
+      return `<li><a href="${item.path}" class="${activeClass}" data-tooltip="${item.label}"><span class="menu-icon">${item.icon}</span><span class="menu-label">${item.label}</span></a></li>`;
     }).join('\n');
   }
 
@@ -222,6 +222,10 @@ function createLNB(currentPath) {
         ${menuItems(SETTINGS_MENU, 'settings-menu')}
       </ul>
     </div>
+    <button class="lnb-collapse-btn" onclick="toggleCollapseLNB()" aria-label="메뉴 접기/펼치기">
+      <span class="collapse-icon">\u25C0</span>
+      <span class="collapse-label">메뉴 접기</span>
+    </button>
   `;
 }
 
@@ -361,16 +365,33 @@ function renderHeader(options = {}) {
 // ============================================
 
 /**
- * 사용자 역할 조회 (캐시 지원)
+ * 사용자 역할 조회 (캐시 지원, 인증 리다이렉트 포함)
+ * Phase 14 QC 4.1: auth_enabled 시 비인증 admin 접근 → /login 리다이렉트
  * @returns {Promise<string>} 사용자 역할
  */
 async function fetchUserRole() {
   if (_cachedUserRole !== null) return _cachedUserRole;
 
   try {
-    const res = await fetch('/api/auth/status');
+    const headers = {};
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      headers['Authorization'] = 'Bearer ' + token;
+    }
+
+    const res = await fetch('/api/auth/me', { headers });
     if (res.ok) {
       const data = await res.json();
+
+      // 프로덕션(auth_enabled=true) + 비인증 → admin 페이지 접근 시 로그인 리다이렉트
+      if (data.auth_enabled && !data.authenticated) {
+        const path = window.location.pathname;
+        if (path.startsWith('/admin')) {
+          window.location.href = '/login?return_to=' + encodeURIComponent(path);
+          return 'user';
+        }
+      }
+
       _cachedUserRole = data.role || 'user';
     } else {
       _cachedUserRole = 'user';
