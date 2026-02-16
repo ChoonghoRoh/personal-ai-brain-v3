@@ -1,6 +1,6 @@
 # AI Team — Workflow SSOT
 
-**버전**: 3.1
+**버전**: 3.2
 **최종 수정**: 2026-02-16
 
 ---
@@ -128,10 +128,13 @@ DONE (G4 Final Gate)
 | VERIFYING | FAIL | REWINDING→BUILDING | Critical 또는 High 존재 |
 | TESTING | PASS | BUILDING (다음 Task) 또는 INTEGRATION | 테스트 전체 통과 |
 | TESTING | FAIL | REWINDING→BUILDING | 테스트 실패 |
-| INTEGRATION | PASS | E2E | 통합 시나리오 전체 통과 (API↔UI 포함) |
-| INTEGRATION | FAIL | REWINDING→BUILDING | 통합 실패 |
-| E2E | PASS | DONE | E2E 전체 통과 + E2E 리포트 + Verification Report 작성 완료 |
-| E2E | FAIL | REWINDING→BUILDING | E2E 실패 |
+| INTEGRATION | PASS (회귀+신규+연동) | E2E | Dev API 회귀 PASS + 현재 API PASS + 통합 연동 PASS |
+| INTEGRATION | FAIL (회귀) | REWINDING→BUILDING | 기존 API 회귀 실패 — 변경사항에 의한 기존 기능 깨짐 |
+| INTEGRATION | FAIL (신규) | REWINDING→BUILDING | 새/변경 API 실패 — 구현 결함 |
+| INTEGRATION | FAIL (연동) | REWINDING→BUILDING | API↔UI 연동 실패 — 도메인 간 불일치 |
+| E2E | PASS (회귀+신규) | DONE | 기존 E2E 회귀 PASS + 현재 E2E PASS + 리포트 작성 완료 |
+| E2E | FAIL (회귀) | REWINDING→BUILDING | 기존 E2E 깨짐 — 변경사항에 의한 회귀 |
+| E2E | FAIL (신규) | REWINDING→BUILDING | 현재 Phase E2E 실패 — 구현/셀렉터 결함 |
 | BLOCKED | 이슈 해결 | (이전 상태) | Blocker 제거 |
 | BLOCKED | SSOT 변경 완료 | (이전 상태) | SSOT 리로드 완료 (LOCK-3) |
 | REWINDING | 롤백 완료 | (대상 상태) | — |
@@ -255,37 +258,124 @@ Step 5: TESTING (G3 - Task 단위)
   ※ Step 4 + Step 5 병렬 실행 가능:
     Verifier와 Tester를 동시에 실행하여 시간 단축
 
-Step 6: INTEGRATION
-  ├── 통합 테스트 실행
-  │   [BE] → API 연동, DB 정합성, 서비스 간 연계
-  │   [FE] → 페이지 간 네비게이션, 공유 컴포넌트 동작
-  │   [FS] → API 호출 → 응답 렌더링 → 사용자 인터랙션 전체 흐름
-  ├── PASS → E2E로 전이
-  └── FAIL → REWINDING→BUILDING
+Step 6: INTEGRATION (Dev API 검사 + 통합 테스트)
+  ├── 6-A. Dev API 회귀 검사 — 기존 Phase 엔드포인트 정상 동작 확인
+  │   ├── 대상: 이전 Phase에서 구현한 API 엔드포인트 전체
+  │   ├── 방법: curl + HTTP 상태 코드 + JSON 응답 구조 검증
+  │   │   ```bash
+  │   │   # 예: 전체 API 헬스체크
+  │   │   curl -s -o /dev/null -w "%{http_code}" http://localhost:8001/api/health
+  │   │   # 예: API 응답 구조 검증
+  │   │   curl -s http://localhost:8001/api/labels | python3 -c \
+  │   │     "import sys,json; d=json.load(sys.stdin); assert isinstance(d,list)"
+  │   │   ```
+  │   ├── PASS → 6-B로 진행
+  │   └── FAIL → REWINDING→BUILDING (회귀 결함 — 기존 기능 깨짐)
+  │
+  ├── 6-B. 현재 Phase API 검사 — 새/변경 엔드포인트 동작 확인
+  │   ├── 대상: 현재 Phase에서 추가·수정한 엔드포인트
+  │   ├── 방법: curl 호출 + 기대 응답 비교 (상태코드, 필드 존재, 값 범위)
+  │   ├── PASS → 6-C로 진행
+  │   └── FAIL → REWINDING→BUILDING (구현 결함 수정)
+  │
+  ├── 6-C. 통합 연동 검사
+  │   ├── [BE] → API 연동, DB 정합성, 서비스 간 연계
+  │   ├── [FE] → 페이지 간 네비게이션, 공유 컴포넌트 동작
+  │   ├── [FS] → API 호출 → 응답 렌더링 → 사용자 인터랙션 전체 흐름
+  │   ├── 페이지 로드 검사: 모든 HTML 라우트 HTTP 200 확인
+  │   │   ```bash
+  │   │   # Phase 13-3 패턴: 전 메뉴 path 일괄 확인
+  │   │   for path in /dashboard /search /knowledge /reason /ask /logs \
+  │   │     /admin/knowledge/chunks /admin/knowledge/labels ...; do
+  │   │     code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8001${path}")
+  │   │     echo "${path}: ${code}"
+  │   │   done
+  │   │   ```
+  │   ├── PASS → E2E로 전이
+  │   └── FAIL → REWINDING→BUILDING (연동 결함 수정)
+  │
+  └── 회귀 분기 판정 기준:
+      ├── 기존 API 응답 구조 변경 → E2 (High), REWINDING 필수
+      ├── 기존 페이지 HTTP 404/500 → E1 (Blocker), BLOCKED 전이
+      ├── 새 API만 실패 → E2 (High), 해당 Task로 REWINDING
+      └── 연동 불일치 (API 응답 ↔ UI 기대값) → E2, REWINDING→BUILDING
 
-Step 7: E2E
-  ├── 사용자 시나리오 기반 전체 테스트 (L6)
-  │   Playwright 또는 수동 브라우저 확인
-  │   사용자 동선별 시나리오 실행
-  │   참조: docs/rules/testing/phase-unit-user-test-guide.md (방안 A/B/C)
-  ├── PASS → E2E 리포트 작성 (Step 7.5)
-  └── FAIL → REWINDING→BUILDING
+Step 7: E2E (Playwright E2E 검사)
+  ├── 7-A. 기존 E2E 회귀 실행 — 이전 Phase spec 파일 전체 실행
+  │   ├── 대상: e2e/ 디렉토리의 기존 spec 파일들
+  │   ├── 실행:
+  │   │   ```bash
+  │   │   # 기존 E2E 전체 회귀 (smoke + 이전 Phase)
+  │   │   npx playwright test e2e/smoke.spec.js
+  │   │   npx playwright test e2e/phase-12-qc.spec.js
+  │   │   npx playwright test e2e/phase-13-menu-user.spec.js \
+  │   │     e2e/phase-13-menu-admin-knowledge.spec.js \
+  │   │     e2e/phase-13-menu-cross.spec.js
+  │   │   ```
+  │   ├── PASS → 7-B로 진행
+  │   └── FAIL → REWINDING→BUILDING (회귀 결함 — 기존 E2E 깨짐)
+  │       ├── 실패 spec 파일·테스트명 기록 (error_log)
+  │       └── 원인 분석: 셀렉터 변경? DOM 구조 변경? API 응답 변경?
+  │
+  ├── 7-B. 현재 Phase E2E 실행 — 새 spec 파일 또는 대체 테스트
+  │   ├── E2E spec 파일 확인: e2e/phase-X-Y.spec.js 존재 여부
+  │   │   ├── 존재 → Playwright 실행
+  │   │   │   ```bash
+  │   │   │   npx playwright test e2e/phase-X-Y.spec.js
+  │   │   │   # 또는 webtest 스크립트 사용
+  │   │   │   python3 scripts/webtest.py X-Y start
+  │   │   │   ```
+  │   │   └── 미존재 → E2E spec 생성 또는 대체 테스트
+  │   │       ├── 방법 1: E2E spec 생성 (기존 spec 참조)
+  │   │       │   참조: docs/devtest/integration-test-guide.md §4
+  │   │       ├── 방법 2: 대체 테스트 (curl API + HTTP 상태)
+  │   │       │   참조: docs/webtest/phase-unit-user-test-guide.md §0
+  │   │       └── 대체 테스트 사용 시 E2E 리포트에 반드시 기재
+  │   ├── Phase 13-3 검증 패턴 (메뉴·헤더 관련 Phase 적용):
+  │   │   ├── 1단계: 페이지 로드 (HTTP 200 + 콘텐츠 확인)
+  │   │   ├── 2단계: 헤더 렌더링 (.container > header 가시성)
+  │   │   └── 3단계: 활성 메뉴 하이라이트 (nav a.active 텍스트 일치)
+  │   ├── PASS → E2E 리포트 작성 (Step 7.5)
+  │   └── FAIL → REWINDING→BUILDING (E2E 결함 수정)
+  │       ├── 실패 테스트 식별 → 관련 Task 역추적
+  │       └── 셀렉터 오류 vs 기능 결함 구분
+  │
+  └── 회귀 분기 판정 기준:
+      ├── 기존 E2E 실패 → E1 (Blocker), 신규 코드에 의한 회귀
+      │   → 현재 Phase 변경사항 중 기존 기능에 영향을 준 부분 식별·수정
+      ├── 새 E2E만 실패 → E2 (High), 해당 Task로 REWINDING
+      ├── 셀렉터 불일치 → DOM 구조 변경 반영 (spec 수정, E3 수준)
+      └── 전체 E2E 통과 + 시나리오 커버리지 100% → PASS
 
 Step 7.5: E2E 리포트 작성
-  ├── Verification Report 작성
-  │   참조 템플릿: docs/rules/templates/verification-report-template.md
-  │   저장: docs/phases/phase-X-Y/phase-X-Y-verification-report.md
-  │   포함 내용:
-  │   - §2 Syntax Check (BE/FE/DB)
-  │   - §3 Logic Check (Task 완료 기준, API, UI, DB 정합성)
-  │   - §4 Edge Case Check
-  │   - §5 코드 오류 (Critical/High/Low)
-  │   - §8.1 Integration Test 결과
-  │   - §8.2 E2E Test 결과
-  │   - §10 최종 판정 (PASS/FAIL/PARTIAL)
-  ├── Web User Test Report 작성 (해당 시)
-  │   참조: docs/rules/testing/phase-unit-user-test-guide.md §5
-  │   저장: docs/webtest/phase-X-Y/reports/
+  ├── 7.5-A. Verification Report 작성
+  │   ├── 참조 템플릿: docs/rules/templates/verification-report-template.md
+  │   ├── 저장: docs/phases/phase-X-Y/phase-X-Y-verification-report.md
+  │   └── 포함 내용:
+  │       - §2 Syntax Check (BE/FE/DB)
+  │       - §3 Logic Check (Task 완료 기준, API, UI, DB 정합성)
+  │       - §4 Edge Case Check
+  │       - §5 코드 오류 (Critical/High/Low)
+  │       - §8.1 Integration Test 결과 (Dev API 검사 결과 포함)
+  │       - §8.2 E2E Test 결과 (회귀 + 신규 E2E 결과 분리 기재)
+  │       - §10 최종 판정 (PASS/FAIL/PARTIAL)
+  │
+  ├── 7.5-B. E2E 실행 결과 리포트 작성
+  │   ├── 참조: docs/devtest/integration-test-guide.md §5 (리포트 규정)
+  │   ├── 참조: docs/webtest/phase-unit-user-test-guide.md §0 (방안 A/B/C)
+  │   ├── 저장: docs/webtest/phase-X-Y/phase-X-Y-webtest-execution-report.md
+  │   └── 포함 내용:
+  │       - E2E Spec 상태 (존재/부재, 대체 방법 사용 여부)
+  │       - 회귀 E2E 결과 (기존 spec 실행 결과)
+  │       - 신규 E2E 결과 (현재 Phase spec 실행 결과)
+  │       - 시나리오 ↔ E2E 테스트 매핑 표 (Phase 13-3 패턴)
+  │       - 실패 테스트 상세 (재현 조건, 원인 분석)
+  │       - 해결된 이슈 / 미해결 이슈
+  │
+  ├── 7.5-C. Web User Test Report 작성 (해당 시)
+  │   ├── 참조: docs/webtest/phase-unit-user-test-guide.md §5
+  │   └── 저장: docs/webtest/phase-X-Y/reports/
+  │
   └── 리포트 완료 → G4 Final Gate (Step 8)
 
 Step 8: DONE (G4)
@@ -492,8 +582,11 @@ IF retry_count >= 3 (동일 상태에서 3회 연속 실패):
 | PLAN_REVIEW 실패 | PLANNING | Planner 재실행 (다른 프롬프트/관점) | 도메인 분류 재검토 |
 | VERIFYING 실패 | BUILDING | 지적 사항 수정 | 도메인별 기준 적용 |
 | TESTING 실패 | BUILDING | 테스트 실패 원인 수정 | [BE] pytest / [FE] 콘솔 에러 / [FS] 연동 |
-| INTEGRATION 실패 | BUILDING | 통합 이슈 수정 (관련 Task 식별) | API↔UI 연동 이슈 우선 확인 |
-| E2E 실패 | BUILDING | E2E 시나리오 기준 수정 | 사용자 동선 기준 |
+| INTEGRATION 실패 (회귀) | BUILDING | 기존 API 깨뜨린 변경사항 식별·수정 | 이전 Phase API 응답 구조 보존 확인 |
+| INTEGRATION 실패 (신규) | BUILDING | 새 API 구현 결함 수정 | 현재 Phase Task 기준 |
+| INTEGRATION 실패 (연동) | BUILDING | API↔UI 연동 이슈 수정 (관련 Task 식별) | 도메인 간 인터페이스 일치 확인 |
+| E2E 실패 (회귀) | BUILDING | 기존 E2E 깨뜨린 변경사항 식별·수정 | 셀렉터 변경 vs 기능 결함 구분 |
+| E2E 실패 (신규) | BUILDING | E2E 시나리오 기준 수정 | 사용자 동선 기준 |
 
 ### 5.3 리와인드 실행 절차
 
@@ -608,20 +701,32 @@ Orchestrator:
      NO → 실패한 게이트로 리와인드
      YES ↓
 
-  3. INTEGRATION 실행 → PASS?
-     [BE] API 연동 확인
-     [FE] 페이지 간 네비게이션 확인
-     [FS] API↔UI 데이터 흐름 확인
-     NO → REWINDING→BUILDING (실패 도메인 식별)
-     YES ↓
+  3. INTEGRATION 실행 (Dev API 검사 + 통합 연동)
+     3-a. Dev API 회귀 검사 → 기존 API 엔드포인트 정상?
+       NO → REWINDING→BUILDING (회귀 결함 — 기존 기능 깨짐)
+       YES ↓
+     3-b. 현재 Phase API 검사 → 새/변경 엔드포인트 정상?
+       NO → REWINDING→BUILDING (구현 결함)
+       YES ↓
+     3-c. 통합 연동 검사
+       [BE] API 연동, DB 정합성
+       [FE] 페이지 간 네비게이션, 전 메뉴 HTTP 200 확인
+       [FS] API↔UI 데이터 흐름 확인
+       NO → REWINDING→BUILDING (실패 도메인 식별)
+       YES ↓
 
-  4. E2E 실행 → PASS?
-     사용자 동선 시나리오 전체 확인
-     NO → REWINDING→BUILDING
-     YES ↓
+  4. E2E 실행 (Playwright 회귀 + 신규)
+     4-a. 기존 E2E 회귀 → 이전 Phase spec 파일 전체 실행
+       NO → REWINDING→BUILDING (회귀 결함 — 기존 E2E 깨짐)
+       YES ↓
+     4-b. 현재 Phase E2E → 새 spec 파일 실행 (또는 대체 테스트)
+       NO → REWINDING→BUILDING (E2E 결함)
+       YES ↓
 
   4.5. E2E 리포트 작성
      → phase-X-Y-verification-report.md 작성 (템플릿 기반)
+     → phase-X-Y-webtest-execution-report.md 작성
+       (회귀 E2E 결과, 신규 E2E 결과, 시나리오↔E2E 매핑 표)
      → E2E 결과, Integration 결과, 코드 오류 종합 기록
      → Web User Test Report 작성 (해당 시)
      → 리포트 최종 판정: PASS/FAIL/PARTIAL
@@ -693,13 +798,17 @@ def decide_next_action(status):
 
     if status.current_state == "INTEGRATION":
         if status.last_action_result == "PASS":
-            return "E2E: E2E 테스트 실행 (사용자 시나리오)"
+            return "E2E: E2E 테스트 실행 (회귀 E2E → 신규 E2E 순서)"
+        if "회귀" in (status.last_action or ""):
+            return "REWINDING→BUILDING: 기존 API 회귀 결함 수정 (변경사항 역추적)"
         return "REWINDING→BUILDING: 통합 이슈 수정 (도메인 식별 필요)"
 
     if status.current_state == "E2E":
         if status.last_action_result == "PASS":
-            return "E2E_REPORT: Verification Report + E2E 리포트 작성"
-        return "REWINDING→BUILDING: E2E 실패 수정"
+            return "E2E_REPORT: Verification Report + E2E 리포트 작성 (회귀+신규 결과 분리 기재)"
+        if "회귀" in (status.last_action or ""):
+            return "REWINDING→BUILDING: 기존 E2E 회귀 결함 수정 (기존 기능 깨짐)"
+        return "REWINDING→BUILDING: E2E 실패 수정 (현재 Phase 결함)"
 
     if status.current_state == "E2E_REPORT":
         return "DONE: G4 Final Gate + Final Summary 작성"
@@ -824,8 +933,13 @@ AI 세션이 끊기고 새 세션에서 재개할 때:
 | VERIFYING | `docs/rules/ai/references/ai-rule-task-inspection.md` | `QA.md` |
 | TESTING [BE] | `docs/rules/testing/integration-test-guide.md` | `QA.md` |
 | TESTING [FE] | `docs/rules/testing/phase-unit-user-test-guide.md` | `QA.md` |
-| E2E | `docs/rules/testing/phase-unit-user-test-guide.md` | `QA.md` |
+| INTEGRATION (Dev API) | `docs/devtest/integration-test-guide.md` §4-§5 | `QA.md` |
+| INTEGRATION (회귀 분기) | `docs/devtest/scenarios/phase-10-regression-scenarios.md` | `QA.md` |
+| E2E (실행) | `docs/webtest/phase-unit-user-test-guide.md` §0 (방안 A/B/C) | `QA.md` |
+| E2E (회귀) | `e2e/smoke.spec.js` + 기존 Phase spec 파일들 | `QA.md` |
+| E2E (Phase 13-3 패턴) | `e2e/phase-13-menu-*.spec.js` (메뉴·헤더·활성 3단계) | `QA.md` |
 | E2E_REPORT | `docs/rules/templates/verification-report-template.md` | `QA.md` |
+| E2E_REPORT (실행 결과) | `docs/devtest/integration-test-guide.md` §5 (리포트 규정) | `QA.md` |
 
 **Charter 파일 경로**:
 
@@ -846,3 +960,4 @@ AI 세션이 끊기고 새 세션에서 재개할 때:
 | 2.0 | 2026-02-09 | 프론트엔드 워크플로우 추가, 도메인 태그 시스템, G2 분리(be/fe), 공통 AI 팀 언어로 전환 | Claude Code (Backend & Logic Expert) |
 | 3.0 | 2026-02-15 | ENTRYPOINT 정의 추가, Phase Template SSOT Connection 추가, 상태 파일에 ssot_version/ssot_loaded_at 필드 추가, SSOT Lock/Freshness enforcement 통합, 부트로더 시퀀스에 SSOT 리로드 명시, 외부 AI 참조 제거 | Claude Code (Backend & Logic Expert) |
 | 3.1 | 2026-02-16 | TASK_SPEC 상태 추가 (PLAN_REVIEW→BUILDING 사이 Task 내역서 생성 단계), E2E_REPORT 단계 추가 (E2E→DONE 사이 Verification Report + E2E 리포트 작성), 참조 문서 매핑에 TASK_SPEC/E2E_REPORT 행 추가 | Claude Code (Backend & Logic Expert) |
+| 3.2 | 2026-02-16 | INTEGRATION/E2E 절차 상세화: (1) Dev API 회귀+신규+연동 3단계 검사, (2) E2E 회귀+신규 2단계 실행, (3) 각 절차별 회귀 분기(REWINDING) 판정 기준 삽입, (4) 리포트에 회귀/신규 결과 분리 기재, (5) Phase 13-3 E2E 패턴(메뉴·헤더·활성 3단계) 적용, (6) 리와인드 매트릭스 회귀/신규/연동 분리, (7) 참조 문서 매핑 확대 | Claude Code (Backend & Logic Expert) |

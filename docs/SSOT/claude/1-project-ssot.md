@@ -12,7 +12,7 @@
 | **프로젝트명** | Personal AI Brain v3 |
 | **목적** | 로컬 설치형 개인 AI 브레인 — 문서 벡터화, 의미 검색, AI 응답, 지식 구조화, Reasoning |
 | **배포 형태** | Docker Compose (On-Premise, 폐쇄망 동작 필수) |
-| **현재 Phase** | Phase 12 완료, Phase 13 준비 중 |
+| **현재 Phase** | Phase 13 완료, Phase 14 계획 수립 대기 |
 
 ---
 
@@ -269,7 +269,10 @@ ELSE IF (High 이슈만 존재):
 | **새 UI 페이지** | 페이지 로드 + 기본 동작 확인 | E2E spec 또는 수동 확인 |
 | **API-UI 연동** | API 호출 + 응답 렌더링 확인 | 통합 시나리오 포함 |
 | **커버리지** | 변경 파일 기준 80% 이상 (백엔드) | `pytest-cov` 측정 |
-| **회귀 테스트** | 기존 테스트 전체 통과 | `pytest tests/` |
+| **회귀 테스트 (pytest)** | 기존 테스트 전체 통과 | `pytest tests/` |
+| **회귀 테스트 (E2E)** | 기존 E2E spec 전체 통과 | `npx playwright test e2e/smoke.spec.js e2e/phase-*.spec.js` |
+| **Dev API 회귀** | 기존 API 엔드포인트 HTTP 200 + 응답 구조 유지 | curl + JSON 파싱 |
+| **메뉴 라우트 검사** | 전 메뉴 path HTTP 200 확인 (Phase 13-3 패턴) | curl 일괄 확인 |
 
 ### 5.3 테스트 실행 명령 표준
 
@@ -288,6 +291,28 @@ npx playwright test e2e/smoke.spec.js
 
 # L6: E2E 테스트 (Phase 전체)
 npx playwright test e2e/phase-X-Y.spec.js
+
+# L6: E2E 회귀 테스트 (기존 Phase spec 전체 실행)
+npx playwright test e2e/smoke.spec.js e2e/phase-12-qc.spec.js \
+  e2e/phase-13-menu-user.spec.js e2e/phase-13-menu-admin-knowledge.spec.js \
+  e2e/phase-13-menu-cross.spec.js
+
+# L6: webtest 스크립트 사용 (E2E spec 있는 Phase)
+python3 scripts/webtest.py X-Y start
+
+# Dev API 검사: 전 메뉴 path HTTP 200 일괄 확인
+for path in /dashboard /search /knowledge /reason /ask /logs \
+  /admin/knowledge/chunks /admin/knowledge/labels /admin/knowledge/groups \
+  /admin/knowledge/relations /admin/knowledge/categories /admin/knowledge/statistics \
+  /admin/settings/templates /admin/settings/presets /admin/settings/rag-profiles \
+  /admin/settings/policies /admin/settings/system; do
+  code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8001${path}")
+  echo "${path}: ${code}"
+done
+
+# Dev API 검사: 주요 API 엔드포인트 상태 확인
+curl -s http://localhost:8001/api/health | python3 -c "import sys,json; print(json.load(sys.stdin))"
+curl -s http://localhost:8001/api/labels | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'labels: {len(d)}개')" 2>/dev/null
 ```
 
 ### 5.4 테스트 리포트 형식
@@ -348,6 +373,8 @@ Verdict: FAIL (2 failures)
 | 검증 리포트 | `docs/phases/phase-X-Y/phase-X-Y-verification-report.md` | Orchestrator (Verifier 결과 기반) |
 | Backend 테스트 | `tests/test_{module}.py` | Orchestrator |
 | E2E 스펙 | `e2e/phase-X-Y.spec.js` | Orchestrator |
+| E2E 실행 리포트 | `docs/webtest/phase-X-Y/phase-X-Y-webtest-execution-report.md` | Orchestrator |
+| 회귀 시나리오 | `docs/devtest/scenarios/phase-X-Y-regression-scenarios.md` | Orchestrator |
 | 최종 요약 | `docs/phases/phase-X-Y/phase-X-Y-final-summary.md` | Orchestrator |
 
 ---
@@ -374,3 +401,4 @@ Verdict: FAIL (2 failures)
 | 1.0 | 2026-02-09 | 초안 작성 (백엔드 전용) | Claude Code (Backend & Logic Expert) |
 | 2.0 | 2026-02-09 | 프론트엔드 구조 추가, 보안/검증 기준 분리, 공통 AI 팀 언어로 전환 | Claude Code (Backend & Logic Expert) |
 | 3.0 | 2026-02-15 | Claude Code 내부 에이전트 팀 전환: 외부 AI 참조(Cursor/Gemini/Copilot) 제거, Task tool subagent_type 기반 구조로 재구성, Backend Builder를 Orchestrator에 통합, 섹션 6.3(전담 AI Gemini) 삭제 | Claude Code (Backend & Logic Expert) |
+| 3.1 | 2026-02-16 | §5.2 테스트 필수 요건에 E2E 회귀/Dev API 회귀/메뉴 라우트 검사 추가, §5.3 테스트 실행 명령에 E2E 회귀·Dev API 검사 명령 추가, §7 산출물에 E2E 실행 리포트·회귀 시나리오 추가. Phase 13-3 E2E 패턴 반영 | Claude Code (Backend & Logic Expert) |
