@@ -21,7 +21,7 @@ from backend.routers.system import system, backup, integrity, logs, error_logs, 
 from backend.routers.system.backup import legacy_router as backup_legacy_router
 from backend.routers.ai import ai, conversations
 from backend.routers.knowledge import knowledge, labels, relations, approval, suggestions, knowledge_integration, folder_management, graph
-from backend.routers.reasoning import reason, reasoning_chain, reasoning_results, recommendations, reason_stream, reason_store
+from backend.routers.reasoning import reason, reasoning_chain, reasoning_results, recommendations, reason_stream, reason_store, reason_document
 from backend.routers.cognitive import memory, context, learning, personality, metacognition
 from backend.routers.automation import automation, workflow
 from backend.routers.ingest import file_parser
@@ -67,6 +67,7 @@ openapi_tags = [
     {"name": "Reasoning", "description": "추론 엔진 (기본 질의)"},
     {"name": "Reasoning Stream", "description": "스트리밍 추론 (SSE)"},
     {"name": "Reasoning Store", "description": "추론 결과 공유 및 저장"},
+    {"name": "Document Reasoning", "description": "지정 문서 대상 추론 (Phase 15-3)"},
     {"name": "Reasoning Chain", "description": "다단계 추론 체인"},
     {"name": "Reasoning Results", "description": "추론 결과 조회"},
     {"name": "Recommendations", "description": "추론 기반 추천"},
@@ -260,6 +261,7 @@ app.include_router(recommendations.router)
 app.include_router(reason.router)
 app.include_router(reason_stream.router)  # Phase 10-1: Reasoning 스트리밍 (진행 상태, 취소, ETA)
 app.include_router(reason_store.router)  # Phase 10-4-2/3: 결과 공유·의사결정 문서
+app.include_router(reason_document.router)  # Phase 15-3: 지정 문서 대상 Reasoning
 # approval.router를 knowledge.router보다 먼저 등록 (경로 충돌 방지)
 app.include_router(approval.router)
 app.include_router(knowledge.router)

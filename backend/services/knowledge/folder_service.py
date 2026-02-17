@@ -2,10 +2,11 @@
 
 환경변수 기본값 + DB 오버라이드 방식으로 폴더 경로 관리.
 Phase 15-1-2: 폴더 내 파일 목록 스캔 기능 추가
+Phase 15-9: 디렉토리 탐색 API (트리뷰용)
 """
 import os
 from pathlib import Path
-from typing import Optional, Literal, List
+from typing import Optional, Literal, List, Dict, Any
 from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -400,3 +401,80 @@ def sync_folder_to_db(
         added_files=added_files,
         missing_files=missing_files
     )
+
+
+# ============================================
+# Phase 15-9: 디렉토리 탐색 (트리뷰용)
+# ============================================
+
+def list_directory(
+    relative_path: str = "",
+    show_files: bool = False,
+) -> List[Dict[str, Any]]:
+    """
+    PROJECT_ROOT 기준 디렉토리/파일 목록 반환 (트리뷰용).
+
+    Args:
+        relative_path: PROJECT_ROOT 기준 상대 경로 (빈 문자열이면 루트)
+        show_files: True이면 파일도 포함, False이면 디렉토리만
+
+    Returns:
+        [{name, path, type("dir"|"file"), children_count}] 리스트
+
+    Raises:
+        ValueError: path traversal 시도 등 잘못된 경로
+    """
+    # 경로 조합
+    if relative_path:
+        target = (PROJECT_ROOT / relative_path).resolve()
+    else:
+        target = PROJECT_ROOT.resolve()
+
+    # 보안: PROJECT_ROOT 내부인지 검증
+    project_root_resolved = PROJECT_ROOT.resolve()
+    if not (target == project_root_resolved or str(target).startswith(str(project_root_resolved) + os.sep)):
+        raise ValueError("허용되지 않는 경로입니다")
+
+    if not target.exists() or not target.is_dir():
+        raise ValueError("존재하지 않는 디렉토리입니다")
+
+    items = []
+    try:
+        for entry in target.iterdir():
+            # 숨김 폴더/파일 제외
+            if entry.name.startswith('.'):
+                continue
+
+            if entry.is_dir():
+                # 하위 항목 수 계산 (1단계만)
+                children_count = 0
+                try:
+                    children_count = sum(
+                        1 for child in entry.iterdir()
+                        if not child.name.startswith('.') and (child.is_dir() or show_files)
+                    )
+                except PermissionError:
+                    pass
+
+                rel_path = str(entry.relative_to(project_root_resolved))
+                items.append({
+                    "name": entry.name,
+                    "path": rel_path,
+                    "type": "dir",
+                    "children_count": children_count,
+                })
+            elif show_files and entry.is_file():
+                rel_path = str(entry.relative_to(project_root_resolved))
+                items.append({
+                    "name": entry.name,
+                    "path": rel_path,
+                    "type": "file",
+                    "children_count": 0,
+                })
+    except PermissionError:
+        pass
+
+    # 정렬: 디렉토리 우선, 이름 알파벳순
+    items.sort(key=lambda x: (0 if x["type"] == "dir" else 1, x["name"].lower()))
+
+    return items

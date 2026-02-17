@@ -194,6 +194,15 @@ async function loadUsers() {
 // Event handlers
 // ============================================
 function init() {
+  // LNB + Header 초기화
+  if (typeof initializeAdminPage === 'function') {
+    initializeAdminPage({
+      title: '👥 사용자 관리',
+      subtitle: '사용자 목록 및 역할 관리',
+      currentPath: '/admin/users',
+    });
+  }
+
   // 사용자 추가 버튼
   document.getElementById('add-user-btn').addEventListener('click', () => showForm('create'));
 

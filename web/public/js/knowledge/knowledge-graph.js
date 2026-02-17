@@ -137,6 +137,15 @@ function showNodeDetail(node) {
 
 // 이벤트
 document.addEventListener('DOMContentLoaded', () => {
+  // LNB + Header 초기화
+  if (typeof initializeAdminPage === 'function') {
+    initializeAdminPage({
+      title: '🕸️ 지식 그래프',
+      subtitle: '지식 노드 관계 시각화',
+      currentPath: '/knowledge-graph',
+    });
+  }
+
   document.getElementById('refresh-btn').addEventListener('click', loadGraphData);
   document.getElementById('node-limit').addEventListener('change', loadGraphData);
 

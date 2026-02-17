@@ -28,5 +28,7 @@ tqdm>=4.66.0
 
 # 보안 (Phase 9-1)
 python-jose[cryptography]>=3.3.0  # JWT 토큰
+passlib[bcrypt]>=1.7.4  # 비밀번호 해싱 (Phase 14-5)
 slowapi>=0.1.9  # Rate Limiting
+redis>=5.0.0  # Redis 클라이언트 (Rate Limit 분산 저장소, 캐시)
 python-dotenv>=1.0.0  # 환경변수 로딩

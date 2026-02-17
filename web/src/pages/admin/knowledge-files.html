@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/static/css/admin/admin-styles.css" />
-    <link rel="stylesheet" href="/static/css/admin/admin-knowledge-files.css" />
+    <link rel="stylesheet" href="/static/css/admin/admin-knowledge-files.css?v=15.9.4" />
     <title>Personal AI Brain - 파일관리</title>
   </head>
   <body>
@@ -18,109 +18,145 @@
 
       <!-- 파일관리 콘텐츠 -->
       <div class="admin-container files-container">
-        <!-- 상단: 폴더 경로 설정 -->
-        <div class="admin-panel">
-          <h3>📁 지식 폴더 경로</h3>
-          <div class="folder-config">
-            <div class="folder-display">
-              <label>현재 폴더 경로</label>
-              <div class="folder-path-wrapper">
-                <input type="text" id="folder-path-input" readonly placeholder="폴더 경로를 불러오는 중..." />
-                <button type="button" id="change-folder-btn" class="btn btn-secondary">경로 변경</button>
-              </div>
-            </div>
-            <div class="folder-edit" style="display: none;">
-              <label>새 폴더 경로</label>
-              <div class="folder-path-wrapper">
-                <input type="text" id="folder-path-edit-input" placeholder="예: /Users/username/documents/knowledge" />
-                <button type="button" id="save-folder-btn" class="btn btn-primary">저장</button>
-                <button type="button" id="cancel-folder-btn" class="btn btn-secondary">취소</button>
-              </div>
-            </div>
-          </div>
+        <!-- TOP: 탭 영역 -->
+        <div class="kf-tabs">
+          <button type="button" class="kf-tab-btn active" data-tab="file-list">파일 목록</button>
+          <button type="button" class="kf-tab-btn" data-tab="upload-sync">업로드 / 동기화</button>
         </div>
 
-        <!-- 중앙: 파일 목록 테이블 -->
-        <div class="admin-panel">
-          <div class="files-header">
-            <h3>📄 파일 목록</h3>
-            <button type="button" id="refresh-files-btn" class="btn btn-secondary btn-small">새로고침</button>
-          </div>
-          <div class="files-controls">
-            <div class="files-filter">
-              <label for="files-max-depth">탐색 깊이</label>
-              <select id="files-max-depth">
-                <option value="1">1단계</option>
-                <option value="2">2단계</option>
-                <option value="3" selected>3단계 (권장)</option>
-                <option value="5">5단계</option>
-                <option value="10">전체 (10단계)</option>
-              </select>
-              <label for="files-limit">표시 개수</label>
-              <select id="files-limit">
-                <option value="50">50개</option>
-                <option value="100" selected>100개</option>
-                <option value="200">200개</option>
-                <option value="500">500개</option>
-              </select>
+        <!-- BOTTOM: 콘텐츠 (left-TREE + right-탭콘텐츠) -->
+        <div class="kf-explorer">
+          <!-- 좌측: 트리뷰 (항상 고정) -->
+          <div class="kf-tree-panel">
+            <div class="kf-tree-header">
+              <span class="kf-tree-title">프로젝트 폴더</span>
+            </div>
+            <div class="kf-tree-body" id="kf-tree-body">
+              <div class="kf-tree-loading">폴더 구조를 불러오는 중...</div>
             </div>
           </div>
-          <table class="table files-table">
-            <thead>
-              <tr>
-                <th style="width: 30%;">파일명</th>
-                <th style="width: 12%;">크기</th>
-                <th style="width: 13%;">수정일</th>
-                <th style="width: 8%;">문서 ID</th>
-                <th style="width: 8%;">청크 수</th>
-                <th style="width: 12%;">상태</th>
-                <th style="width: 17%;">액션</th>
-              </tr>
-            </thead>
-            <tbody id="files-table-body">
-              <tr>
-                <td colspan="7" class="loading">파일 목록을 불러오는 중...</td>
-              </tr>
-            </tbody>
-          </table>
-          <div id="files-pagination-info" class="files-pagination-info"></div>
-        </div>
 
-        <!-- 하단: 업로드 및 동기화 -->
-        <div class="admin-panel">
-          <h3>📤 파일 업로드 및 동기화</h3>
-          <div class="upload-sync-container">
-            <!-- 업로드 영역 -->
-            <div class="upload-area">
-              <h4>파일 업로드</h4>
-              <div class="upload-dropzone" id="upload-dropzone">
-                <div class="upload-icon">📁</div>
-                <p>파일을 드래그앤드롭하거나 클릭하여 선택하세요</p>
-                <input type="file" id="file-input" style="display: none;" />
-                <button type="button" id="select-file-btn" class="btn btn-primary">파일 선택</button>
+          <!-- 우측: 탭 콘텐츠 전환 영역 -->
+          <div class="kf-file-panel">
+            <!-- 탭1: 파일 목록 -->
+            <div class="kf-tab-panel active" data-tab-panel="file-list">
+              <div class="files-header">
+                <h3>📄 파일 목록</h3>
+                <div class="files-header-actions">
+                  <span id="current-folder-display" class="current-folder-badge"></span>
+                  <button type="button" id="refresh-files-btn" class="btn btn-secondary btn-small">새로고침</button>
+                </div>
               </div>
-              <div class="upload-path-input" style="display: none; margin-top: 12px;">
-                <label>상대 경로 (선택사항)</label>
-                <input type="text" id="upload-relative-path" placeholder="예: subfolder/file.md (비어있으면 루트)" />
-                <button type="button" id="upload-btn" class="btn btn-primary">업로드</button>
-                <button type="button" id="cancel-upload-btn" class="btn btn-secondary">취소</button>
+              <div class="files-controls">
+                <div class="files-filter">
+                  <label for="files-max-depth">탐색 깊이</label>
+                  <select id="files-max-depth">
+                    <option value="1">1단계</option>
+                    <option value="2">2단계</option>
+                    <option value="3" selected>3단계 (권장)</option>
+                    <option value="5">5단계</option>
+                    <option value="10">전체 (10단계)</option>
+                  </select>
+                  <label for="files-limit">표시 개수</label>
+                  <select id="files-limit">
+                    <option value="10">10개</option>
+                    <option value="20" selected>20개</option>
+                    <option value="30">30개</option>
+                    <option value="40">40개</option>
+                    <option value="50">50개</option>
+                    <option value="100">100개</option>
+                    <option value="200">200개</option>
+                    <option value="500">500개</option>
+                  </select>
+                </div>
+                <div class="files-bulk-actions">
+                  <button type="button" id="bulk-reasoning-btn" class="btn btn-primary btn-small" disabled>선택 문서 Reasoning</button>
+                </div>
               </div>
+              <table class="table files-table">
+                <thead>
+                  <tr>
+                    <th style="width: 4%;"><input type="checkbox" id="select-all-files" title="전체 선택"></th>
+                    <th style="width: 28%;">파일명</th>
+                    <th style="width: 10%;">크기</th>
+                    <th style="width: 13%;">수정일</th>
+                    <th style="width: 7%;">문서 ID</th>
+                    <th style="width: 7%;">청크 수</th>
+                    <th style="width: 11%;">상태</th>
+                    <th style="width: 20%;">액션</th>
+                  </tr>
+                </thead>
+                <tbody id="files-table-body">
+                  <tr>
+                    <td colspan="8" class="loading">파일 목록을 불러오는 중...</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div id="files-pagination-info" class="files-pagination-info"></div>
             </div>
 
-            <!-- 동기화 영역 -->
-            <div class="sync-area">
-              <h4>폴더 동기화</h4>
-              <p class="sync-description">
-                지정 폴더의 파일들을 스캔하여 새 파일을 추가하고, 삭제된 파일을 확인합니다.
-              </p>
-              <div class="sync-options">
-                <label>
-                  <input type="checkbox" id="sync-delete-missing" />
-                  삭제된 파일을 DB에서도 제거
-                </label>
+            <!-- 탭2: 업로드 / 동기화 -->
+            <div class="kf-tab-panel" data-tab-panel="upload-sync">
+              <!-- 폴더 경로 설정 -->
+              <div class="kf-section">
+                <h3>📁 지식 폴더 경로</h3>
+                <div class="folder-config">
+                  <div class="folder-display">
+                    <label>현재 폴더 경로</label>
+                    <div class="folder-path-wrapper">
+                      <input type="text" id="folder-path-input" readonly placeholder="폴더 경로를 불러오는 중..." />
+                      <button type="button" id="change-folder-btn" class="btn btn-secondary">경로 변경</button>
+                    </div>
+                  </div>
+                  <div class="folder-edit" style="display: none;">
+                    <label>새 폴더 경로</label>
+                    <div class="folder-path-wrapper">
+                      <input type="text" id="folder-path-edit-input" placeholder="예: /Users/username/documents/knowledge" />
+                      <button type="button" id="save-folder-btn" class="btn btn-primary">저장</button>
+                      <button type="button" id="cancel-folder-btn" class="btn btn-secondary">취소</button>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <button type="button" id="sync-btn" class="btn btn-primary">동기화 실행</button>
-              <div id="sync-result" class="sync-result" style="display: none;"></div>
+
+              <!-- 업로드 및 동기화 -->
+              <div class="kf-section">
+                <h3>📤 파일 업로드 및 동기화</h3>
+                <div class="upload-sync-container">
+                  <!-- 업로드 영역 -->
+                  <div class="upload-area">
+                    <h4>파일 업로드</h4>
+                    <div class="upload-dropzone" id="upload-dropzone">
+                      <div class="upload-icon">📁</div>
+                      <p>파일을 드래그앤드롭하거나 클릭하여 선택하세요</p>
+                      <input type="file" id="file-input" style="display: none;" />
+                      <button type="button" id="select-file-btn" class="btn btn-primary">파일 선택</button>
+                    </div>
+                    <div class="upload-path-input" style="display: none; margin-top: 12px;">
+                      <label>상대 경로 (선택사항)</label>
+                      <input type="text" id="upload-relative-path" placeholder="예: subfolder/file.md (비어있으면 루트)" />
+                      <button type="button" id="upload-btn" class="btn btn-primary">업로드</button>
+                      <button type="button" id="cancel-upload-btn" class="btn btn-secondary">취소</button>
+                    </div>
+                  </div>
+
+                  <!-- 동기화 영역 -->
+                  <div class="sync-area">
+                    <h4>폴더 동기화</h4>
+                    <p class="sync-description">
+                      지정 폴더의 파일들을 스캔하여 새 파일을 추가하고, 삭제된 파일을 확인합니다.
+                    </p>
+                    <div class="sync-options">
+                      <label>
+                        <input type="checkbox" id="sync-delete-missing" />
+                        삭제된 파일을 DB에서도 제거
+                      </label>
+                    </div>
+                    <button type="button" id="sync-btn" class="btn btn-primary">동기화 실행</button>
+                    <div id="sync-result" class="sync-result" style="display: none;"></div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -131,6 +167,6 @@
     <script src="/static/js/components/header-component.js"></script>
     <script src="/static/js/admin/admin-common.js"></script>
     <script src="/static/js/components/utils.js"></script>
-    <script type="module" src="/static/js/admin/knowledge-files.js"></script>
+    <script type="module" src="/static/js/admin/knowledge-files.js?v=15.9.4"></script>
   </body>
 </html>

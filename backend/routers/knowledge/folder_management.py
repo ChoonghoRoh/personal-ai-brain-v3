@@ -20,6 +20,7 @@ from backend.services.knowledge.folder_service import (
     scan_folder_files,
     save_uploaded_file,
     sync_folder_to_db,
+    list_directory,
     FileInfo,
 )
 from backend.config import get_env_int
@@ -124,6 +125,69 @@ async def update_folder_config(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"폴더 생성 실패: {str(e)}"
+        )
+
+
+# ============================================
+# Phase 15-9: 디렉토리 탐색 (트리뷰용)
+# ============================================
+
+class BrowseDirectoryItem(BaseModel):
+    """디렉토리 항목"""
+    name: str = Field(..., description="파일/폴더 이름")
+    path: str = Field(..., description="PROJECT_ROOT 기준 상대 경로")
+    type: str = Field(..., description="항목 유형 (dir|file)")
+    children_count: int = Field(0, description="하위 항목 수 (디렉토리만)")
+
+
+class BrowseDirectoryResponse(BaseModel):
+    """디렉토리 탐색 응답"""
+    items: List[BrowseDirectoryItem] = Field(..., description="항목 목록")
+    current_path: str = Field(..., description="현재 경로")
+    parent_path: Optional[str] = Field(None, description="상위 경로 (루트이면 null)")
+
+
+@router.get(
+    "/browse-directory",
+    response_model=BrowseDirectoryResponse,
+    summary="디렉토리 탐색 (트리뷰용)",
+    description="""
+    PROJECT_ROOT 기준 디렉토리 구조를 탐색합니다.
+
+    **동작**:
+    - 지정 경로 하위의 디렉토리/파일 목록 반환
+    - 숨김 폴더(`.`으로 시작) 제외
+    - path traversal 시도 시 400 에러
+
+    **권한**: admin_knowledge 이상
+    """,
+    dependencies=[Depends(require_admin_knowledge)]
+)
+async def browse_directory(
+    path: str = Query("", description="탐색할 상대 경로 (빈 문자열이면 PROJECT_ROOT)"),
+    show_files: bool = Query(False, description="파일도 표시할지 여부"),
+    user: UserInfo = Depends(require_admin_knowledge)
+):
+    """디렉토리 탐색"""
+    try:
+        items = list_directory(relative_path=path, show_files=show_files)
+
+        # 상위 경로 계산
+        parent_path = None
+        if path:
+            from pathlib import PurePosixPath
+            parent = str(PurePosixPath(path).parent)
+            parent_path = "" if parent == "." else parent
+
+        return BrowseDirectoryResponse(
+            items=[BrowseDirectoryItem(**item) for item in items],
+            current_path=path,
+            parent_path=parent_path,
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
         )
 
 

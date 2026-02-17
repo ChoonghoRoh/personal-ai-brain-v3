@@ -6,17 +6,17 @@
 
 // 역할 계층 (Phase 14-1)
 const ROLE_HIERARCHY = {
-  'user': 0,
-  'admin_knowledge': 1,
-  'admin_system': 2,
+  user: 0,
+  admin_knowledge: 1,
+  admin_system: 2,
 };
 
 // 메뉴 그룹별 필요 최소 역할 (Phase 14-1)
 const MENU_REQUIRED_ROLE = {
-  'user-menu': 'user',
-  'admin-menu': 'admin_knowledge',
-  'system-menu': 'admin_system',
-  'settings-menu': 'admin_system',
+  "user-menu": "user",
+  "admin-menu": "admin_knowledge",
+  "system-menu": "admin_system",
+  "settings-menu": "admin_system",
 };
 
 // 캐시된 사용자 역할 (Phase 14-1)
@@ -24,39 +24,37 @@ let _cachedUserRole = null;
 
 // 사용자 메뉴 정의
 const USER_MENU = [
-  { path: '/dashboard', label: '대시보드', icon: '🎛️' },
-  { path: '/search', label: '검색', icon: '🔍' },
-  { path: '/knowledge', label: '지식 구조', icon: '📊' },
-  { path: '/reason', label: 'Reasoning', icon: '💭' },
-  { path: '/ask', label: 'AI 질의', icon: '💬' },
-  { path: '/logs', label: '로그', icon: '📋' }
+  { path: "/dashboard", label: "대시보드", icon: "🎛️" },
+  { path: "/search", label: "검색", icon: "🔍" },
+  { path: "/knowledge", label: "지식 구조", icon: "📊" },
+  { path: "/reason", label: "Reasoning", icon: "💭" },
+  { path: "/ask", label: "AI 질의", icon: "💬" },
+  { path: "/logs", label: "로그", icon: "📋" },
 ];
 
 // 관리자 메뉴 - 지식 관리
 const ADMIN_MENU = [
-  { path: '/admin/groups', label: '키워드 관리', icon: '📦' },
-  { path: '/admin/labels', label: '라벨 관리', icon: '🏷️' },
-  { path: '/admin/chunk-create', label: '청크 생성', icon: '➕' },
-  { path: '/admin/approval', label: '청크 승인', icon: '✅' },
-  { path: '/admin/chunk-labels', label: '청크 관리', icon: '📝' },
-  { path: '/admin/knowledge-files', label: '파일관리', icon: '📁' },
-  { path: '/admin/ai-automation', label: 'AI 자동화', icon: '🤖' },
-  { path: '/knowledge-graph', label: '지식 그래프', icon: '🕸️' },
-  { path: '/admin/statistics', label: '통계', icon: '📈' }
+  { path: "/admin/groups", label: "키워드 관리", icon: "📦" },
+  { path: "/admin/labels", label: "라벨 관리", icon: "🏷️" },
+  { path: "/admin/chunk-create", label: "청크 생성", icon: "➕" },
+  { path: "/admin/approval", label: "청크 승인", icon: "✅" },
+  { path: "/admin/chunk-labels", label: "청크 관리", icon: "📝" },
+  { path: "/admin/knowledge-files", label: "파일관리", icon: "📁" },
+  { path: "/admin/ai-automation", label: "AI 자동화", icon: "🤖" },
+  { path: "/knowledge-graph", label: "지식 그래프", icon: "🕸️" },
+  { path: "/admin/statistics", label: "통계", icon: "📈" },
 ];
 
 // 시스템 관리 메뉴 (Phase 15-5-3)
-const SYSTEM_MENU = [
-  { path: '/admin/users', label: '사용자 관리', icon: '👥' }
-];
+const SYSTEM_MENU = [{ path: "/admin/users", label: "사용자 관리", icon: "👥" }];
 
 // 설정 관리 메뉴 (Phase 11-3)
 const SETTINGS_MENU = [
-  { path: '/admin/settings/templates', label: '템플릿', icon: '📄' },
-  { path: '/admin/settings/presets', label: '프리셋', icon: '⚙️' },
-  { path: '/admin/settings/rag-profiles', label: 'RAG 프로필', icon: '🔍' },
-  { path: '/admin/settings/policy-sets', label: '정책', icon: '📋' },
-  { path: '/admin/settings/audit-logs', label: '변경 이력', icon: '📜' }
+  { path: "/admin/settings/templates", label: "템플릿", icon: "📄" },
+  { path: "/admin/settings/presets", label: "프리셋", icon: "⚙️" },
+  { path: "/admin/settings/rag-profiles", label: "RAG 프로필", icon: "🔍" },
+  { path: "/admin/settings/policy-sets", label: "정책", icon: "📋" },
+  { path: "/admin/settings/audit-logs", label: "변경 이력", icon: "📜" },
 ];
 
 // ============================================
@@ -194,16 +192,18 @@ function createLNB(currentPath) {
   currentPath = currentPath || window.location.pathname;
 
   function menuItems(items, groupClass) {
-    return items.map(item => {
-      let isActive = false;
-      if (item.path === '/dashboard') {
-        isActive = currentPath === item.path || currentPath === '/';
-      } else {
-        isActive = currentPath.startsWith(item.path);
-      }
-      const activeClass = isActive ? 'active' : '';
-      return `<li><a href="${item.path}" class="${activeClass}" data-tooltip="${item.label}"><span class="menu-icon">${item.icon}</span><span class="menu-label">${item.label}</span></a></li>`;
-    }).join('\n');
+    return items
+      .map((item) => {
+        let isActive = false;
+        if (item.path === "/dashboard") {
+          isActive = currentPath === item.path || currentPath === "/";
+        } else {
+          isActive = currentPath.startsWith(item.path);
+        }
+        const activeClass = isActive ? "active" : "";
+        return `<li><a href="${item.path}" class="${activeClass}" data-tooltip="${item.label}"><span class="menu-icon">${item.icon}</span><span class="menu-label">${item.label}</span></a></li>`;
+      })
+      .join("\n");
   }
 
   return `
@@ -216,25 +216,25 @@ function createLNB(currentPath) {
     <div class="lnb-group" data-menu-group="user-menu">
       <div class="lnb-group-title">사용자 메뉴</div>
       <ul class="lnb-menu user-menu">
-        ${menuItems(USER_MENU, 'user-menu')}
+        ${menuItems(USER_MENU, "user-menu")}
       </ul>
     </div>
     <div class="lnb-group" data-menu-group="admin-menu">
       <div class="lnb-group-title">지식 관리</div>
       <ul class="lnb-menu admin-menu">
-        ${menuItems(ADMIN_MENU, 'admin-menu')}
+        ${menuItems(ADMIN_MENU, "admin-menu")}
       </ul>
     </div>
     <div class="lnb-group system-group" data-menu-group="system-menu">
       <div class="lnb-group-title">시스템 관리</div>
       <ul class="lnb-menu system-menu">
-        ${menuItems(SYSTEM_MENU, 'system-menu')}
+        ${menuItems(SYSTEM_MENU, "system-menu")}
       </ul>
     </div>
     <div class="lnb-group settings-group" data-menu-group="settings-menu">
       <div class="lnb-group-title">설정 관리</div>
       <ul class="lnb-menu settings-menu">
-        ${menuItems(SETTINGS_MENU, 'settings-menu')}
+        ${menuItems(SETTINGS_MENU, "settings-menu")}
       </ul>
     </div>
     <button class="lnb-collapse-btn" onclick="toggleCollapseLNB()" aria-label="메뉴 접기/펼치기">
@@ -250,21 +250,21 @@ function createLNB(currentPath) {
  */
 function renderLNB(currentPath) {
   // LNB 스타일 추가
-  if (!document.getElementById('lnb-component-styles')) {
-    const style = document.createElement('style');
-    style.id = 'lnb-component-styles';
+  if (!document.getElementById("lnb-component-styles")) {
+    const style = document.createElement("style");
+    style.id = "lnb-component-styles";
     style.textContent = LNB_STYLES;
     document.head.appendChild(style);
   }
 
-  const lnbEl = document.getElementById('lnb-sidebar');
+  const lnbEl = document.getElementById("lnb-sidebar");
   if (!lnbEl) return;
 
   // @trusted: 개발자 정의 메뉴 배열만 사용
   lnbEl.innerHTML = createLNB(currentPath);
 
   // 역할 기반 메뉴 필터링
-  fetchUserRole().then(role => applyMenuPermissions(role));
+  fetchUserRole().then((role) => applyMenuPermissions(role));
 }
 
 // ============================================
@@ -274,7 +274,7 @@ function renderLNB(currentPath) {
 const HEADER_STYLES = `
   .top-bar {
     background: white;
-    padding: 16px 0;
+    padding: 16px 20px;
     margin-bottom: 20px;
     border-bottom: 1px solid #e5e7eb;
     display: flex;
@@ -308,15 +308,15 @@ const HEADER_STYLES = `
  * @returns {string} Header HTML
  */
 function createHeader(options = {}) {
-  const subtitle = options.subtitle || '';
+  const subtitle = options.subtitle || "";
   const currentPath = options.currentPath || window.location.pathname;
 
   // 현재 경로에 해당하는 메뉴 라벨 찾기
-  let currentMenuLabel = '';
+  let currentMenuLabel = "";
 
-  const userMenuItem = USER_MENU.find(item => {
-    if (item.path === '/dashboard') {
-      return currentPath === item.path || currentPath === '/';
+  const userMenuItem = USER_MENU.find((item) => {
+    if (item.path === "/dashboard") {
+      return currentPath === item.path || currentPath === "/";
     }
     return currentPath.startsWith(item.path);
   });
@@ -324,21 +324,26 @@ function createHeader(options = {}) {
   if (userMenuItem) {
     currentMenuLabel = `${userMenuItem.icon} ${userMenuItem.label}`;
   } else {
-    const settingsMenuItem = SETTINGS_MENU.find(item => currentPath.startsWith(item.path));
+    const settingsMenuItem = SETTINGS_MENU.find((item) => currentPath.startsWith(item.path));
     if (settingsMenuItem) {
       currentMenuLabel = `${settingsMenuItem.icon} ${settingsMenuItem.label}`;
     } else {
-      const adminMenuItem = ADMIN_MENU.find(item => currentPath.startsWith(item.path));
-      if (adminMenuItem) {
-        currentMenuLabel = `${adminMenuItem.icon} ${adminMenuItem.label}`;
+      const systemMenuItem = SYSTEM_MENU.find((item) => currentPath.startsWith(item.path));
+      if (systemMenuItem) {
+        currentMenuLabel = `${systemMenuItem.icon} ${systemMenuItem.label}`;
+      } else {
+        const adminMenuItem = ADMIN_MENU.find((item) => currentPath.startsWith(item.path));
+        if (adminMenuItem) {
+          currentMenuLabel = `${adminMenuItem.icon} ${adminMenuItem.label}`;
+        }
       }
     }
   }
 
   return `
     <div class="top-bar">
-      ${currentMenuLabel ? `<h2>${currentMenuLabel}</h2>` : '<h2></h2>'}
-      ${subtitle ? `<div class="top-bar-separator">|</div><p class="subtitle">${subtitle}</p>` : ''}
+      ${currentMenuLabel ? `<h2>${currentMenuLabel}</h2>` : "<h2></h2>"}
+      ${subtitle ? `<div class="top-bar-separator">|</div><p class="subtitle">${subtitle}</p>` : ""}
     </div>
   `;
 }
@@ -348,12 +353,12 @@ function createHeader(options = {}) {
  * @param {object} options - 옵션
  */
 function renderHeader(options = {}) {
-  const containerSelector = options.containerSelector || '.container';
+  const containerSelector = options.containerSelector || ".container";
 
   // Header 스타일 추가
-  if (!document.getElementById('header-component-styles')) {
-    const style = document.createElement('style');
-    style.id = 'header-component-styles';
+  if (!document.getElementById("header-component-styles")) {
+    const style = document.createElement("style");
+    style.id = "header-component-styles";
     style.textContent = HEADER_STYLES;
     document.head.appendChild(style);
   }
@@ -365,10 +370,10 @@ function renderHeader(options = {}) {
   const container = document.querySelector(containerSelector);
   if (container) {
     // 기존 header 또는 top-bar 제거
-    const existing = container.querySelector('header, .top-bar');
+    const existing = container.querySelector("header, .top-bar");
     if (existing) existing.remove();
 
-    container.insertAdjacentHTML('afterbegin', headerHTML);
+    container.insertAdjacentHTML("afterbegin", headerHTML);
   }
 
   // LNB 렌더링
@@ -389,12 +394,12 @@ async function fetchUserRole() {
 
   try {
     const headers = {};
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem("auth_token");
     if (token) {
-      headers['Authorization'] = 'Bearer ' + token;
+      headers["Authorization"] = "Bearer " + token;
     }
 
-    const res = await fetch('/api/auth/me', { headers });
+    const res = await fetch("/api/auth/me", { headers });
     if (res.ok) {
       const data = await res.json();
 
@@ -402,20 +407,20 @@ async function fetchUserRole() {
       if (data.auth_enabled && !data.authenticated) {
         const path = window.location.pathname;
         // 공개 페이지: /, /login, /dashboard 외 모든 페이지는 보호 대상
-        const publicPaths = ['/', '/login', '/dashboard'];
+        const publicPaths = ["/", "/login", "/dashboard"];
         if (!publicPaths.includes(path)) {
-          window.location.href = '/login?return_to=' + encodeURIComponent(path);
-          return 'user';
+          window.location.href = "/login?return_to=" + encodeURIComponent(path);
+          return "user";
         }
       }
 
-      _cachedUserRole = data.role || 'user';
+      _cachedUserRole = data.role || "user";
     } else {
-      _cachedUserRole = 'user';
+      _cachedUserRole = "user";
     }
   } catch (e) {
-    console.warn('사용자 역할 조회 실패, 기본 role=user 적용:', e);
-    _cachedUserRole = 'user';
+    console.warn("사용자 역할 조회 실패, 기본 role=user 적용:", e);
+    _cachedUserRole = "user";
   }
 
   return _cachedUserRole;
@@ -434,13 +439,13 @@ function applyMenuPermissions(userRole) {
     // LNB에서 메뉴 그룹 찾기 (Phase 14-3)
     const lnbGroup = document.querySelector(`.lnb-group[data-menu-group="${menuClass}"]`);
     if (lnbGroup && roleLevel < requiredLevel) {
-      lnbGroup.style.display = 'none';
+      lnbGroup.style.display = "none";
     }
   });
 }
 
 // 전역으로 export (브라우저 환경)
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   if (!window.renderHeader) {
     window.createHeader = createHeader;
     window.renderHeader = renderHeader;
@@ -450,6 +455,7 @@ if (typeof window !== 'undefined') {
     window.applyMenuPermissions = applyMenuPermissions;
     window.USER_MENU = USER_MENU;
     window.ADMIN_MENU = ADMIN_MENU;
+    window.SYSTEM_MENU = SYSTEM_MENU;
     window.SETTINGS_MENU = SETTINGS_MENU;
     window.ROLE_HIERARCHY = ROLE_HIERARCHY;
     window.MENU_REQUIRED_ROLE = MENU_REQUIRED_ROLE;

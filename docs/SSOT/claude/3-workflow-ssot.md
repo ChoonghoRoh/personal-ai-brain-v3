@@ -1,7 +1,7 @@
 # AI Team — Workflow SSOT
 
-**버전**: 4.3
-**최종 수정**: 2026-02-16
+**버전**: 4.5
+**최종 수정**: 2026-02-17
 
 ---
 
@@ -1005,6 +1005,10 @@ created_at: "2026-02-16T..."
 | **CHAIN-3** | Chain 파일 유지 | `/clear` 후에도 Chain 파일은 디스크에 영속 |
 | **CHAIN-4** | 순차 보장 | phases 배열 순서대로만 실행 (건너뛰기 금지) |
 | **CHAIN-5** | 완료 리포트 | 각 Phase DONE 시 1줄 요약을 Chain 파일에 기록 |
+| **CHAIN-6** | 산출물 의무 | Chain 실행 시에도 각 Phase는 §5의 상태 머신·§7의 산출물 규칙을 준수해야 함. 최소 필수 산출물: **plan.md**, **todo-list.md**, **tasks/task-X-Y-N.md**, **status.md(YAML)** |
+| **CHAIN-7** | Gate 의무 | Chain 실행 시에도 §8의 Gate 체크(G1~G4)를 생략하지 않음. 단, 단독 실행(팀 미구성) 시 G2·G3는 자체 검증으로 대체 가능하되 status.md에 기록 필수 |
+| **CHAIN-8** | Status 형식 | Chain 내 모든 Phase의 status.md는 YAML frontmatter 형식(§5.2 스키마)을 준수. 간략 Markdown 형식 금지 |
+| **CHAIN-9** | Task 문서 형식 | Task 문서(task-X-Y-N.md)는 다음 형식을 반드시 준수: **메타 필드** = `우선순위/의존성/담당 팀원/상태` 4개 필수, **섹션 번호** = `§1. 개요`, `§2. 파일 변경 계획`, `§3. 작업 체크리스트 (Done Definition)`, `§4. 참조`. `S1`, `SS1`, `1.` 등 변형 금지 |
 
 ---
 
@@ -1050,3 +1054,5 @@ created_at: "2026-02-16T..."
 | 4.1 | 2026-02-16 | Hub-and-Spoke 통신 모델 (Peer DM 제거). 모델 지정: planner=opus, 나머지=sonnet. 자동화 주기 점검 | Claude Code (Backend & Logic Expert) |
 | 4.2 | 2026-02-16 | 자동화 트리거 추가: TaskCompleted hook (품질 자동 검사) + `/verify-implementation` skill (G2 심층 리뷰) | Claude Code (Backend & Logic Expert) |
 | 4.3 | 2026-02-16 | Phase Chain (자동 순차 실행) 프로토콜 추가: Section 9 신설. `/clear` 기반 토큰 최적화, Chain 파일 정의, 중단·재개 규칙 | Claude Code (Backend & Logic Expert) |
+| 4.4 | 2026-02-17 | Phase Chain 산출물 의무 규칙 추가: CHAIN-6(산출물 의무), CHAIN-7(Gate 의무), CHAIN-8(Status YAML 형식) | Claude Code (Backend & Logic Expert) |
+| 4.5 | 2026-02-17 | CHAIN-9 추가: Task 문서 형식 고정 (메타 필드 4종 + §1~§4 섹션 번호). Phase 15-3~15-8 드리프트 정규화 반영 | Claude Code (Backend & Logic Expert) |
