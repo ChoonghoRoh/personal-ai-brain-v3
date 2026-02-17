@@ -27,5 +27,5 @@ def test_cache_stats_api():
 
 def test_health_check():
     """헬스 체크 테스트"""
-    response = client.get("/api/system/health")
+    response = client.get("/health")
     assert response.status_code == 200

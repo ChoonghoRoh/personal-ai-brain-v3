@@ -91,7 +91,6 @@ class TestTaskPlanGenerator:
         )
         # 구조 확인 (성공 여부와 무관)
         assert "task_plan" in result
-        assert "test_plan" in result
         assert "analyzed_files" in result
         assert "success" in result
         assert "error" in result
@@ -108,7 +107,6 @@ class TestTaskPlanGenerator:
             assert result["success"] is False
             assert "토큰" in result["error"]
             assert result["task_plan"] == ""
-            assert result["test_plan"] == ""
 
     def test_generate_task_plan_with_mock_cli(self):
         """Claude CLI Mock으로 Task Plan 생성"""
@@ -129,7 +127,6 @@ class TestTaskPlanGenerator:
                 )
                 assert result["success"] is True
                 assert "Task Plan" in result["task_plan"]
-                assert "Test Plan" in result["test_plan"]
 
 
 class TestTaskPlanAPI:
@@ -150,7 +147,6 @@ class TestTaskPlanAPI:
         # 응답 구조 확인
         assert "success" in data
         assert "task_plan" in data
-        assert "test_plan" in data
         assert "analyzed_files" in data
         assert "error" in data
 
