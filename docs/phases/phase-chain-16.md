@@ -1,7 +1,7 @@
 ---
 chain_name: "phase-16-fullstack"
 phases: ["16-1", "16-2", "16-3", "16-4", "16-5", "16-6", "16-7"]
-current_index: 4
+current_index: 5
 status: "running"
 ssot_version: "4.5"
 created_at: "2026-02-17T16:00:00Z"
@@ -11,7 +11,7 @@ phase_summaries:
   "16-3": "AI 자동화 UX — doc_result SSE 배치 완료 스트리밍 + Virtual Scroll(500+ 문서 96% DOM 절감) 완료"
   "16-4": "Backend 500줄 초과 리팩토링 — 서비스 Mixin 분리 + 라우터 핸들러 분리 + main.py lifecycle 추출 (9파일→21파일, 전부 500줄 이하)"
   "16-5": null
-  "16-6": null
+  "16-6": "Web CSS 500줄 초과 5개 파일 리팩토링 — reason.css 3분할 + knowledge CSS 2분할×2 + admin CSS 2분할×2 (5파일→11파일, 전부 600줄 이하)"
   "16-7": null
 ---
 

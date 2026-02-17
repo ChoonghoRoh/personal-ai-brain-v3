@@ -1,6 +1,6 @@
 ---
 name: verify-backend
-description: 백엔드 코드 심층 리뷰. G2_be 게이트 검증. role-verifier-ssot.md §2.1 기준 적용.
+description: 백엔드 코드 심층 리뷰. G2_be 게이트 검증. 4th SSOT ROLES/verifier.md §2.1 기준 적용.
 user-invocable: false
 context: fork
 agent: Explore
@@ -11,7 +11,7 @@ allowed-tools: "Read, Glob, Grep"
 
 ## 역할
 
-`role-verifier-ssot.md` §2.1 백엔드 검증 기준에 따라 변경 파일을 검토하고 G2_be 판정을 반환한다.
+`docs/SSOT/renewal/iterations/4th/ROLES/verifier.md` §2.1 백엔드 검증 기준에 따라 변경 파일을 검토하고 G2_be 판정을 반환한다.
 
 ## 입력
 
