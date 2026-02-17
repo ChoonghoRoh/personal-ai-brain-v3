@@ -43,6 +43,14 @@ class TaskState:
         # 취소 플래그
         self.cancelled = False
 
+        # 세부 진행률 (Phase 16-1-1)
+        self.detail: Optional[Dict[str, Any]] = None
+        self.eta_seconds: Optional[float] = None
+
+        # 문서별 완료 결과 (Phase 16-3-1: doc_result SSE)
+        self.doc_results: List[Dict[str, Any]] = []
+        self.last_doc_result_index = 0  # SSE 전송 추적용
+
         # 결과
         self.results: Dict[str, Any] = {}
         self.error: Optional[str] = None
@@ -61,6 +69,9 @@ class TaskState:
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,
             "elapsed_time": round(time.time() - self.started_at, 1),
             "cancelled": self.cancelled,
+            "detail": self.detail,
+            "eta_seconds": self.eta_seconds,
+            "doc_results": self.doc_results,
             "results": self.results,
             "error": self.error,
         }
@@ -97,6 +108,8 @@ def update_progress(
     stage_name: str,
     progress_pct: int,
     message: Optional[str] = None,
+    detail: Optional[Dict[str, Any]] = None,
+    eta_seconds: Optional[float] = None,
 ) -> None:
     """태스크 진행 상황 업데이트
 
@@ -105,6 +118,8 @@ def update_progress(
         stage_name: 현재 단계 이름
         progress_pct: 진행률 (0-100)
         message: 추가 메시지
+        detail: 세부 진행률 (current, total, item_name 등)
+        eta_seconds: 예상 잔여 시간 (초)
     """
     if task_id not in active_tasks:
         logger.warning("존재하지 않는 태스크: %s", task_id)
@@ -113,14 +128,20 @@ def update_progress(
     task = active_tasks[task_id]
     task.current_stage = stage_name
     task.progress_pct = progress_pct
+    task.detail = detail
+    task.eta_seconds = eta_seconds
 
     # 단계 기록 추가
-    stage_record = {
+    stage_record: Dict[str, Any] = {
         "name": stage_name,
         "progress": progress_pct,
         "message": message or stage_name,
         "timestamp": datetime.utcnow().isoformat(),
     }
+    if detail is not None:
+        stage_record["detail"] = detail
+    if eta_seconds is not None:
+        stage_record["eta_seconds"] = eta_seconds
     task.stages.append(stage_record)
 
     logger.debug(
@@ -128,6 +149,37 @@ def update_progress(
         task_id,
         stage_name,
         progress_pct,
+    )
+
+
+def add_doc_result(
+    task_id: str,
+    document_ids: List[int],
+    batch_index: int,
+    batch_stats: Dict[str, Any],
+) -> None:
+    """배치 완료 시 문서별 결과 기록 (Phase 16-3-1)
+
+    Args:
+        task_id: 태스크 ID
+        document_ids: 완료된 문서 ID 목록
+        batch_index: 배치 번호 (0-based)
+        batch_stats: 배치 통계 (chunks_created, keywords 등)
+    """
+    if task_id not in active_tasks:
+        return
+
+    task = active_tasks[task_id]
+    task.doc_results.append({
+        "document_ids": document_ids,
+        "batch_index": batch_index,
+        "stats": batch_stats,
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+
+    logger.debug(
+        "doc_result 추가: task_id=%s batch=%d docs=%d",
+        task_id, batch_index, len(document_ids),
     )
 
 

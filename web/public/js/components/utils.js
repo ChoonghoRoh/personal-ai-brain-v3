@@ -92,3 +92,41 @@ function cleanArray(arr) {
     )
   );
 }
+
+/**
+ * HTML 이스케이프 (escapeHtml 단축 별칭)
+ * @param {string|null|undefined} str - 이스케이프할 문자열
+ * @returns {string} 이스케이프된 HTML 문자열
+ */
+function esc(str) {
+  return escapeHtml(str);
+}
+
+/**
+ * Authorization 헤더 생성 (토큰 있으면 추가)
+ * @param {boolean} [includeContentType=true] - Content-Type 헤더 포함 여부
+ * @returns {object} 헤더 객체
+ */
+function getAuthHeaders(includeContentType = true) {
+  const headers = {};
+  if (includeContentType) {
+    headers["Content-Type"] = "application/json";
+  }
+  const token = localStorage.getItem("auth_token");
+  if (token) {
+    headers["Authorization"] = "Bearer " + token;
+  }
+  return headers;
+}
+
+/**
+ * 바이트 크기를 읽기 쉬운 형식으로 변환
+ * @param {number} bytes - 바이트 크기
+ * @returns {string} 포맷된 문자열 (예: "1.50 MB")
+ */
+function formatFileSize(bytes) {
+  if (!bytes || bytes === 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return (bytes / Math.pow(1024, i)).toFixed(2) + " " + units[i];
+}

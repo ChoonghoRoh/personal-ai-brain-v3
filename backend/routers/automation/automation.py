@@ -5,7 +5,7 @@ import time
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
-from typing import List, Dict, Optional, AsyncGenerator
+from typing import Any, List, Dict, Optional, AsyncGenerator
 from pydantic import BaseModel
 
 from backend.models.database import get_db
@@ -213,6 +213,7 @@ async def stream_progress(task_id: str) -> AsyncGenerator[str, None]:
         return
 
     last_stage_count = 0
+    heartbeat_counter = 0
 
     while True:
         task = ai_workflow_state.get_task(task_id)
@@ -223,14 +224,28 @@ async def stream_progress(task_id: str) -> AsyncGenerator[str, None]:
         # 새로운 단계 업데이트가 있으면 전송
         if len(task.stages) > last_stage_count:
             for stage in task.stages[last_stage_count:]:
-                yield ai_workflow_state.format_sse_event("progress", {
+                event_data: Dict[str, Any] = {
                     "task_id": task_id,
                     "stage_name": stage["name"],
                     "progress_pct": stage["progress"],
                     "message": stage["message"],
                     "status": task.status,
-                })
+                    "detail": stage.get("detail"),
+                    "eta_seconds": stage.get("eta_seconds"),
+                }
+                yield ai_workflow_state.format_sse_event("progress", event_data)
             last_stage_count = len(task.stages)
+
+        # doc_result 이벤트 전송 (Phase 16-3-1: 배치 완료 시 문서별 결과)
+        if len(task.doc_results) > task.last_doc_result_index:
+            for dr in task.doc_results[task.last_doc_result_index:]:
+                yield ai_workflow_state.format_sse_event("doc_result", {
+                    "task_id": task_id,
+                    "document_ids": dr["document_ids"],
+                    "batch_index": dr["batch_index"],
+                    "stats": dr["stats"],
+                })
+            task.last_doc_result_index = len(task.doc_results)
 
         # 완료/실패/취소 시 종료
         if task.status == "completed":
@@ -259,6 +274,15 @@ async def stream_progress(task_id: str) -> AsyncGenerator[str, None]:
             })
             yield ai_workflow_state.format_sse_event("done", {"task_id": task_id})
             return
+
+        # Heartbeat 발행 (매 10회 폴링 ≈ 5초 간격)
+        heartbeat_counter += 1
+        if heartbeat_counter >= 10:
+            heartbeat_counter = 0
+            yield ai_workflow_state.format_sse_event("heartbeat", {
+                "type": "heartbeat",
+                "timestamp": time.time(),
+            })
 
         # 0.5초 대기 후 다음 체크
         await asyncio.sleep(0.5)

@@ -13,7 +13,7 @@ Claude Code 공식 문서 기준:
 
 | 목적           | 파일                    | 비고                          |
 |----------------|-------------------------|-------------------------------|
-| **페르소나**   | `.claude/CLAUDE.md`     | Backend 페르소나 (시작 시 로드) |
+| **페르소나**   | `.claude/CLAUDE.md`     | 4th SSOT PERSONA/BACKEND.md 참조 (시작 시 로드) |
 | **권한 등**    | `.claude/settings.json` 또는 `settings.local.json` | permissions, env 등 |
 
 - **CLAUDE.md**: 프로젝트 루트 또는 `.claude/CLAUDE.md` — Claude Code가 시작 시 로드하는 “메모리/지시” 파일.

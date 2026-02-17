@@ -37,7 +37,21 @@
         }
       ],
       "status": "completed"
+    },
+    {
+      "name": "full_20260216_150842",
+      "type": "full",
+      "incremental": false,
+      "timestamp": "2026-02-16T15:08:42.794943",
+      "files": [
+        {
+          "type": "metadata",
+          "path": "full_20260216_150842_metadata.tar.gz",
+          "size": 25464
+        }
+      ],
+      "status": "completed"
     }
   ],
-  "last_backup": "2026-02-04T09:40:17.741132"
+  "last_backup": "2026-02-16T15:08:42.794943"
 }

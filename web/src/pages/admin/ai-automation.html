@@ -34,6 +34,7 @@
           <div class="selected-count">
             선택된 문서: <span id="selected-count">0</span>개
           </div>
+          <div id="selection-summary" class="selection-summary" style="display:none;"></div>
         </div>
 
         <!-- 중앙: 워크플로우 실행 패널 -->
@@ -67,6 +68,9 @@
             <div class="progress-bar-container">
               <div class="progress-bar" id="progress-bar"></div>
             </div>
+            <div id="progress-detail" class="progress-detail"></div>
+            <div id="progress-eta" class="progress-eta"></div>
+            <div id="doc-progress" class="doc-progress"></div>
             <div class="progress-stages">
               <div class="stage-item" data-stage="1">
                 <span class="stage-number">1</span>
@@ -129,6 +133,7 @@
     <script src="/static/js/components/header-component.js"></script>
     <script src="/static/js/admin/admin-common.js"></script>
     <script src="/static/js/components/utils.js"></script>
+    <script src="/static/js/admin/ai-automation-api.js"></script>
     <script type="module" src="/static/js/admin/ai-automation.js"></script>
   </body>
 </html>

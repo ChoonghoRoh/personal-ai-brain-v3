@@ -510,3 +510,86 @@
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+/* ============================================
+   선택 요약 & 진행 세부 정보
+   ============================================ */
+.selection-summary {
+  padding: 8px 12px;
+  margin: 8px 0;
+  background: var(--bs-light, #f8f9fa);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: var(--bs-secondary, #6c757d);
+}
+
+.selection-warn {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffc107;
+  font-weight: 600;
+}
+
+.progress-detail {
+  font-size: 0.85rem;
+  color: var(--bs-secondary, #6c757d);
+  margin-top: 4px;
+}
+
+.progress-eta {
+  font-size: 0.85rem;
+  color: var(--bs-info, #0dcaf0);
+  margin-top: 2px;
+}
+
+/* Phase 16-3-1: 문서 완료 표시 */
+.doc-progress {
+  font-size: 0.85rem;
+  color: var(--bs-success, #198754);
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.document-item.doc-completed {
+  opacity: 0.7;
+  background: var(--bs-success-bg-subtle, #d1e7dd);
+}
+
+.document-item.doc-completed .document-item-label {
+  text-decoration: line-through;
+  color: var(--bs-success, #198754);
+}
+
+.doc-check {
+  color: var(--bs-success, #198754);
+  font-weight: bold;
+}
+
+.batch-result {
+  border-left: 3px solid var(--bs-success, #198754);
+  padding-left: 8px;
+  margin-bottom: 8px;
+}
+
+/* Phase 16-3-2: Virtual Scroll */
+.vs-container {
+  position: relative;
+  overflow-y: auto;
+}
+
+.vs-spacer {
+  width: 100%;
+}
+
+.vs-viewport {
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+
+.vs-container .document-item {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}

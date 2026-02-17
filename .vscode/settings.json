@@ -12,7 +12,15 @@
       "approve": true,
       "matchCommandLine": true
     },
-    "git fetch": true
+    "git fetch": true,
+    "/^mkdir -p docs/SSOT/renewal/iterations/3rd/ROLES$/": {
+      "approve": true,
+      "matchCommandLine": true
+    },
+    "/^cp docs/SSOT/renewal/iterations/2nd/\\*\\.md docs/SSOT/renewal/iterations/3rd/ 2>/dev/null; cp docs/SSOT/renewal/iterations/2nd/ROLES/\\*\\.md docs/SSOT/renewal/iterations/3rd/ROLES/$/": {
+      "approve": true,
+      "matchCommandLine": true
+    }
   },
   "[python]": {
     "editor.defaultFormatter": "ms-python.python",

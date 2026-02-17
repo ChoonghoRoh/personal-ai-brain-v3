@@ -1,4 +1,5 @@
 """AI 워크플로우 서비스 테스트 (Phase 15-2-2)"""
+import sys
 import pytest
 from unittest.mock import MagicMock, patch, Mock
 from pathlib import Path
@@ -117,7 +118,7 @@ def test_extract_keywords_ollama_unavailable(workflow_service, mock_db):
 
     mock_db.add.side_effect = add_side_effect
 
-    with patch("backend.services.automation.ai_workflow_service.ollama_available", return_value=False):
+    with patch("backend.services.automation.workflow_extract.ollama_available", return_value=False):
         keyword_count = workflow_service._extract_keywords(task_id, [1], mock_db)
 
     assert keyword_count >= 0
@@ -148,8 +149,8 @@ def test_extract_keywords_ollama_available(workflow_service, mock_db):
 
     mock_db.add.side_effect = add_side_effect
 
-    with patch("backend.services.automation.ai_workflow_service.ollama_available", return_value=True):
-        with patch("backend.services.automation.ai_workflow_service.ollama_generate") as mock_generate:
+    with patch("backend.services.automation.workflow_extract.ollama_available", return_value=True):
+        with patch("backend.services.automation.workflow_extract.ollama_generate") as mock_generate:
             mock_generate.return_value = "FastAPI, SQLAlchemy, 백엔드, 개발, API"
 
             keyword_count = workflow_service._extract_keywords(task_id, [1], mock_db)
@@ -224,44 +225,103 @@ def test_approve_items_auto_approve_false(workflow_service, mock_db):
 
 
 def test_embed_chunks(workflow_service, mock_db):
-    """Qdrant 임베딩 테스트"""
+    """Qdrant 배치 임베딩 테스트"""
     task_id = ai_workflow_state.create_task([1], True)
 
-    # Mock approved chunks
+    # Mock approved chunks (qdrant_point_id=None → 미동기화)
     chunk1 = KnowledgeChunk(id=1, document_id=1, chunk_index=0, content="테스트", status="approved")
+    chunk1.qdrant_point_id = None
     chunk2 = KnowledgeChunk(id=2, document_id=1, chunk_index=1, content="테스트2", status="approved")
+    chunk2.qdrant_point_id = None
 
-    mock_db.query.return_value.filter.return_value.all.return_value = [chunk1, chunk2]
+    doc1 = Document(id=1, file_path="/test/doc1.txt", file_name="doc1.txt", file_type="txt", size=100)
 
-    # Mock sync_chunk_to_qdrant
-    mock_result = Mock()
-    mock_result.success = True
+    # db.query().filter().all() 호출 순서: 1) chunks, 2) documents
+    call_count = {"n": 0}
 
-    with patch("backend.services.automation.ai_workflow_service.sync_chunk_to_qdrant") as mock_sync:
-        mock_sync.return_value = mock_result
+    def all_side_effect():
+        call_count["n"] += 1
+        if call_count["n"] == 1:
+            return [chunk1, chunk2]
+        return [doc1]
 
+    mock_db.query.return_value.filter.return_value.all = all_side_effect
+
+    # Mock embeddings (각 원소에 .tolist() 필요)
+    mock_vec1 = Mock()
+    mock_vec1.tolist.return_value = [0.1] * 384
+    mock_vec2 = Mock()
+    mock_vec2.tolist.return_value = [0.2] * 384
+
+    mock_model = Mock()
+    mock_model.encode.return_value = [mock_vec1, mock_vec2]
+    mock_qdrant = Mock()
+
+    # lazy import 모듈 mock
+    mock_st = Mock()
+    mock_st.SentenceTransformer.return_value = mock_model
+    mock_qc = Mock()
+    mock_qc.QdrantClient.return_value = mock_qdrant
+    mock_qc_models = Mock()
+
+    with patch.dict(sys.modules, {
+        "sentence_transformers": mock_st,
+        "qdrant_client": mock_qc,
+        "qdrant_client.models": mock_qc_models,
+    }), \
+    patch("backend.config.EMBEDDING_MODEL", "test-model"), \
+    patch("backend.config.QDRANT_HOST", "localhost"), \
+    patch("backend.config.QDRANT_PORT", 6333), \
+    patch("backend.config.COLLECTION_NAME", "test"):
         embedded_count = workflow_service._embed_chunks(task_id, [1, 2], mock_db)
 
     assert embedded_count == 2
+    mock_model.encode.assert_called_once()
+    mock_qdrant.upsert.assert_called_once()
 
 
 def test_embed_chunks_qdrant_failure(workflow_service, mock_db):
-    """Qdrant 임베딩 실패 테스트"""
+    """Qdrant 배치 임베딩 실패 테스트"""
     task_id = ai_workflow_state.create_task([1], True)
 
-    # Mock approved chunks
     chunk1 = KnowledgeChunk(id=1, document_id=1, chunk_index=0, content="테스트", status="approved")
+    chunk1.qdrant_point_id = None
 
-    mock_db.query.return_value.filter.return_value.all.return_value = [chunk1]
+    doc1 = Document(id=1, file_path="/test/doc1.txt", file_name="doc1.txt", file_type="txt", size=100)
 
-    # Mock sync_chunk_to_qdrant failure
-    mock_result = Mock()
-    mock_result.success = False
-    mock_result.error = "Qdrant 연결 실패"
+    call_count = {"n": 0}
 
-    with patch("backend.services.automation.ai_workflow_service.sync_chunk_to_qdrant") as mock_sync:
-        mock_sync.return_value = mock_result
+    def all_side_effect():
+        call_count["n"] += 1
+        if call_count["n"] == 1:
+            return [chunk1]
+        return [doc1]
 
+    mock_db.query.return_value.filter.return_value.all = all_side_effect
+
+    mock_vec1 = Mock()
+    mock_vec1.tolist.return_value = [0.1] * 384
+
+    mock_model = Mock()
+    mock_model.encode.return_value = [mock_vec1]
+    mock_qdrant = Mock()
+    mock_qdrant.upsert.side_effect = Exception("Qdrant 연결 실패")
+
+    mock_st = Mock()
+    mock_st.SentenceTransformer.return_value = mock_model
+    mock_qc = Mock()
+    mock_qc.QdrantClient.return_value = mock_qdrant
+    mock_qc_models = Mock()
+
+    with patch.dict(sys.modules, {
+        "sentence_transformers": mock_st,
+        "qdrant_client": mock_qc,
+        "qdrant_client.models": mock_qc_models,
+    }), \
+    patch("backend.config.EMBEDDING_MODEL", "test-model"), \
+    patch("backend.config.QDRANT_HOST", "localhost"), \
+    patch("backend.config.QDRANT_PORT", 6333), \
+    patch("backend.config.COLLECTION_NAME", "test"):
         embedded_count = workflow_service._embed_chunks(task_id, [1], mock_db)
 
     assert embedded_count == 0
@@ -283,11 +343,14 @@ def test_execute_workflow_failure(workflow_service, mock_db):
     """워크플로우 실패 테스트"""
     task_id = ai_workflow_state.create_task([1], False)
 
-    # Mock Document 조회 실패
-    mock_db.query.side_effect = Exception("DB 연결 오류")
+    # Mock SessionLocal이 반환하는 세션에서 Document 조회 실패
+    failing_db = MagicMock()
+    failing_db.query.side_effect = Exception("DB 연결 오류")
 
-    workflow_service.execute_workflow(task_id, mock_db)
+    with patch("backend.models.database.SessionLocal", return_value=failing_db):
+        workflow_service.execute_workflow(task_id, mock_db)
 
     task = ai_workflow_state.get_task(task_id)
     assert task.status == "failed"
     assert "DB 연결 오류" in task.error
+    assert "문서 텍스트 추출" in task.current_stage
