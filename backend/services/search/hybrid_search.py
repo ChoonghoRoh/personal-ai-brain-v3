@@ -101,20 +101,19 @@ class HybridSearchService:
 
             q = (
                 db.query(KnowledgeChunk)
+                .join(Document, KnowledgeChunk.document_id == Document.id)
                 .filter(KnowledgeChunk.status == "approved")
                 .filter(KnowledgeChunk.content.isnot(None))
             )
-            # ILIKE OR 조건
+            # ILIKE OR 조건 (content + file_path)
             if terms:
-                ilike_filter = or_(
-                    *[KnowledgeChunk.content.ilike(f"%{t}%") for t in terms]
-                )
+                content_filters = [KnowledgeChunk.content.ilike(f"%{t}%") for t in terms]
+                filepath_filters = [Document.file_path.ilike(f"%{t}%") for t in terms]
+                ilike_filter = or_(*(content_filters + filepath_filters))
                 q = q.filter(ilike_filter)
 
-            from backend.models.models import Document, KnowledgeLabel
-
             if project_id is not None:
-                q = q.join(Document, KnowledgeChunk.document_id == Document.id).filter(
+                q = q.filter(
                     Document.project_id == project_id
                 )
             if label_ids:
@@ -133,22 +132,23 @@ class HybridSearchService:
                 if chunk.id in seen_ids:
                     continue
                 seen_ids.add(chunk.id)
-                content_lower = (chunk.content or "").lower()
-                match_count = sum(1 for t in terms if t.lower() in content_lower)
-                score = match_count / len(terms) if terms else 0.0
                 # document_id: Qdrant와 fusion 시 동일 키로 매칭되도록
                 doc_id = chunk.qdrant_point_id if chunk.qdrant_point_id else f"chunk_{chunk.id}"
-                file_path = ""
+                chunk_file_path = ""
                 if chunk.document_id:
                     doc_row = db.query(Document).filter(Document.id == chunk.document_id).first()
                     if doc_row:
-                        file_path = doc_row.file_path or ""
+                        chunk_file_path = doc_row.file_path or ""
+                content_lower = (chunk.content or "").lower()
+                filepath_lower = chunk_file_path.lower()
+                match_count = sum(1 for t in terms if t.lower() in content_lower or t.lower() in filepath_lower)
+                score = match_count / len(terms) if terms else 0.0
                 results.append({
                     "document_id": str(doc_id),
                     "content": chunk.content or "",
                     "score": min(1.0, score * 1.2),  # 소폭 상한
                     "chunk_id": chunk.id,
-                    "file": file_path,
+                    "file": chunk_file_path,
                     "snippet": (chunk.content or "")[:200] + ("..." if len(chunk.content or "") > 200 else ""),
                     "chunk_index": chunk.chunk_index or 0,
                     "source": "keyword",

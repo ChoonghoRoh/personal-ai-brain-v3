@@ -12,10 +12,21 @@ document.addEventListener("DOMContentLoaded", function () {
   } else {
     console.error("renderHeader 함수를 찾을 수 없습니다.");
   }
+
+  // 검색 모드 토글 이벤트
+  document.querySelectorAll(".mode-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      document.querySelectorAll(".mode-btn").forEach(function (b) { b.classList.remove("active"); });
+      btn.classList.add("active");
+      currentSearchMode = btn.dataset.mode;
+    });
+  });
 });
 
 let searchHistory = JSON.parse(localStorage.getItem("searchHistory") || "[]");
 let currentQuery = "";
+let currentSearchMode = "hybrid";
+let allDocuments = [];
 
 /**
  * 검색 히스토리 표시
@@ -65,29 +76,114 @@ function highlightText(text, query) {
 }
 
 /**
- * 추천 문서 로드
- * 최근 업데이트된 문서 5개를 로드하여 표시
+ * 추천 문서 로드 (전체 목록 fetch 후 클라이언트사이드 필터링)
  */
 async function loadRecommended() {
   try {
-    const response = await fetch("/api/documents?limit=5");
+    const response = await fetch("/api/documents");
     const docs = await response.json();
+    allDocuments = docs;
     if (docs.length > 0) {
       document.getElementById("recommended").style.display = "block";
-      const recommendedHtml = docs
-        .map(
-          (doc) => `
-        <div class="recommended-item" onclick="openDocument('${doc.file_path.replace(/'/g, "\\'")}')">
-          ${escapeHtml(doc.name || doc.file_path)}
-        </div>
-      `
-        )
-        .join("");
-      document.getElementById("recommended-items").innerHTML = recommendedHtml;
+      populateFolderFilter(docs);
+      filterRecommended();
     }
   } catch (error) {
     console.error("추천 문서 로드 오류:", error);
   }
+}
+
+/**
+ * 폴더 필터 드롭다운 생성
+ * @param {Array} docs - 문서 목록
+ */
+function populateFolderFilter(docs) {
+  var folders = new Set();
+  docs.forEach(function (doc) {
+    var parts = (doc.file_path || "").split("/");
+    if (parts.length > 1) {
+      folders.add(parts[0]);
+    }
+  });
+  var select = document.getElementById("rec-folder");
+  var sorted = Array.from(folders).sort();
+  sorted.forEach(function (folder) {
+    var opt = document.createElement("option");
+    opt.value = folder;
+    opt.textContent = folder + "/";
+    select.appendChild(opt);
+  });
+}
+
+/**
+ * 추천 문서 필터/정렬/렌더링
+ */
+function filterRecommended() {
+  var searchText = (document.getElementById("rec-search").value || "").toLowerCase();
+  var folder = document.getElementById("rec-folder").value;
+  var sortBy = document.getElementById("rec-sort").value;
+  var limit = parseInt(document.getElementById("rec-limit").value, 10);
+
+  var filtered = allDocuments.filter(function (doc) {
+    var name = (doc.name || "").toLowerCase();
+    var path = (doc.file_path || "").toLowerCase();
+    if (searchText && name.indexOf(searchText) === -1 && path.indexOf(searchText) === -1) {
+      return false;
+    }
+    if (folder && !path.startsWith(folder.toLowerCase() + "/")) {
+      return false;
+    }
+    return true;
+  });
+
+  // 정렬
+  filtered.sort(function (a, b) {
+    if (sortBy === "name") {
+      return (a.name || "").localeCompare(b.name || "");
+    } else if (sortBy === "size") {
+      return (b.size || 0) - (a.size || 0);
+    }
+    // newest (기본)
+    return (b.modified || 0) - (a.modified || 0);
+  });
+
+  // 슬라이스
+  var sliced = filtered.slice(0, limit);
+
+  renderRecommendedCards(sliced);
+}
+
+/**
+ * 추천 문서를 그리드 카드로 렌더링
+ * @param {Array} docs - 문서 목록
+ */
+function renderRecommendedCards(docs) {
+  var container = document.getElementById("recommended-items");
+  if (docs.length === 0) {
+    container.innerHTML = '<div class="no-results">조건에 맞는 문서가 없습니다.</div>';
+    return;
+  }
+  var html = docs.map(function (doc) {
+    var name = escapeHtml(doc.name || doc.file_path);
+    var pathParts = (doc.file_path || "").split("/");
+    var folderPath = pathParts.length > 1 ? escapeHtml(pathParts.slice(0, -1).join("/")) : "";
+    var sizeKB = doc.size ? (doc.size / 1024).toFixed(1) + " KB" : "";
+    var dateStr = "";
+    if (doc.modified) {
+      var d = new Date(doc.modified * 1000);
+      dateStr = d.toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" });
+    }
+    var fp = (doc.file_path || "").replace(/'/g, "\\'");
+    return '<div class="rec-card" onclick="openDocument(\'' + fp + '\')">' +
+      '<div class="rec-card-title">' + name + '</div>' +
+      (folderPath ? '<div class="rec-card-path">' + folderPath + '</div>' : '') +
+      '<div class="rec-card-meta">' +
+        (sizeKB ? '<span>' + sizeKB + '</span>' : '') +
+        (dateStr ? '<span>' + dateStr + '</span>' : '') +
+      '</div>' +
+    '</div>';
+  }).join("");
+  container.innerHTML = html;
 }
 
 /**
@@ -123,14 +219,15 @@ async function search() {
   resultsDiv.innerHTML = '<div class="loading">검색 중...</div>';
 
   try {
-    const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&limit=10`);
-    
+    const url = `/api/search?q=${encodeURIComponent(query)}&limit=10&search_mode=${encodeURIComponent(currentSearchMode)}`;
+    const response = await fetch(url);
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     const data = await response.json();
-    
+
     // API 응답이 객체인 경우 results 속성 사용, 배열인 경우 직접 사용
     let results = [];
     if (Array.isArray(data)) {
@@ -138,14 +235,14 @@ async function search() {
     } else if (data && typeof data === 'object') {
       results = Array.isArray(data.results) ? data.results : [];
     }
-    
+
     // results가 배열인지 최종 확인
     if (!Array.isArray(results)) {
       console.error("검색 결과가 배열이 아닙니다:", typeof results, results);
       resultsDiv.innerHTML = '<div class="no-results">검색 결과 형식 오류가 발생했습니다.</div>';
       return;
     }
-    
+
     if (results.length === 0) {
       resultsDiv.innerHTML = '<div class="no-results">검색 결과가 없습니다.</div>';
     } else {

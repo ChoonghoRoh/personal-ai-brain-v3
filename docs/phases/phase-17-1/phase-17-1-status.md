@@ -1,21 +1,34 @@
-# Phase 17-1: 키워드 그룹 3단 레이아웃 리뉴얼
-
-## Status: DONE
-
-## 목표
-2단(목록+모달) -> 3단(목록+상세+키워드) 레이아웃으로 전환
-- 모달 제거, 인라인 편집
-- 페이지네이션 추가
-- 최초 진입 시 1번째 그룹 자동 선택
-
-## Tasks
-1. [BE] 그룹 목록 페이지네이션 API (page/size + total)
-2. [FE] 3단 레이아웃 HTML 구조 (groups.html 전면 개편, 모달 제거)
-3. [FE] 상세 패널 인라인 편집 (crud.js 모달->인라인 전환)
-4. [FE] 키워드 목록 3단 영역 이동 (matching.js)
-5. [FE] 페이지네이션 + 자동 선택 (ui.js)
-6. [FE] CSS 3단 그리드 (admin-groups.css)
-
-## 진행 상황
-- 2026-02-18: BUILDING 착수
-- 2026-02-18: 6개 Task 모두 구현 완료 + 코드 리뷰 통과 → DONE
+---
+phase: "17-1"
+ssot_version: "6.0-renewal-4th"
+ssot_loaded_at: "2026-02-18T09:00:00Z"
+current_state: "DONE"
+current_task: null
+current_task_domain: null
+team_name: "phase-17-1"
+team_members:
+  - { name: "backend-dev", status: "shutdown" }
+  - { name: "frontend-dev", status: "shutdown" }
+  - { name: "verifier", status: "shutdown" }
+last_action: "6개 Task 구현 완료 + 코드 리뷰 통과"
+last_action_result: "PASS"
+next_action: "Phase Chain 17-2 시작"
+blockers: []
+rewind_target: null
+retry_count: 0
+gate_results:
+  G1_plan_review: "PASS"
+  G2_code_review_be: "PASS"
+  G2_code_review_fe: "PASS"
+  G3_test_gate: "PASS (기존 테스트 회귀 없음)"
+  G4_final_gate: "PASS"
+task_progress:
+  17-1-1: { status: "DONE", domain: "[BE]", owner: "backend-dev" }
+  17-1-2: { status: "DONE", domain: "[FE]", owner: "frontend-dev" }
+  17-1-3: { status: "DONE", domain: "[FE]", owner: "frontend-dev" }
+  17-1-4: { status: "DONE", domain: "[FE]", owner: "frontend-dev" }
+  17-1-5: { status: "DONE", domain: "[FE]", owner: "frontend-dev" }
+  17-1-6: { status: "DONE", domain: "[FE]", owner: "frontend-dev" }
+error_log: []
+last_updated: "2026-02-18T14:41:00Z"
+---

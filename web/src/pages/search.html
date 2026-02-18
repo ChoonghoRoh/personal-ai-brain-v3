@@ -16,6 +16,12 @@
           <input type="text" id="search-input" class="search-input" placeholder="검색어를 입력하세요..." onkeypress="if(event.key === 'Enter') search()" />
           <button class="search-button" onclick="search()" id="search-button">검색</button>
         </div>
+        <div class="search-mode-toggle">
+          <span class="search-mode-label">검색 모드:</span>
+          <button class="mode-btn" data-mode="semantic">Semantic</button>
+          <button class="mode-btn" data-mode="keyword">Keyword</button>
+          <button class="mode-btn active" data-mode="hybrid">Hybrid</button>
+        </div>
         <div class="search-history" id="search-history" style="display: none">
           <h3>최근 검색</h3>
           <div id="history-items"></div>
@@ -28,7 +34,23 @@
 
       <div class="recommended" id="recommended" style="display: none">
         <h3>추천 문서</h3>
-        <div id="recommended-items"></div>
+        <div class="rec-controls">
+          <input type="text" id="rec-search" class="rec-search-input" placeholder="문서 이름/경로 검색..." oninput="filterRecommended()" />
+          <select id="rec-folder" class="rec-select" onchange="filterRecommended()">
+            <option value="">전체 폴더</option>
+          </select>
+          <select id="rec-sort" class="rec-select" onchange="filterRecommended()">
+            <option value="newest">최신순</option>
+            <option value="name">이름순</option>
+            <option value="size">크기순</option>
+          </select>
+          <select id="rec-limit" class="rec-select" onchange="filterRecommended()">
+            <option value="5">5건</option>
+            <option value="10">10건</option>
+            <option value="20">20건</option>
+          </select>
+        </div>
+        <div id="recommended-items" class="rec-grid"></div>
       </div>
     </div>
 

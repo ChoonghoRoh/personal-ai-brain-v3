@@ -47,6 +47,43 @@
   cursor: not-allowed;
 }
 
+/* 검색 모드 토글 */
+.search-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.search-mode-label {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.mode-btn {
+  padding: 5px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 16px;
+  background: #f9fafb;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.mode-btn:hover {
+  background: #e5e7eb;
+}
+
+.mode-btn.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+/* 검색 결과 */
 .results {
   background: white;
   padding: 20px;
@@ -109,6 +146,7 @@
   color: #666;
 }
 
+/* 검색 히스토리 */
 .search-history {
   background: white;
   padding: 15px;
@@ -145,32 +183,127 @@
   border-radius: 3px;
 }
 
+/* 추천 문서 영역 */
 .recommended {
   background: white;
-  padding: 15px;
+  padding: 20px;
   border-radius: 8px;
   margin-top: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .recommended h3 {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 10px;
+  font-size: 16px;
+  color: #374151;
+  margin-bottom: 14px;
+  font-weight: 600;
 }
 
-.recommended-item {
-  padding: 10px;
-  border-bottom: 1px solid #e5e7eb;
+/* 추천 문서 조회 컨트롤 */
+.rec-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.rec-search-input {
+  flex: 1;
+  min-width: 180px;
+  padding: 7px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.rec-search-input:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+.rec-select {
+  padding: 7px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+  background: white;
+  color: #374151;
   cursor: pointer;
+}
+
+.rec-select:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+/* 추천 문서 그리드 카드 */
+.rec-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.rec-card {
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: #fafbfc;
+}
+
+.rec-card:hover {
+  border-color: #2563eb;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+  background: white;
+}
+
+.rec-card-title {
+  font-weight: 600;
   font-size: 14px;
-  color: #2563eb;
+  color: #1f2937;
+  margin-bottom: 6px;
+  word-break: break-word;
 }
 
-.recommended-item:hover {
-  background: #f9fafb;
+.rec-card-path {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 8px;
+  word-break: break-all;
 }
 
-.recommended-item:last-child {
-  border-bottom: none;
+.rec-card-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .search-input-group {
+    flex-direction: column;
+  }
+
+  .search-mode-toggle {
+    flex-wrap: wrap;
+  }
+
+  .rec-controls {
+    flex-direction: column;
+  }
+
+  .rec-search-input {
+    min-width: auto;
+  }
+
+  .rec-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .result-header {
+    flex-direction: column;
+    gap: 6px;
+  }
 }
