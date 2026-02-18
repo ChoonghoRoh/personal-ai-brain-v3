@@ -1,14 +1,14 @@
 /**
  * 키워드 그룹 매칭 모듈
- * 키워드 선택, 연결, 제거 기능을 제공하는 클래스
+ * 키워드 선택, 연결, 제거 기능 + 3단 레이아웃 키워드 영역 관리
  */
 class KeywordGroupMatching {
   constructor(manager) {
-    this.manager = manager; // KeywordGroupManager 인스턴스 참조
+    this.manager = manager;
   }
 
   /**
-   * 키워드 목록 로드
+   * 키워드 목록 로드 (3단 영역)
    */
   async loadKeywords() {
     try {
@@ -24,7 +24,6 @@ class KeywordGroupMatching {
       if (!keywordsList) return;
       keywordsList.innerHTML = "";
 
-      // 그룹이 선택된 경우 키워드를 분류
       let groupKeywords = [];
       let otherKeywords = [];
 
@@ -37,19 +36,20 @@ class KeywordGroupMatching {
           }
         });
 
-        // 그룹 키워드 섹션
         if (groupKeywords.length > 0) {
           const sectionContainer = this.createKeywordSection("group", groupKeywords, true);
           keywordsList.appendChild(sectionContainer);
         }
 
-        // 그룹 외 키워드 섹션
         if (otherKeywords.length > 0) {
           const sectionContainer = this.createKeywordSection("other", otherKeywords, false);
           keywordsList.appendChild(sectionContainer);
         }
+
+        if (groupKeywords.length === 0 && otherKeywords.length === 0) {
+          keywordsList.innerHTML = '<div style="padding:20px;color:#9ca3af;text-align:center">키워드가 없습니다</div>';
+        }
       } else {
-        // 그룹이 선택되지 않은 경우 모든 키워드를 비활성화 상태로 표시
         const keywordsContainer = document.createElement("div");
         keywordsContainer.style.cssText = "display: flex; flex-wrap: wrap; gap: 8px";
 
@@ -135,15 +135,30 @@ class KeywordGroupMatching {
   }
 
   /**
-   * 그룹 선택
+   * 그룹 선택 — 3단 레이아웃: 상세 패널 + 키워드 목록 갱신
    */
   selectGroup(groupId) {
+    // 토글: 같은 그룹 다시 클릭하면 선택 해제
     this.manager.selectedGroupId = this.manager.selectedGroupId === groupId ? null : groupId;
+
     if (this.manager.selectedGroupId) {
       this.manager.selectedKeywordIds.clear();
       this.manager.selectedRemoveKeywordIds.clear();
       this.manager.selectedKeywordForGroupCheck = null;
+
+      // 상세 패널 업데이트
+      const group = this.manager.crud.groups.find(g => g.id === groupId);
+      if (group) {
+        this.manager.crud.renderDetailPanel(group);
+      }
+    } else {
+      // 선택 해제 시 상세 패널 초기화
+      const panel = document.getElementById("group-detail-panel");
+      if (panel) {
+        panel.innerHTML = '<div class="detail-empty-state"><p>좌측에서 그룹을 선택하세요</p></div>';
+      }
     }
+
     this.loadKeywords();
     this.manager.ui.updateMatchingUI();
   }
@@ -210,35 +225,22 @@ class KeywordGroupMatching {
     sectionBadges.forEach((badge) => {
       const keywordId = parseInt(badge.dataset.keywordId);
       if (isGroupSection) {
-        if (!this.manager.selectedRemoveKeywordIds.has(keywordId)) {
-          hasUnselected = true;
-        }
+        if (!this.manager.selectedRemoveKeywordIds.has(keywordId)) hasUnselected = true;
       } else {
-        if (!this.manager.selectedKeywordIds.has(keywordId)) {
-          hasUnselected = true;
-        }
+        if (!this.manager.selectedKeywordIds.has(keywordId)) hasUnselected = true;
       }
     });
 
-    if (hasUnselected) {
-      sectionBadges.forEach((badge) => {
-        const keywordId = parseInt(badge.dataset.keywordId);
-        if (isGroupSection) {
-          this.manager.selectedRemoveKeywordIds.add(keywordId);
-        } else {
-          this.manager.selectedKeywordIds.add(keywordId);
-        }
-      });
-    } else {
-      sectionBadges.forEach((badge) => {
-        const keywordId = parseInt(badge.dataset.keywordId);
-        if (isGroupSection) {
-          this.manager.selectedRemoveKeywordIds.delete(keywordId);
-        } else {
-          this.manager.selectedKeywordIds.delete(keywordId);
-        }
-      });
-    }
+    sectionBadges.forEach((badge) => {
+      const keywordId = parseInt(badge.dataset.keywordId);
+      if (hasUnselected) {
+        if (isGroupSection) this.manager.selectedRemoveKeywordIds.add(keywordId);
+        else this.manager.selectedKeywordIds.add(keywordId);
+      } else {
+        if (isGroupSection) this.manager.selectedRemoveKeywordIds.delete(keywordId);
+        else this.manager.selectedKeywordIds.delete(keywordId);
+      }
+    });
 
     this.manager.ui.updateMatchingUI();
     this.manager.ui.updateSelectAllButtons();
@@ -257,14 +259,10 @@ class KeywordGroupMatching {
       const response = await fetch(`/api/labels/groups/${this.manager.selectedGroupId}/keywords`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          keyword_ids: Array.from(this.manager.selectedKeywordIds),
-        }),
+        body: JSON.stringify({ keyword_ids: Array.from(this.manager.selectedKeywordIds) }),
       });
 
-      if (!response.ok) {
-        throw new Error("키워드 연결 실패");
-      }
+      if (!response.ok) throw new Error("키워드 연결 실패");
 
       showSuccess(`${this.manager.selectedKeywordIds.size}개의 키워드가 그룹에 연결되었습니다.`);
       this.manager.selectedKeywordIds.clear();
@@ -288,17 +286,13 @@ class KeywordGroupMatching {
 
     try {
       const removePromises = Array.from(this.manager.selectedRemoveKeywordIds).map((keywordId) =>
-        fetch(`/api/labels/groups/${this.manager.selectedGroupId}/keywords/${keywordId}`, {
-          method: "DELETE",
-        })
+        fetch(`/api/labels/groups/${this.manager.selectedGroupId}/keywords/${keywordId}`, { method: "DELETE" })
       );
 
       const results = await Promise.all(removePromises);
       const failed = results.filter((r) => !r.ok);
 
-      if (failed.length > 0) {
-        throw new Error("일부 키워드 제외 실패");
-      }
+      if (failed.length > 0) throw new Error("일부 키워드 제외 실패");
 
       showSuccess(`${this.manager.selectedRemoveKeywordIds.size}개의 키워드가 그룹에서 제외되었습니다.`);
       this.manager.selectedRemoveKeywordIds.clear();
@@ -312,12 +306,11 @@ class KeywordGroupMatching {
   }
 
   /**
-   * 그룹에 키워드 추가
+   * 그룹에 키워드 추가 (이름 기반)
    */
   async addKeywordsToGroup(groupId, keywordNames) {
     try {
       const cleanedKeywords = cleanArray(keywordNames);
-
       if (cleanedKeywords.length === 0) {
         showError("추가할 키워드가 없습니다.");
         return;
@@ -335,7 +328,6 @@ class KeywordGroupMatching {
       }
 
       const result = await response.json();
-
       let message = `${result.added_count || cleanedKeywords.length}개의 키워드가 그룹에 추가되었습니다.`;
       if (result.skipped_count > 0) {
         message += ` (${result.skipped_count}개는 이미 그룹에 속함)`;
@@ -343,7 +335,7 @@ class KeywordGroupMatching {
 
       if (result.errors && result.errors.length > 0) {
         console.warn("키워드 추가 경고:", result.errors);
-        showError(`일부 키워드 추가 실패 (${result.error_count}개): ${result.errors.slice(0, 3).join(", ")}${result.errors.length > 3 ? "..." : ""}`);
+        showError(`일부 키워드 추가 실패 (${result.error_count}개)`);
       } else {
         showSuccess(message);
       }

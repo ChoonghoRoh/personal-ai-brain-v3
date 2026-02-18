@@ -26,8 +26,10 @@
 
 ## 테스트 명령 예시
 
-- **백엔드**: `pytest tests/ -v --cov=backend --cov-report=term-missing`
-- **E2E**: `npx playwright test e2e/phase-X-Y.spec.js`, `npx playwright test e2e/smoke.spec.js e2e/phase-*.spec.js`
+> **필수**: 테스트 실행 전 반드시 `clear` 명령으로 터미널을 초기화한 뒤 진행합니다.
+
+- **백엔드**: `clear && pytest tests/ -v --cov=backend --cov-report=term-missing`
+- **E2E**: `clear && npx playwright test e2e/phase-X-Y.spec.js`, `clear && npx playwright test e2e/smoke.spec.js e2e/phase-*.spec.js`
 
 ➜ 상세: [ROLES/tester.md](../ROLES/tester.md), [3-workflow.md](../3-workflow.md) §4 품질 게이트
 

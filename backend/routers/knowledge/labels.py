@@ -82,6 +82,7 @@ class GroupKeywordsAdd(BaseModel):
 class SuggestKeywordsRequest(BaseModel):
     description: str = ""
     model: Optional[str] = None
+    group_id: Optional[int] = None
 
 
 # --- 엔드포인트 ---
@@ -106,15 +107,17 @@ async def list_labels(
 
 # ========== Phase 7.7: 키워드 그룹 관리 API (/{label_id} 라우트보다 먼저 정의) ==========
 
-@router.get("/groups", response_model=List[LabelResponse])
+@router.get("/groups")
 async def list_keyword_groups(
     q: Optional[str] = None,
+    page: Optional[int] = None,
+    size: int = 20,
     limit: int = 50,
     offset: int = 0,
     db: Session = Depends(get_db),
 ):
-    """키워드 그룹 목록 조회"""
-    return await handle_list_keyword_groups(q, limit, offset, db)
+    """키워드 그룹 목록 조회 (page/size 페이지네이션 또는 limit/offset)"""
+    return await handle_list_keyword_groups(q, limit, offset, db, page=page, size=size)
 
 
 @router.get("/groups/{group_id}", response_model=LabelResponse)

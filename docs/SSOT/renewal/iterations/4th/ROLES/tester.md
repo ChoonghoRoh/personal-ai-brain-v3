@@ -36,18 +36,22 @@
 
 ### 3.1 백엔드 테스트 (pytest)
 
+> **필수**: 테스트 실행 전 반드시 `clear` 명령으로 터미널을 초기화한 뒤 진행합니다.
+
 ```bash
-pytest tests/ -v --tb=short
-pytest tests/ --cov=backend --cov-report=term-missing
-pytest tests/test_admin_api.py -v
+clear && pytest tests/ -v --tb=short
+clear && pytest tests/ --cov=backend --cov-report=term-missing
+clear && pytest tests/test_admin_api.py -v
 ```
 
 ### 3.2 프론트엔드 테스트 (Playwright)
 
+> **필수**: 테스트 실행 전 반드시 `clear` 명령으로 터미널을 초기화한 뒤 진행합니다.
+
 ```bash
-npx playwright test e2e/phase-X-Y.spec.js
-npx playwright test e2e/smoke.spec.js e2e/phase-*.spec.js
-npx playwright test e2e/smoke.spec.js
+clear && npx playwright test e2e/phase-X-Y.spec.js
+clear && npx playwright test e2e/smoke.spec.js e2e/phase-*.spec.js
+clear && npx playwright test e2e/smoke.spec.js
 ```
 
 ---

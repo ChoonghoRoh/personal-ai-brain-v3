@@ -3,45 +3,53 @@
  */
 
 /**
- * 에러 메시지 표시
+ * 메시지 영역에 닫기 버튼을 추가하는 헬퍼
+ * @param {HTMLElement} el - 메시지 요소
+ * @param {string} message - 표시할 메시지
+ */
+function _setMessageContent(el, message) {
+  el.textContent = '';
+  const textSpan = document.createElement('span');
+  textSpan.textContent = message;
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '\u00d7';
+  closeBtn.className = 'msg-close-btn';
+  closeBtn.title = '닫기';
+  closeBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    el.style.display = 'none';
+  });
+  el.appendChild(textSpan);
+  el.appendChild(closeBtn);
+}
+
+/**
+ * 에러 메시지 표시 (클릭 닫기 지원, 자동 숨김 없음)
  * @param {string} message - 에러 메시지
- * @param {object} [options] - 옵션. persist: true 이면 자동 숨김 없음
+ * @param {object} [options] - 옵션 (하위 호환용)
  */
 function showError(message, options) {
   const errorDiv = document.getElementById("error-message");
   if (errorDiv) {
-    errorDiv.textContent = message;
+    _setMessageContent(errorDiv, message);
     errorDiv.style.display = "block";
     errorDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    const persist = (options && options.persist === true) || (window.ADMIN_MESSAGES_PERSIST === true);
-    if (!persist) {
-      setTimeout(() => {
-        errorDiv.style.display = "none";
-      }, 5000);
-    }
   } else {
     console.error("Error:", message);
-    alert("오류: " + message);
   }
 }
 
 /**
- * 성공 메시지 표시
+ * 성공 메시지 표시 (클릭 닫기 지원, 자동 숨김 없음)
  * @param {string} message - 성공 메시지
- * @param {object} [options] - 옵션. persist: true 이면 자동 숨김 없음
+ * @param {object} [options] - 옵션 (하위 호환용)
  */
 function showSuccess(message, options) {
   const successDiv = document.getElementById("success-message");
   if (successDiv) {
-    successDiv.textContent = message;
+    _setMessageContent(successDiv, message);
     successDiv.style.display = "block";
     successDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    const persist = (options && options.persist === true) || (window.ADMIN_MESSAGES_PERSIST === true);
-    if (!persist) {
-      setTimeout(() => {
-        successDiv.style.display = "none";
-      }, 3000);
-    }
   } else {
     console.log("Success:", message);
   }

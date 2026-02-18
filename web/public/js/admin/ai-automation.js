@@ -1,4 +1,4 @@
-// AI 자동화 JS 모듈 (ESM)
+// AI 자동화 JS 모듈
 // API/SSE 통신은 ai-automation-api.js 참조
 // esc(), getAuthHeaders()는 utils.js 전역 함수 사용
 

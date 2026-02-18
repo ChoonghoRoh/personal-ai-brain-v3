@@ -1,20 +1,21 @@
 /**
  * 키워드 그룹 검색 모듈
- * 그룹/키워드 검색 기능을 제공하는 클래스
+ * 그룹/키워드 검색 기능 (3단 레이아웃 + 페이지네이션 연동)
  */
 class KeywordGroupSearch {
   constructor(manager) {
-    this.manager = manager; // KeywordGroupManager 인스턴스 참조
+    this.manager = manager;
+    this._debounceTimer = null;
   }
 
   /**
-   * 그룹/키워드 검색
+   * 그룹/키워드 검색 (디바운스 적용)
    */
   searchGroupsAndKeywords() {
-    const searchTerm = document.getElementById(this.manager.searchInputId)?.value.toLowerCase() || "";
-    document.querySelectorAll(".group-card, .keyword-badge").forEach((card) => {
-      const text = card.textContent.toLowerCase();
-      card.style.display = text.includes(searchTerm) ? "inline-flex" : "none";
-    });
+    clearTimeout(this._debounceTimer);
+    this._debounceTimer = setTimeout(() => {
+      // 검색어가 변경되면 그룹 목록을 1페이지부터 다시 로드
+      this.manager.crud.loadGroups(1);
+    }, 300);
   }
 }

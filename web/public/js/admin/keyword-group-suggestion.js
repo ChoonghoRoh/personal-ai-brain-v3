@@ -62,10 +62,11 @@ class KeywordGroupSuggestion {
     const model = modelSelect && modelSelect.value ? modelSelect.value : undefined;
 
     try {
+      const groupId = this.manager.editingGroupId || null;
       const response = await fetch("/api/labels/groups/suggest-keywords", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description: description, model: model }),
+        body: JSON.stringify({ description: description, model: model, group_id: groupId }),
       });
 
       if (!response.ok) {
@@ -74,16 +75,15 @@ class KeywordGroupSuggestion {
       }
 
       const data = await response.json();
-      let keywords = data.keywords || [];
-      const llmKeywords = data.llm_keywords || [];
-      const similarKeywords = data.similar_keywords || [];
-      const similarKeywordsWithScore = data.similar_keywords_with_score || [];
-      const extractionMethod = data.extraction_method || "regex";  // "ollama" | "regex"
+      const suggestions = data.suggestions || [];
+      let newKeywords = data.new_keywords || [];
 
-      // 문제 1: 영어 추천시 문장으로 나오는 문제 수정 - 키워드만 추출
-      keywords = this.extractKeywordsOnly(keywords);
+      // new_keywords는 LLM 원시 출력이므로 정제 적용
+      newKeywords = this.extractKeywordsOnly(newKeywords);
 
-      if (keywords.length === 0) {
+      const totalCount = suggestions.length + newKeywords.length;
+
+      if (totalCount === 0) {
         if (errorDiv) {
           errorDiv.textContent = "추천할 키워드를 찾을 수 없습니다.";
           errorDiv.style.display = "block";
@@ -106,26 +106,31 @@ class KeywordGroupSuggestion {
       keywordsList.innerHTML = "";
       this.manager.selectedSuggestedKeywords.clear();
 
-      // 문제 3: 기존 키워드 목록에 있는 아이템인 경우 매칭 유사도 % 표기
-      keywords.forEach((keyword) => {
-        const isSimilar = similarKeywords.includes(keyword);
-        const similarityScore = this.getSimilarityScore(keyword, similarKeywordsWithScore);
-        const chip = this.createSuggestedKeywordChip(keyword, isSimilar, similarityScore);
+      // 기존 라벨 매칭 추천 (confidence 표시)
+      suggestions.forEach((item) => {
+        const chip = this.createSuggestedKeywordChip(item.name, true, item.confidence);
+        keywordsList.appendChild(chip);
+      });
+
+      // DB에 없는 새 키워드 (별도 표시)
+      newKeywords.forEach((keyword) => {
+        const chip = this.createSuggestedKeywordChip(keyword, false, null, true);
         keywordsList.appendChild(chip);
       });
 
       container.style.display = "block";
 
-      const methodLabel = extractionMethod === "ollama"
+      const ollamaOk = data.ollama_feedback && data.ollama_feedback.available;
+      const methodLabel = ollamaOk
         ? "Ollama(로컬 LLM)"
-        : "정규식 기반 (Ollama 미실행/미설치)";
-      let message = `${keywords.length}개의 키워드가 추천되었습니다. [${methodLabel}]`;
-      if (llmKeywords.length > 0 && similarKeywords.length > 0) {
-        message += ` — 새 키워드: ${llmKeywords.length}개, 유사 키워드: ${similarKeywords.length}개`;
-      } else if (similarKeywords.length > 0) {
-        message += ` — 유사 키워드 ${similarKeywords.length}개 포함`;
-      } else if (llmKeywords.length > 0) {
-        message += ` — 새 키워드 ${llmKeywords.length}개`;
+        : "Fallback (Ollama 미실행)";
+      let message = `${totalCount}개의 키워드가 추천되었습니다. [${methodLabel}]`;
+      if (suggestions.length > 0 && newKeywords.length > 0) {
+        message += ` — 기존 라벨 매칭: ${suggestions.length}개, 새 키워드: ${newKeywords.length}개`;
+      } else if (suggestions.length > 0) {
+        message += ` — 기존 라벨 매칭 ${suggestions.length}개`;
+      } else if (newKeywords.length > 0) {
+        message += ` — 새 키워드 ${newKeywords.length}개`;
       }
 
       const successMsgDiv = document.getElementById(this.manager.suggestionSuccessId);
@@ -250,34 +255,28 @@ class KeywordGroupSuggestion {
   }
 
   /**
-   * 유사도 점수 가져오기
-   */
-  getSimilarityScore(keyword, similarKeywordsWithScore) {
-    if (!similarKeywordsWithScore || similarKeywordsWithScore.length === 0) {
-      return null;
-    }
-    const found = similarKeywordsWithScore.find((item) => item.keyword === keyword);
-    return found ? found.score : null;
-  }
-
-  /**
    * 추천 키워드 칩 생성
+   * @param {string} keyword - 키워드 이름
+   * @param {boolean} isMatched - DB 기존 라벨 매칭 여부
+   * @param {number|null} confidence - 신뢰도 (0~1)
+   * @param {boolean} isNew - 새 키워드 여부
    */
-  createSuggestedKeywordChip(keyword, isSimilar, similarityScore = null) {
+  createSuggestedKeywordChip(keyword, isMatched, confidence = null, isNew = false) {
     const chip = document.createElement("div");
     chip.className = "keyword-chip";
     chip.dataset.keyword = keyword;
     chip.style.cssText =
       "display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: white; border: 2px solid #e5e7eb; border-radius: 16px; cursor: pointer; font-size: 13px; transition: all 0.2s";
 
-    // 문제 3: 기존 키워드 목록에 있는 아이템인 경우 매칭 유사도 % 표기
     let badge = "";
-    if (isSimilar) {
-      if (similarityScore !== null && similarityScore !== undefined) {
-        const scorePercent = Math.round(similarityScore * 100);
-        badge = `<span style="font-size: 10px; background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 10px; margin-right: 4px">유사 ${scorePercent}%</span>`;
+    if (isNew) {
+      badge = '<span style="font-size: 10px; background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 10px; margin-right: 4px">새 키워드</span>';
+    } else if (isMatched) {
+      if (confidence !== null && confidence !== undefined) {
+        const scorePercent = Math.round(confidence * 100);
+        badge = `<span style="font-size: 10px; background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 10px; margin-right: 4px">매칭 ${scorePercent}%</span>`;
       } else {
-        badge = '<span style="font-size: 10px; background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 10px; margin-right: 4px">유사</span>';
+        badge = '<span style="font-size: 10px; background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 10px; margin-right: 4px">매칭</span>';
       }
     }
 

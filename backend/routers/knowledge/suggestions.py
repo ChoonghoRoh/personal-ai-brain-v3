@@ -7,7 +7,6 @@ from pydantic import BaseModel
 from backend.models.database import get_db
 from backend.models.models import KnowledgeChunk, Label, KnowledgeLabel, KnowledgeRelation
 from backend.services.search.search_service import get_search_service
-from backend.services.reasoning.recommendation_service import get_recommendation_service
 from backend.services.ai.ollama_client import ollama_connection_check
 
 router = APIRouter(prefix="/api/knowledge", tags=["Suggestions"])
@@ -85,13 +84,16 @@ async def suggest_labels_llm(
         kl.label_id
         for kl in db.query(KnowledgeLabel).filter(KnowledgeLabel.chunk_id == chunk_id).all()
     ]
-    svc = get_recommendation_service(db)
-    result = svc.recommend_labels_with_llm(
+    from backend.services.reasoning.chunk_label_recommender import ChunkLabelRecommender
+    from backend.services.search.hybrid_search import get_hybrid_search_service
+
+    recommender = ChunkLabelRecommender(db, get_hybrid_search_service())
+    result = recommender.recommend(
+        chunk_id=chunk_id,
         content=content,
         existing_label_ids=existing_ids,
         limit=limit,
         model=model,
-        chunk_id=chunk_id,
     )
     suggestions = result.get("suggestions", [])
     new_keywords = result.get("new_keywords", [])

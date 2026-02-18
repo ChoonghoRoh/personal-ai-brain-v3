@@ -1,5 +1,5 @@
 /**
- * AI 자동화 API 모듈 (ESM)
+ * AI 자동화 API 모듈
  * API 통신, SSE 연결, 태스크 이력 관련 함수
  */
 
@@ -26,7 +26,7 @@ async function loadDocuments() {
     const token = localStorage.getItem('auth_token');
     if (token) headers['Authorization'] = 'Bearer ' + token;
 
-    const url = '/api/knowledge/folder-files?max_depth=10&limit=500&offset=0';
+    const url = '/api/automation/documents?limit=1000&offset=0';
     const res = await fetch(url, { headers });
 
     if (!res.ok) throw new Error('문서 목록을 불러올 수 없습니다.');

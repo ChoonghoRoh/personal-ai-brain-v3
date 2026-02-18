@@ -109,12 +109,22 @@ async def handle_delete_label(label_id: int, db: Session):
 # 키워드 그룹 관리
 # ---------------------------------------------------------------------------
 
-async def handle_list_keyword_groups(q: Optional[str], limit: int, offset: int, db: Session):
-    """키워드 그룹 목록 조회"""
+async def handle_list_keyword_groups(
+    q: Optional[str], limit: int, offset: int, db: Session,
+    page: Optional[int] = None, size: int = 20,
+):
+    """키워드 그룹 목록 조회 (page/size 페이지네이션 지원)"""
     query = db.query(Label).filter(Label.label_type == "keyword_group")
 
     if q:
         query = query.filter(Label.name.ilike(f"%{q}%"))
+
+    # page 파라미터가 있으면 페이지네이션 모드
+    if page is not None:
+        total = query.count()
+        page_offset = (max(page, 1) - 1) * size
+        items = query.order_by(Label.name).offset(page_offset).limit(size).all()
+        return {"items": items, "total": total, "page": max(page, 1), "size": size}
 
     return query.offset(offset).limit(limit).all()
 
@@ -152,114 +162,76 @@ async def handle_create_keyword_group(group, db: Session):
 
 
 async def handle_suggest_keywords(body, db: Session):
-    """그룹 설명 기반 LLM 키워드 추천 + 기존 키워드 유사도 매칭 (Phase 7.7)"""
-    from scripts.backend.extract_keywords_and_labels import extract_keywords_with_gpt4all, extract_keywords_with_regex
+    """그룹 설명 기반 키워드 추천 — RecommendationService 통일 (청크 추천과 동일 로직)"""
+    from backend.services.reasoning.group_keyword_recommender import GroupKeywordRecommender
+    from backend.services.ai.ollama_client import ollama_connection_check
 
     description = (body.description or "").strip()
     if not description:
         raise HTTPException(status_code=400, detail="설명을 입력해주세요")
 
+    import re
+    meaningful_text = re.sub(r'[^\w가-힣]', '', description)
+    MIN_DESCRIPTION_LENGTH = 2
+    if len(meaningful_text) < MIN_DESCRIPTION_LENGTH:
+        raise HTTPException(
+            status_code=400,
+            detail=f"키워드를 추출할 수 있도록 {MIN_DESCRIPTION_LENGTH}자 이상의 의미 있는 설명을 입력해주세요",
+        )
+
     MAX_DESCRIPTION_LENGTH = 1000
     if len(description) > MAX_DESCRIPTION_LENGTH:
-        description = description[:MAX_DESCRIPTION_LENGTH] + "..."
+        raise HTTPException(
+            status_code=400,
+            detail=f"설명은 {MAX_DESCRIPTION_LENGTH}자 이하로 입력해주세요 (현재 {len(description)}자)",
+        )
 
-    llm_keywords = []
-    extraction_method = "regex"
+    ollama_feedback = ollama_connection_check()
 
-    prompt = f"""다음 그룹 설명을 분석하여 관련 키워드를 추출해주세요.
+    # 사용자가 모델을 지정한 경우, 설치된 모델 목록에 있는지 검증
+    if body.model and ollama_feedback["available"]:
+        installed = [m["name"] for m in ollama_feedback.get("models", [])]
+        if body.model not in installed:
+            raise HTTPException(
+                status_code=400,
+                detail=f"모델 '{body.model}'을(를) 찾을 수 없습니다. 사용 가능한 모델: {', '.join(installed)}",
+            )
 
-그룹 설명:
-{description}
+    # 그룹에 이미 소속된 키워드 조회 (중복 추천 방지)
+    from backend.models.models import Label
+    existing_label_ids = []
+    existing_keyword_names = []
+    if body.group_id:
+        group_keywords = (
+            db.query(Label)
+            .filter(Label.parent_label_id == body.group_id, Label.label_type == "keyword")
+            .all()
+        )
+        existing_label_ids = [kw.id for kw in group_keywords]
+        existing_keyword_names = [kw.name for kw in group_keywords]
 
-요구사항:
-1. 설명과 관련된 의미 있는 키워드만 추출
-2. 불용어(것, 수, 등, 때 등)는 제외
-3. 전문 용어나 개념을 우선
-4. 키워드는 한글로, 2글자 이상
-5. 상위 10개만 추출
-6. 중국어(中文)나 일본어로 작성하지 마세요
+    recommender = GroupKeywordRecommender(db)
+    result = recommender.recommend(
+        description=description,
+        existing_label_ids=existing_label_ids,
+        existing_keyword_names=existing_keyword_names,
+        limit=15,
+        model=body.model,
+    )
 
-키워드를 쉼표로 구분하여 나열해주세요. 설명 없이 키워드만 출력하세요.
-예시: 인프라, 벡터, 데이터베이스, API, 시스템"""
+    suggestions = result.get("suggestions", [])
+    new_keywords = result.get("new_keywords", [])
 
-    try:
-        from backend.config import OLLAMA_MODEL_LIGHT
-        use_model = body.model or OLLAMA_MODEL_LIGHT
-        llm_keywords = extract_keywords_with_gpt4all(prompt, top_n=10, model=use_model)
-        from backend.utils.korean_utils import postprocess_korean_keywords
-        llm_keywords = postprocess_korean_keywords("\n".join(llm_keywords)) if llm_keywords else []
-        extraction_method = "ollama"
-    except Exception as e:
-        print(f"Ollama error: {e}, falling back to regex...")
-        llm_keywords = extract_keywords_with_regex(description, top_n=10)
-        extraction_method = "regex"
-
-    try:
-        existing_keywords = db.query(Label).filter(
-            Label.label_type == "keyword"
-        ).all()
-    except ProgrammingError:
-        existing_keywords = []
-
-    similar_keywords = []
-    similar_keywords_with_score = []
-
-    def calculate_similarity(keyword_name: str, desc: str) -> float:
-        """간단한 유사도 계산 (0.0 ~ 1.0)"""
-        keyword_lower = keyword_name.lower()
-        desc_lower = desc.lower()
-
-        if keyword_lower == desc_lower:
-            return 1.0
-        if keyword_lower in desc_lower:
-            return 0.9
-        if desc_lower in keyword_lower:
-            return 0.8
-
-        keyword_words = set(word for word in keyword_lower.split() if len(word) >= 2)
-        desc_words = set(word for word in desc_lower.split() if len(word) >= 2)
-        if keyword_words and desc_words:
-            common_words = keyword_words.intersection(desc_words)
-            if common_words:
-                return min(0.7, len(common_words) / max(len(keyword_words), len(desc_words)))
-
-        if len(keyword_lower) >= 2 and keyword_lower in desc_lower:
-            return 0.6
-
-        keyword_chars = set(keyword_lower)
-        desc_chars = set(desc_lower)
-        if keyword_chars and desc_chars:
-            intersection = keyword_chars.intersection(desc_chars)
-            union = keyword_chars.union(desc_chars)
-            if union:
-                jaccard = len(intersection) / len(union)
-                if jaccard > 0.3:
-                    return jaccard * 0.5
-
-        return 0.0
-
-    for keyword in existing_keywords:
-        similarity = calculate_similarity(keyword.name, description)
-        if similarity >= 0.3:
-            if keyword.name not in similar_keywords:
-                similar_keywords.append(keyword.name)
-                similar_keywords_with_score.append({
-                    "keyword": keyword.name,
-                    "score": similarity,
-                })
-
-    similar_keywords_with_score.sort(key=lambda x: x["score"], reverse=True)
-    similar_keywords = [item["keyword"] for item in similar_keywords_with_score]
-
-    all_keywords = list(dict.fromkeys(llm_keywords + similar_keywords))
+    # 그룹 기존 키워드와 이름이 동일한 new_keywords도 제외
+    if existing_keyword_names:
+        existing_lower = {n.lower() for n in existing_keyword_names}
+        new_keywords = [kw for kw in new_keywords if kw.lower() not in existing_lower]
 
     return {
-        "keywords": all_keywords[:15],
-        "count": len(all_keywords),
-        "llm_keywords": llm_keywords,
-        "similar_keywords": similar_keywords[:10],
-        "similar_keywords_with_score": similar_keywords_with_score[:10],
-        "extraction_method": extraction_method,
+        "suggestions": suggestions,
+        "new_keywords": new_keywords,
+        "source": "llm",
+        "ollama_feedback": ollama_feedback,
     }
 
 

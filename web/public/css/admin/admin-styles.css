@@ -167,20 +167,41 @@
   color: #666;
 }
 
+.error,
+.success {
+  position: relative;
+  padding: 15px 40px 15px 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
 .error {
   background: #fee2e2;
   color: #991b1b;
-  padding: 15px;
-  border-radius: 6px;
-  margin-bottom: 20px;
 }
 
 .success {
   background: #d1fae5;
   color: #065f46;
-  padding: 15px;
-  border-radius: 6px;
-  margin-bottom: 20px;
+}
+
+.msg-close-btn {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.6;
+  padding: 2px 6px;
+}
+
+.msg-close-btn:hover {
+  opacity: 1;
 }
 
 /* 모달 스타일 */

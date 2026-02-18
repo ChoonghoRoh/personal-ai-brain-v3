@@ -19,6 +19,66 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/automation", tags=["Automation"])
 
 
+class DocumentListItem(BaseModel):
+    """자동화용 문서 목록 항목"""
+    document_id: int
+    file_name: str
+    file_path: str
+    size: int
+    chunk_count: int
+
+
+@router.get("/documents")
+async def list_automation_documents(
+    limit: int = 1000,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+    user: UserInfo = Depends(require_admin_knowledge),
+):
+    """자동화 대상 문서 목록 (DB 기반)
+
+    documents 테이블에서 직접 조회하여 자동화 워크플로우에 사용할 수 있는
+    문서 목록을 반환합니다.
+    """
+    from backend.models.models import Document, KnowledgeChunk
+    from sqlalchemy import func
+
+    # 문서 + 청크 수 조회
+    query = (
+        db.query(
+            Document.id,
+            Document.file_name,
+            Document.file_path,
+            Document.size,
+            func.count(KnowledgeChunk.id).label("chunk_count"),
+        )
+        .outerjoin(KnowledgeChunk, Document.id == KnowledgeChunk.document_id)
+        .group_by(Document.id)
+        .order_by(Document.file_name)
+    )
+
+    total_count = db.query(func.count(Document.id)).scalar() or 0
+    rows = query.offset(offset).limit(limit).all()
+
+    items = [
+        DocumentListItem(
+            document_id=row.id,
+            file_name=row.file_name,
+            file_path=row.file_path,
+            size=row.size,
+            chunk_count=row.chunk_count,
+        )
+        for row in rows
+    ]
+
+    return {
+        "items": [item.model_dump() for item in items],
+        "total_count": total_count,
+        "limit": limit,
+        "offset": offset,
+    }
+
+
 class AutoLabelRequest(BaseModel):
     chunk_ids: Optional[List[int]] = None
     min_confidence: float = 0.7

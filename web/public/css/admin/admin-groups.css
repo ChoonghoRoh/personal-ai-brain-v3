@@ -1,70 +1,347 @@
 /* 키워드 그룹 관리 페이지 전용 스타일 */
-.group-card,
-.keyword-card {
+
+/* ===== 페이지 헤더 ===== */
+.groups-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.groups-page-header h3 {
+  color: #2563eb;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.groups-page-header .btn {
+  padding: 10px 24px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* ===== 검색 바 ===== */
+.groups-search-bar {
+  margin-bottom: 20px;
+}
+
+.groups-search-bar input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.groups-search-bar input:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+/* ===== 3단 레이아웃 ===== */
+.groups-three-col {
+  display: grid;
+  grid-template-columns: 240px 1fr 1fr;
+  gap: 16px;
+  min-height: 500px;
+}
+
+.groups-col {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.col-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: white;
+}
+
+.col-header h4 {
+  margin: 0;
+  color: #2563eb;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ===== 1단: 그룹 목록 ===== */
+.groups-col-list {
+  min-width: 0;
+}
+
+.groups-list-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ===== 2단: 그룹 상세 ===== */
+.groups-col-detail {
+  min-width: 0;
+}
+
+.group-detail-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.detail-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 200px;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+/* 상세 패널 내 폼 */
+.detail-view-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-field-value {
+  font-size: 14px;
+  color: #1f2937;
+  line-height: 1.5;
+}
+
+.detail-field-value.empty {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.detail-color-swatch {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+.detail-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* 인라인 편집 폼 */
+.detail-edit-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-edit-mode .form-group {
+  margin-bottom: 0;
+}
+
+.detail-edit-mode .form-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.detail-edit-mode .form-group input,
+.detail-edit-mode .form-group textarea {
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.detail-edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding-top: 8px;
+}
+
+/* 키워드 추천 영역 (상세 패널 내) */
+.detail-suggestion-area {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.detail-suggestion-area .form-group {
+  margin-bottom: 8px;
+}
+
+#keyword-suggestion-error {
+  margin-top: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: 6px;
+  border: 1px solid #fecaca;
+}
+
+#keyword-suggestion-success {
+  margin-top: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  background: #d1fae5;
+  color: #065f46;
+  border-radius: 6px;
+  border: 1px solid #a7f3d0;
+}
+
+#suggested-keywords-container {
+  margin-top: 8px;
+  padding: 10px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+#suggested-keywords-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* ===== 3단: 키워드 목록 ===== */
+.groups-col-keywords {
+  min-width: 0;
+}
+
+.keywords-list-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+/* ===== 그룹 카드 ===== */
+.group-card {
   background: white;
   border: 2px solid #e5e7eb;
   border-radius: 8px;
-  padding: 15px;
+  padding: 10px 12px;
   cursor: pointer;
   transition: all 0.2s;
+  border-left: 4px solid #4f46e5;
 }
 
-.group-card:hover,
-.keyword-card:hover {
+.group-card:hover {
   border-color: #2563eb;
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
 }
 
-.group-card.selected,
-.keyword-card.selected {
+.group-card.selected {
   border-color: #2563eb;
   background: #eff6ff;
-}
-
-.group-card {
-  border-left: 4px solid #4f46e5; /* 기본 색상 */
-}
-
-/* 그룹 색상이 있으면 border-left에 적용 */
-.group-card[data-group-color] {
-  border-left-color: var(--group-color);
-}
-
-.keyword-card {
-  border-left: 4px solid #10b981;
-}
-
-.group-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
+  border-left-color: #2563eb;
 }
 
 .group-card-name {
   font-weight: 600;
   color: #1f2937;
-}
-
-.group-card-color {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .group-card-description {
-  font-size: 13px;
+  font-size: 12px;
   color: #6b7280;
-  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
 }
 
 .group-card-keywords-count {
-  font-size: 12px;
+  font-size: 11px;
   color: #9ca3af;
+  margin-top: 4px;
 }
 
-/* 키워드 배지 스타일 */
+/* ===== 페이지네이션 ===== */
+.groups-pagination {
+  padding: 8px;
+  border-top: 1px solid #e5e7eb;
+  background: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.groups-pagination:empty {
+  display: none;
+}
+
+.pagination-btn {
+  padding: 4px 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  background: white;
+  color: #374151;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-width: 28px;
+  text-align: center;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #eff6ff;
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.pagination-btn.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  font-size: 11px;
+  color: #9ca3af;
+  margin: 0 4px;
+}
+
+/* ===== 키워드 배지 ===== */
 .keyword-badge {
   display: inline-flex;
   align-items: center;
@@ -84,21 +361,18 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* 활성화 상태 */
 .keyword-badge.active {
   background: #2563eb;
   color: white;
   border-color: #2563eb;
 }
 
-/* 비활성화 상태 */
 .keyword-badge.inactive {
   background: #f3f4f6;
   color: #6b7280;
   border-color: #e5e7eb;
 }
 
-/* 선택된 상태 (매칭 모드) */
 .keyword-badge.selected {
   background: #eff6ff;
   color: #2563eb;
@@ -106,10 +380,88 @@
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
 }
 
-/* 제외 선택된 상태 (그룹 키워드 제외용) */
 .keyword-badge.remove-selected {
   background: #fee2e2;
   color: #991b1b;
   border-color: #dc2626;
   box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+}
+
+/* ===== 하단 요약 바 ===== */
+.matching-summary-bar {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding: 12px 16px;
+  border-top: 2px solid #e5e7eb;
+  border-radius: 0 0 8px 8px;
+  margin-top: 16px;
+}
+
+.matching-summary-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.selection-summary {
+  font-weight: 500;
+  color: #333;
+  font-size: 14px;
+}
+
+.matching-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-danger-light {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.btn-danger-light:hover {
+  background: #fecaca;
+}
+
+.btn-secondary-light {
+  background: #e5e7eb;
+  color: #333;
+}
+
+.btn-secondary-light:hover {
+  background: #d1d5db;
+}
+
+/* ===== 키워드 그룹 정보 표시 ===== */
+#selected-keyword-group-info {
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  font-size: 13px;
+  color: #333;
+  margin-top: 8px;
+}
+
+/* ===== 반응형 ===== */
+@media (max-width: 1024px) {
+  .groups-three-col {
+    grid-template-columns: 200px 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .groups-col-keywords {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .groups-three-col {
+    grid-template-columns: 1fr;
+  }
+
+  .groups-col-keywords {
+    grid-column: auto;
+  }
 }

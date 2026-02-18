@@ -24,7 +24,7 @@
 |------|------|
 | **도구** | Claude Code Agent Teams (TeamCreate / SendMessage / TaskList) |
 | **프로젝트** | Personal AI Brain v3 (Docker Compose 기반) |
-| **현재 Phase** | Phase 14 완료, Phase 15 계획 수립 대기 |
+| **현재 Phase** | Phase 16 완료 (Chain 16-1~16-7), Phase 17 계획 수립 대기 |
 
 ### 당신의 역할은?
 

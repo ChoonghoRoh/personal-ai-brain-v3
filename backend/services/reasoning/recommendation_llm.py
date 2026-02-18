@@ -1,17 +1,20 @@
-"""Reasoning 추천 서비스 — LLM 기반 추천/질문/탐색 Mixin (Phase 16-4-1)
+"""Reasoning 추천 서비스 — LLM 기반 추천/질문/탐색 Mixin (Phase 16-4-1, Phase 17-2 리팩토링)
 
 recommendation_service.py에서 LLM 의존 메서드를 분리합니다.
+
+Phase 17-2: 공통 유틸 함수 추출 + recommend_labels_with_llm 래퍼 전환.
+  - 청크 추천 → ChunkLabelRecommender (chunk_label_recommender.py)
+  - 그룹 추천 → GroupKeywordRecommender (group_keyword_recommender.py)
 """
 import json
 import logging
 import re
-from typing import List, Dict, Any, Optional, Set
+from typing import List, Dict, Any, Optional, Set, Callable
 
 from sqlalchemy.orm import Session
 
 from backend.models.models import (
     KnowledgeChunk,
-    KnowledgeRelation,
     KnowledgeLabel,
     Label,
     Document,
@@ -20,6 +23,155 @@ from backend.models.models import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# 공통 유틸 함수 (Phase 17-2: 두 Recommender 에서 공유)
+# ---------------------------------------------------------------------------
+
+
+def extract_keywords_from_content(
+    content: str,
+    existing_label_names_lower: Optional[Set[str]] = None,
+    limit: int = 10,
+) -> List[str]:
+    """텍스트에서 2글자 이상 단어/구를 추출해, 기존 라벨명에 없는 것만 반환 (fallback용)."""
+    if not content or not content.strip():
+        return []
+    existing = existing_label_names_lower or set()
+    text = re.sub(r"[#*_`|\[\]()]", " ", content)
+    tokens = re.findall(r"[가-힣a-zA-Z0-9]{2,}", text)
+    seen: Set[str] = set()
+    out: List[str] = []
+    for t in tokens:
+        low = t.lower()
+        if low in seen:
+            continue
+        if any(low in ln or ln in low for ln in existing):
+            continue
+        seen.add(low)
+        out.append(t.strip())
+        if len(out) >= limit:
+            break
+    return out
+
+
+def resolve_model(model: Optional[str] = None) -> str:
+    """사용할 Ollama 모델 결정 (LIGHT → OLLAMA_MODEL 폴백)."""
+    from backend.config import OLLAMA_MODEL_LIGHT, OLLAMA_MODEL
+    from backend.services.ai.ollama_client import ollama_list_models
+
+    use_model = model or OLLAMA_MODEL_LIGHT
+    if not model:
+        installed = [m["name"] for m in ollama_list_models()]
+        if use_model not in installed and OLLAMA_MODEL in installed:
+            use_model = OLLAMA_MODEL
+            logger.info(
+                "OLLAMA_MODEL_LIGHT(%s) 미설치, OLLAMA_MODEL(%s) 사용",
+                OLLAMA_MODEL_LIGHT, OLLAMA_MODEL,
+            )
+    return use_model
+
+
+def generate_keywords_via_llm(prompt: str, model: str) -> Optional[List[str]]:
+    """LLM 호출 → postprocess_korean_keywords → 단일 라인 분리."""
+    from backend.services.ai.ollama_client import ollama_generate
+    from backend.utils.korean_utils import postprocess_korean_keywords
+
+    raw = ollama_generate(prompt, max_tokens=300, temperature=0.3, model=model)
+    if not raw:
+        return None
+    lines = postprocess_korean_keywords(raw)
+    # LLM이 공백 구분 단일 라인으로 응답한 경우 개별 단어로 분리
+    if len(lines) == 1 and " " in lines[0] and len(lines[0].split()) >= 2:
+        words = [w.strip() for w in lines[0].split() if len(w.strip()) >= 2]
+        if words:
+            lines = words
+    return lines if lines else None
+
+
+def match_and_score_labels(
+    db: Session,
+    keywords: List[str],
+    existing_ids: Set[int],
+    all_label_names_lower: Set[str],
+    limit: int,
+) -> Dict[str, Any]:
+    """LLM 추출 키워드를 DB 라벨과 매칭하여 suggestions + new_keywords 생성."""
+    scored: Dict[int, tuple] = {}
+    matched_keywords: set = set()
+    for i, keyword in enumerate(keywords[:15]):
+        if not keyword or len(keyword) < 2:
+            continue
+        kw_clean = keyword.strip().lower()
+        labels = (
+            db.query(Label)
+            .filter(Label.name.ilike(f"%{kw_clean}%"))
+            .limit(5)
+            .all()
+        )
+        conf = 0.9 - (i * 0.03)
+        conf = max(0.5, min(conf, 0.9))
+        if labels:
+            matched_keywords.add(kw_clean)
+            for lb in labels:
+                if lb.id not in existing_ids and (lb.id not in scored or scored[lb.id][0] < conf):
+                    scored[lb.id] = (conf, "llm")
+
+    new_keywords: List[str] = []
+    for keyword in keywords[:15]:
+        if not keyword or len(keyword) < 2:
+            continue
+        kw_clean = keyword.strip().lower()
+        if kw_clean in matched_keywords:
+            continue
+        # exact match만 체크 (substring 매칭은 짧은 라벨이 긴 키워드에 오탐 유발)
+        if kw_clean in all_label_names_lower:
+            continue
+        if kw_clean not in [k.lower() for k in new_keywords]:
+            new_keywords.append(keyword.strip())
+
+    sorted_labels = sorted(scored.items(), key=lambda x: -x[1][0])[:limit]
+    label_ids = [lid for lid, _ in sorted_labels]
+    labels_map = {lb.id: lb for lb in db.query(Label).filter(Label.id.in_(label_ids)).all()}
+    out: List[Dict[str, Any]] = []
+    for lid, (conf, src) in sorted_labels:
+        lb = labels_map.get(lid)
+        if not lb:
+            continue
+        out.append({
+            "label_id": lb.id,
+            "name": lb.name,
+            "label_type": lb.label_type or "keyword",
+            "confidence": round(conf, 2),
+            "source": src,
+        })
+    if not out and not new_keywords and keywords:
+        new_keywords = [
+            ln for ln in keywords[:10]
+            if ln.strip() and ln.strip().lower() not in all_label_names_lower
+        ][:10]
+    return {"suggestions": out, "new_keywords": new_keywords[:10]}
+
+
+def fallback_extract(
+    content: str,
+    existing_label_ids: Optional[List[int]],
+    all_label_names_lower: Set[str],
+    recommend_labels_fn: Optional[Callable] = None,
+    limit: int = 10,
+) -> Dict[str, Any]:
+    """LLM 실패 시 텍스트 기반 fallback."""
+    suggestions: List[Dict[str, Any]] = []
+    if recommend_labels_fn:
+        suggestions = recommend_labels_fn(content, existing_label_ids=existing_label_ids, limit=limit)
+    new_kw = extract_keywords_from_content(content, all_label_names_lower, limit=10)
+    return {"suggestions": suggestions, "new_keywords": new_kw}
+
+
+# ---------------------------------------------------------------------------
+# Mixin 클래스
+# ---------------------------------------------------------------------------
 
 
 class RecommendationLLMMixin:
@@ -35,108 +187,8 @@ class RecommendationLLMMixin:
         existing_label_names_lower: Optional[Set[str]] = None,
         limit: int = 10,
     ) -> List[str]:
-        """청크 텍스트에서 2글자 이상 단어/구를 추출해, 기존 라벨명에 없는 것만 반환 (fallback용)."""
-        if not content or not content.strip():
-            return []
-        existing = existing_label_names_lower or set()
-        text = re.sub(r"[#*_`|\[\]()]", " ", content)
-        tokens = re.findall(r"[가-힣a-zA-Z0-9]{2,}", text)
-        seen: Set[str] = set()
-        out: List[str] = []
-        for t in tokens:
-            low = t.lower()
-            if low in seen:
-                continue
-            if any(low in ln or ln in low for ln in existing):
-                continue
-            seen.add(low)
-            out.append(t.strip())
-            if len(out) >= limit:
-                break
-        return out
-
-    def _gather_keyword_context(self, content: str, chunk_id: Optional[int] = None) -> str:
-        """추천 키워드 추론용 컨텍스트 수집: 유사 청크 라벨, 관계 청크 라벨, 기존 라벨 샘플."""
-        parts: List[str] = []
-        try:
-            # 1) 유사 청크의 라벨 수집
-            hybrid_results = self.hybrid_search.search_hybrid(
-                db=self.db,
-                query=(content or "")[:400],
-                top_k=5,
-            )
-            similar_label_names: List[str] = []
-            for r in hybrid_results:
-                doc_id = r.get("document_id")
-                chunk = (
-                    self.db.query(KnowledgeChunk)
-                    .filter(
-                        KnowledgeChunk.qdrant_point_id == str(doc_id),
-                        KnowledgeChunk.status == "approved",
-                    )
-                    .first()
-                )
-                if not chunk:
-                    continue
-                kl_list = (
-                    self.db.query(KnowledgeLabel)
-                    .filter(
-                        KnowledgeLabel.chunk_id == chunk.id,
-                        KnowledgeLabel.status == "confirmed",
-                    )
-                    .all()
-                )
-                for kl in kl_list:
-                    lb = self.db.query(Label).filter(Label.id == kl.label_id).first()
-                    if lb and lb.name not in similar_label_names:
-                        similar_label_names.append(lb.name)
-                if len(similar_label_names) >= 20:
-                    break
-            if similar_label_names:
-                parts.append(f"참고 - 유사한 문서의 키워드: {', '.join(similar_label_names[:20])}")
-
-            # 2) 관계 청크의 라벨 수집 (chunk_id가 있는 경우)
-            if chunk_id:
-                relations = (
-                    self.db.query(KnowledgeRelation)
-                    .filter(
-                        (
-                            KnowledgeRelation.source_chunk_id == chunk_id
-                        ) | (
-                            KnowledgeRelation.target_chunk_id == chunk_id
-                        ),
-                        KnowledgeRelation.confirmed == "true",
-                    )
-                    .limit(10)
-                    .all()
-                )
-                related_label_names: List[str] = []
-                for rel in relations:
-                    other_id = rel.target_chunk_id if rel.source_chunk_id == chunk_id else rel.source_chunk_id
-                    kl_list = (
-                        self.db.query(KnowledgeLabel)
-                        .filter(
-                            KnowledgeLabel.chunk_id == other_id,
-                            KnowledgeLabel.status == "confirmed",
-                        )
-                        .all()
-                    )
-                    for kl in kl_list:
-                        lb = self.db.query(Label).filter(Label.id == kl.label_id).first()
-                        if lb and lb.name not in related_label_names and lb.name not in similar_label_names:
-                            related_label_names.append(lb.name)
-                if related_label_names:
-                    parts.append(f"참고 - 관련 문서의 키워드: {', '.join(related_label_names[:20])}")
-
-            # 3) DB 전체 라벨 샘플
-            all_labels = self.db.query(Label.name).distinct().limit(30).all()
-            sample_names = [lb[0] for lb in all_labels]
-            if sample_names:
-                parts.append(f"참고 - 시스템 내 기존 키워드 (일부): {', '.join(sample_names)}")
-        except Exception as e:
-            logger.debug("_gather_keyword_context failed: %s", e)
-
-        return "\n".join(parts)
+        """공통 함수 위임."""
+        return extract_keywords_from_content(content, existing_label_names_lower, limit)
 
     def recommend_labels_with_llm(
         self,
@@ -145,116 +197,40 @@ class RecommendationLLMMixin:
         limit: int = 10,
         model: Optional[str] = None,
         chunk_id: Optional[int] = None,
+        existing_keyword_names: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
-        """LLM(Ollama)으로 청크 내용에서 키워드 추출 후,
-        (1) 기존 키워드 추천: DB 라벨과 매칭된 항목,
-        (2) 새로운 키워드 추천: DB에 없는 LLM 추출 키워드(신설).
+        """[래퍼] 새 코드는 ChunkLabelRecommender / GroupKeywordRecommender 직접 사용 권장.
+
+        기존 시그니처를 유지하며, chunk_id 여부에 따라 전용 Recommender로 위임합니다.
         """
-        empty_result = {"suggestions": [], "new_keywords": []}
-        if not content or not content.strip() or limit <= 0:
-            return empty_result
-        limit = min(limit, 15)
-        existing = set(existing_label_ids or [])
-        all_label_names_lower = {lb.name.lower() for lb in self.db.query(Label.name).distinct().all()}
+        if chunk_id:
+            from backend.services.reasoning.chunk_label_recommender import ChunkLabelRecommender
 
-        def _fallback_with_extract():
-            fallback = self.recommend_labels(content, existing_label_ids=existing_label_ids, limit=limit)
-            new_kw = self._extract_keywords_from_content(content, all_label_names_lower, limit=10)
-            return {"suggestions": fallback, "new_keywords": new_kw}
-
-        try:
-            from backend.services.ai.ollama_client import ollama_generate, ollama_available
-            if not ollama_available():
-                return _fallback_with_extract()
-        except Exception:
-            return _fallback_with_extract()
-
-        text_slice = (content or "").strip()[:2000]
-        context_info = self._gather_keyword_context(content, chunk_id)
-        if context_info:
-            context_info = "\n\n" + context_info
-        prompt = f"""다음 텍스트를 분석하여 핵심 키워드를 10개 이내로 추출하세요.
-텍스트에 직접 언급되지 않더라도, 참고 정보를 바탕으로 관련성이 높은 키워드를 추론하여 포함하세요.
-
-반드시 한국어 또는 영어 소문자 전문 용어로만 작성하세요.
-중국어(中文), 일본어로 답변하지 마세요.
-번호나 불릿 없이 키워드만 한 줄에 하나씩 작성하세요.
-
-텍스트:
-{text_slice}
-{context_info}
-키워드 목록:"""
-
-        try:
-            from backend.config import OLLAMA_MODEL_LIGHT
-            use_model = model or OLLAMA_MODEL_LIGHT
-            raw = ollama_generate(prompt, max_tokens=300, temperature=0.3, model=use_model)
-            if not raw:
-                return _fallback_with_extract()
-            from backend.utils.korean_utils import postprocess_korean_keywords
-            lines = postprocess_korean_keywords(raw)
-            if not lines:
-                return _fallback_with_extract()
-        except Exception as e:
-            logger.debug("recommend_labels_with_llm generate failed: %s", e)
-            return _fallback_with_extract()
-
-        scored: Dict[int, tuple] = {}
-        matched_keywords: set = set()
-        for i, keyword in enumerate(lines[:15]):
-            if not keyword or len(keyword) < 2:
-                continue
-            kw_clean = keyword.strip().lower()
-            labels = (
-                self.db.query(Label)
-                .filter(Label.name.ilike(f"%{kw_clean}%"))
-                .limit(5)
-                .all()
+            recommender = ChunkLabelRecommender(
+                self.db, self.hybrid_search,
+                recommend_labels_fn=self.recommend_labels,
             )
-            conf = 0.9 - (i * 0.03)
-            conf = max(0.5, min(conf, 0.9))
-            if labels:
-                matched_keywords.add(kw_clean)
-                for lb in labels:
-                    if lb.id not in existing and (lb.id not in scored or scored[lb.id][0] < conf):
-                        scored[lb.id] = (conf, "llm")
+            return recommender.recommend(
+                chunk_id=chunk_id,
+                content=content,
+                existing_label_ids=existing_label_ids,
+                limit=limit,
+                model=model,
+            )
+        else:
+            from backend.services.reasoning.group_keyword_recommender import GroupKeywordRecommender
 
-        all_label_names = all_label_names_lower
-        new_keywords = []
-        for keyword in lines[:15]:
-            if not keyword or len(keyword) < 2:
-                continue
-            kw_clean = keyword.strip().lower()
-            if kw_clean in matched_keywords:
-                continue
-            if any(kw_clean in ln or ln in kw_clean for ln in all_label_names):
-                continue
-            if kw_clean not in [k.lower() for k in new_keywords]:
-                new_keywords.append(keyword.strip())
-
-        sorted_labels = sorted(scored.items(), key=lambda x: -x[1][0])[:limit]
-        label_ids = [lid for lid, _ in sorted_labels]
-        labels_map = {l.id: l for l in self.db.query(Label).filter(Label.id.in_(label_ids)).all()}
-        out = []
-        for lid, (conf, src) in sorted_labels:
-            lb = labels_map.get(lid)
-            if not lb:
-                continue
-            out.append({
-                "label_id": lb.id,
-                "name": lb.name,
-                "label_type": lb.label_type or "keyword",
-                "confidence": round(conf, 2),
-                "source": src,
-            })
-        if not out and not new_keywords and lines:
-            new_keywords = [
-                ln for ln in lines[:10]
-                if ln.strip() and ln.strip().lower() not in all_label_names
-            ][:10]
-        if not out and not new_keywords:
-            new_keywords = self._extract_keywords_from_content(content, all_label_names, limit=10)
-        return {"suggestions": out, "new_keywords": new_keywords[:10]}
+            recommender = GroupKeywordRecommender(
+                self.db,
+                recommend_labels_fn=self.recommend_labels,
+            )
+            return recommender.recommend(
+                description=content,
+                existing_label_ids=existing_label_ids,
+                existing_keyword_names=existing_keyword_names,
+                limit=limit,
+                model=model,
+            )
 
     def generate_sample_questions(
         self,

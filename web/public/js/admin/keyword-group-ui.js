@@ -1,10 +1,10 @@
 /**
  * 키워드 그룹 UI 업데이트 모듈
- * 매칭 UI, 선택 버튼 업데이트 기능을 제공하는 클래스
+ * 매칭 UI, 선택 버튼 업데이트 기능 (3단 레이아웃)
  */
 class KeywordGroupUI {
   constructor(manager) {
-    this.manager = manager; // KeywordGroupManager 인스턴스 참조
+    this.manager = manager;
   }
 
   /**
@@ -53,38 +53,6 @@ class KeywordGroupUI {
       }
     });
 
-    // 그룹 미선택 시 선택된 키워드의 그룹 정보 표시
-    if (!this.manager.selectedGroupId && this.manager.selectedKeywordForGroupCheck) {
-      const selectedBadge = document.querySelector(`.keyword-badge[data-keyword-id="${this.manager.selectedKeywordForGroupCheck}"]`);
-      const groupInfoDiv = document.getElementById(this.manager.selectedKeywordGroupInfoId);
-      const groupInfoText = document.getElementById(this.manager.selectedKeywordGroupTextId);
-
-      if (selectedBadge && groupInfoDiv && groupInfoText) {
-        const parentGroupId = selectedBadge.dataset.parentGroupId;
-
-        if (parentGroupId) {
-          const groupCard = document.querySelector(`.group-card[data-group-id="${parentGroupId}"]`);
-          const groupName = groupCard
-            ? groupCard.querySelector(".group-card-name")?.textContent || `그룹 #${parentGroupId}`
-            : `그룹 #${parentGroupId}`;
-
-          const keywordCountElement = document.getElementById(`group-${parentGroupId}-count`);
-          const keywordCount = keywordCountElement ? keywordCountElement.textContent : "0";
-
-          groupInfoText.textContent = `선택된 키워드 포함 그룹: ${groupName} (키워드 포함: ${keywordCount}개)`;
-          groupInfoDiv.style.display = "block";
-        } else {
-          groupInfoText.textContent = "선택된 키워드는 소속된 그룹이 없습니다.";
-          groupInfoDiv.style.display = "block";
-        }
-      }
-    } else {
-      const groupInfoDiv = document.getElementById(this.manager.selectedKeywordGroupInfoId);
-      if (groupInfoDiv) {
-        groupInfoDiv.style.display = "none";
-      }
-    }
-
     this.updateSelectAllButtons();
 
     // 요약 바 업데이트
@@ -115,12 +83,8 @@ class KeywordGroupUI {
           summaryText.textContent = `선택된 그룹: ${groupName} · 우측에서 키워드를 선택하세요`;
         }
 
-        if (applyBtn) {
-          applyBtn.style.display = this.manager.selectedKeywordIds.size > 0 ? "inline-block" : "none";
-        }
-        if (removeBtn) {
-          removeBtn.style.display = this.manager.selectedRemoveKeywordIds.size > 0 ? "inline-block" : "none";
-        }
+        if (applyBtn) applyBtn.style.display = this.manager.selectedKeywordIds.size > 0 ? "inline-block" : "none";
+        if (removeBtn) removeBtn.style.display = this.manager.selectedRemoveKeywordIds.size > 0 ? "inline-block" : "none";
       } else {
         summaryBar.style.display = "none";
       }
@@ -140,9 +104,7 @@ class KeywordGroupUI {
         let allSelected = true;
         groupBadges.forEach((badge) => {
           const keywordId = parseInt(badge.dataset.keywordId);
-          if (!this.manager.selectedRemoveKeywordIds.has(keywordId)) {
-            allSelected = false;
-          }
+          if (!this.manager.selectedRemoveKeywordIds.has(keywordId)) allSelected = false;
         });
         groupBtn.textContent = allSelected ? "전체 해제" : "전체 선택";
       }
@@ -157,9 +119,7 @@ class KeywordGroupUI {
         let allSelected = true;
         otherBadges.forEach((badge) => {
           const keywordId = parseInt(badge.dataset.keywordId);
-          if (!this.manager.selectedKeywordIds.has(keywordId)) {
-            allSelected = false;
-          }
+          if (!this.manager.selectedKeywordIds.has(keywordId)) allSelected = false;
         });
         otherBtn.textContent = allSelected ? "전체 해제" : "전체 선택";
       }
@@ -174,6 +134,13 @@ class KeywordGroupUI {
     this.manager.selectedKeywordIds.clear();
     this.manager.selectedRemoveKeywordIds.clear();
     this.manager.selectedKeywordForGroupCheck = null;
+
+    // 상세 패널 초기화
+    const panel = document.getElementById("group-detail-panel");
+    if (panel) {
+      panel.innerHTML = '<div class="detail-empty-state"><p>좌측에서 그룹을 선택하세요</p></div>';
+    }
+
     this.updateMatchingUI();
     this.manager.matching.loadKeywords();
   }
