@@ -28,7 +28,7 @@
 
         <!-- Summary Cards -->
         <section class="summary-cards">
-          <div class="card summary-card" id="cardDocuments">
+          <div class="card summary-card" id="cardDocuments" data-category="documents">
             <div class="card-icon">📄</div>
             <div class="card-content">
               <div class="card-value" id="totalDocuments">-</div>
@@ -37,7 +37,7 @@
             </div>
           </div>
 
-          <div class="card summary-card" id="cardChunks">
+          <div class="card summary-card" id="cardChunks" data-category="chunks">
             <div class="card-icon">🧩</div>
             <div class="card-content">
               <div class="card-value" id="totalChunks">-</div>
@@ -46,7 +46,7 @@
             </div>
           </div>
 
-          <div class="card summary-card" id="cardLabels">
+          <div class="card summary-card" id="cardLabels" data-category="labels">
             <div class="card-icon">🏷️</div>
             <div class="card-content">
               <div class="card-value" id="totalLabels">-</div>
@@ -55,7 +55,7 @@
             </div>
           </div>
 
-          <div class="card summary-card" id="cardUsage">
+          <div class="card summary-card" id="cardUsage" data-category="usage">
             <div class="card-icon">📊</div>
             <div class="card-content">
               <div class="card-value" id="todayUsage">-</div>
@@ -170,6 +170,41 @@
                 <span class="status-value" id="totalRecords">-</span>
               </div>
             </div>
+          </div>
+        </section>
+
+        <!-- Phase 17-5: 필터링 목록 -->
+        <section id="filtered-list-section" class="filtered-list-section" style="display: none">
+          <div class="card">
+            <div class="filtered-list-header">
+              <div class="filtered-list-tabs">
+                <button class="tab-btn active" data-category="documents" onclick="switchCategory('documents')">문서</button>
+                <button class="tab-btn" data-category="chunks" onclick="switchCategory('chunks')">청크</button>
+                <button class="tab-btn" data-category="labels" onclick="switchCategory('labels')">라벨</button>
+                <button class="tab-btn" data-category="usage" onclick="switchCategory('usage')">사용량</button>
+              </div>
+              <button class="btn btn-sm" onclick="closeFilteredList()">닫기</button>
+            </div>
+            <div class="filtered-list-controls">
+              <input type="text" id="filteredSearchInput" class="filtered-search" placeholder="검색..." />
+              <select id="filteredTypeFilter" class="filtered-select">
+                <option value="">전체</option>
+              </select>
+              <select id="filteredSortOrder" class="filtered-select" onchange="applyFilters()">
+                <option value="desc">최신순</option>
+                <option value="asc">오래된순</option>
+              </select>
+              <button class="btn btn-sm" onclick="resetFilters()">초기화</button>
+            </div>
+            <div class="table-container">
+              <table id="filteredTable">
+                <thead id="filteredTableHead"></thead>
+                <tbody id="filteredTableBody">
+                  <tr><td colspan="5" class="loading">카드를 클릭하세요</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="filteredPagination" class="filtered-pagination"></div>
           </div>
         </section>
       </div>

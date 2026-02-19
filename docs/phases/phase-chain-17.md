@@ -1,7 +1,7 @@
 ---
 chain_name: "phase-17-ui-ux"
 phases: ["17-1", "17-2", "17-3", "17-4", "17-5", "17-6", "17-7", "17-8"]
-current_index: 4
+current_index: 5
 status: "running"
 ssot_version: "6.0-renewal-4th"
 created_at: "2026-02-18T09:00:00Z"
@@ -10,7 +10,7 @@ phase_summaries:
   "17-2": "키워드 추천 아키텍처 분리 — ChunkLabelRecommender + GroupKeywordRecommender 전용 클래스 + 공통 유틸 추출 + 단위 테스트 23건 완료"
   "17-3": "검색 메뉴 + 추천 문서 개선 — 파일명 ILIKE 검색 + 그리드 카드 UI + 폴더 필터·정렬·건수 제한 + 검색 모드 토글 + 반응형 완료"
   "17-4": "AI 질의 고도화 — 멀티턴 세션 관리 API + 이어서 질문(컨텍스트 주입) + 자동 요약 + 페이지네이션/일괄삭제 + 스레드 UI + 대화 기록 그리드 완료"
-  "17-5": null
+  "17-5": "로그 통계 개선 — 카드 클릭→하단 필터링 연동 + 테이블 조회 영역(검색/필터/정렬/페이지네이션) + 4개 리스트 API 완료"
   "17-6": null
   "17-7": null
   "17-8": null

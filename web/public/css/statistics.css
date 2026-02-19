@@ -308,3 +308,35 @@ td.loading {
     grid-template-columns: 1fr;
   }
 }
+
+/* Phase 17-5: 카드 클릭 + 필터링 목록 */
+.summary-card { cursor: pointer; transition: all 0.2s; }
+.summary-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+.summary-card.active { border: 2px solid #2563eb; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
+
+.filtered-list-section { margin-top: 24px; }
+.filtered-list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.filtered-list-tabs { display: flex; gap: 4px; }
+.filtered-list-tabs .tab-btn { padding: 6px 14px; border: 1px solid #d1d5db; border-radius: 6px; background: white; cursor: pointer; font-size: 13px; }
+.filtered-list-tabs .tab-btn.active { background: #2563eb; color: white; border-color: #2563eb; }
+.filtered-list-tabs .tab-btn:hover:not(.active) { background: #f3f4f6; }
+
+.filtered-list-controls { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.filtered-search { flex: 1; min-width: 180px; padding: 7px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; }
+.filtered-select { padding: 7px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: white; }
+
+.status-badge { padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+.status-badge.success { background: #dcfce7; color: #15803d; }
+.status-badge.warning { background: #fef3c7; color: #92400e; }
+
+.filtered-pagination { margin-top: 12px; text-align: center; }
+.pagination-controls { display: flex; justify-content: center; align-items: center; gap: 12px; }
+.pagination-btn { padding: 6px 14px; border: 1px solid #d1d5db; border-radius: 6px; background: white; cursor: pointer; font-size: 13px; }
+.pagination-btn:hover:not(:disabled) { background: #f3f4f6; }
+.pagination-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.pagination-info { font-size: 13px; color: #6b7280; }
+
+@media (max-width: 768px) {
+  .filtered-list-controls { flex-direction: column; }
+  .filtered-search { min-width: auto; }
+}

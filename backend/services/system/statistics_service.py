@@ -8,6 +8,7 @@ Phase 9-4-2: 통계/분석 대시보드
 """
 
 import logging
+import math
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List
 from sqlalchemy import func, and_, distinct
@@ -153,6 +154,201 @@ class StatisticsService:
         except Exception as e:
             logger.error(f"페이지 접근 로그 조회 실패: {e}")
             return []
+
+    # ================== List Methods (Phase 17-5) ==================
+
+    def list_documents(self, page: int = 1, size: int = 20, file_type: Optional[str] = None,
+                       q: Optional[str] = None, sort_by: str = "created_at", sort_order: str = "desc") -> Dict[str, Any]:
+        """문서 목록 (페이지네이션 + 필터)"""
+        try:
+            query = self.db.query(Document)
+            if file_type:
+                query = query.filter(Document.file_type == file_type)
+            if q and q.strip():
+                term = f"%{q.strip()}%"
+                query = query.filter(Document.file_name.ilike(term))
+
+            total = query.count()
+
+            # 정렬
+            sort_col = getattr(Document, sort_by, Document.created_at)
+            if sort_order == "asc":
+                query = query.order_by(sort_col.asc())
+            else:
+                query = query.order_by(sort_col.desc())
+
+            offset = (page - 1) * size
+            items = query.offset(offset).limit(size).all()
+
+            return {
+                "items": [
+                    {
+                        "id": d.id,
+                        "file_name": d.file_name,
+                        "file_type": d.file_type,
+                        "file_path": d.file_path,
+                        "project_id": d.project_id,
+                        "created_at": d.created_at.isoformat() if d.created_at else None,
+                    }
+                    for d in items
+                ],
+                "total": total,
+                "page": page,
+                "size": size,
+                "total_pages": math.ceil(total / size) if total > 0 else 1,
+            }
+        except Exception as e:
+            logger.error("문서 목록 조회 실패: %s", e)
+            return {"items": [], "total": 0, "page": page, "size": size, "total_pages": 1}
+
+    def list_chunks(self, page: int = 1, size: int = 20, status: Optional[str] = None,
+                    q: Optional[str] = None, sort_by: str = "created_at", sort_order: str = "desc") -> Dict[str, Any]:
+        """청크 목록 (페이지네이션 + 필터)"""
+        try:
+            query = self.db.query(KnowledgeChunk)
+            if status:
+                query = query.filter(KnowledgeChunk.status == status)
+            if q and q.strip():
+                term = f"%{q.strip()}%"
+                query = query.filter(KnowledgeChunk.content.ilike(term))
+
+            total = query.count()
+
+            sort_col = getattr(KnowledgeChunk, sort_by, KnowledgeChunk.created_at)
+            if sort_order == "asc":
+                query = query.order_by(sort_col.asc())
+            else:
+                query = query.order_by(sort_col.desc())
+
+            offset = (page - 1) * size
+            items = query.offset(offset).limit(size).all()
+
+            return {
+                "items": [
+                    {
+                        "id": c.id,
+                        "content": (c.content[:100] + "...") if c.content and len(c.content) > 100 else c.content,
+                        "status": c.status,
+                        "document_id": c.document_id,
+                        "created_at": c.created_at.isoformat() if c.created_at else None,
+                    }
+                    for c in items
+                ],
+                "total": total,
+                "page": page,
+                "size": size,
+                "total_pages": math.ceil(total / size) if total > 0 else 1,
+            }
+        except Exception as e:
+            logger.error("청크 목록 조회 실패: %s", e)
+            return {"items": [], "total": 0, "page": page, "size": size, "total_pages": 1}
+
+    def list_labels(self, page: int = 1, size: int = 20, label_type: Optional[str] = None,
+                    q: Optional[str] = None, sort_by: str = "name", sort_order: str = "asc") -> Dict[str, Any]:
+        """라벨 목록 (페이지네이션 + 필터)"""
+        try:
+            query = self.db.query(
+                Label.id, Label.name, Label.label_type,
+                func.count(KnowledgeLabel.chunk_id).label("usage_count")
+            ).outerjoin(KnowledgeLabel, KnowledgeLabel.label_id == Label.id
+            ).group_by(Label.id, Label.name, Label.label_type)
+
+            if label_type:
+                query = query.filter(Label.label_type == label_type)
+            if q and q.strip():
+                term = f"%{q.strip()}%"
+                query = query.filter(Label.name.ilike(term))
+
+            # Count before pagination (subquery)
+            count_query = self.db.query(Label)
+            if label_type:
+                count_query = count_query.filter(Label.label_type == label_type)
+            if q and q.strip():
+                count_query = count_query.filter(Label.name.ilike(f"%{q.strip()}%"))
+            total = count_query.count()
+
+            # 정렬
+            if sort_by == "usage_count":
+                if sort_order == "asc":
+                    query = query.order_by(func.count(KnowledgeLabel.chunk_id).asc())
+                else:
+                    query = query.order_by(func.count(KnowledgeLabel.chunk_id).desc())
+            else:
+                sort_col = getattr(Label, sort_by, Label.name)
+                if sort_order == "asc":
+                    query = query.order_by(sort_col.asc())
+                else:
+                    query = query.order_by(sort_col.desc())
+
+            offset = (page - 1) * size
+            items = query.offset(offset).limit(size).all()
+
+            return {
+                "items": [
+                    {
+                        "id": lid,
+                        "name": name,
+                        "label_type": ltype,
+                        "usage_count": usage,
+                    }
+                    for lid, name, ltype, usage in items
+                ],
+                "total": total,
+                "page": page,
+                "size": size,
+                "total_pages": math.ceil(total / size) if total > 0 else 1,
+            }
+        except Exception as e:
+            logger.error("라벨 목록 조회 실패: %s", e)
+            return {"items": [], "total": 0, "page": page, "size": size, "total_pages": 1}
+
+    def list_reasoning_results(self, page: int = 1, size: int = 20, mode: Optional[str] = None,
+                               from_date: Optional[str] = None, to_date: Optional[str] = None,
+                               sort_by: str = "created_at", sort_order: str = "desc") -> Dict[str, Any]:
+        """추론 결과 목록 (페이지네이션 + 필터)"""
+        try:
+            query = self.db.query(ReasoningResult).filter(
+                ReasoningResult.question != "",
+                ReasoningResult.question.isnot(None),
+            )
+            if mode:
+                query = query.filter(ReasoningResult.mode == mode)
+            if from_date:
+                query = query.filter(ReasoningResult.created_at >= datetime.fromisoformat(from_date))
+            if to_date:
+                to_dt = datetime.fromisoformat(to_date) + timedelta(days=1)
+                query = query.filter(ReasoningResult.created_at < to_dt)
+
+            total = query.count()
+
+            sort_col = getattr(ReasoningResult, sort_by, ReasoningResult.created_at)
+            if sort_order == "asc":
+                query = query.order_by(sort_col.asc())
+            else:
+                query = query.order_by(sort_col.desc())
+
+            offset = (page - 1) * size
+            items = query.offset(offset).limit(size).all()
+
+            return {
+                "items": [
+                    {
+                        "id": r.id,
+                        "question": (r.question[:80] + "...") if r.question and len(r.question) > 80 else r.question,
+                        "mode": r.mode,
+                        "summary": r.summary,
+                        "created_at": r.created_at.isoformat() if r.created_at else None,
+                    }
+                    for r in items
+                ],
+                "total": total,
+                "page": page,
+                "size": size,
+                "total_pages": math.ceil(total / size) if total > 0 else 1,
+            }
+        except Exception as e:
+            logger.error("추론 결과 목록 조회 실패: %s", e)
+            return {"items": [], "total": 0, "page": page, "size": size, "total_pages": 1}
 
     # ================== Private Methods ==================
 

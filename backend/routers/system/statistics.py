@@ -149,3 +149,64 @@ async def get_page_access_logs(
     """
     service = get_statistics_service(db)
     return service.get_page_access_logs(limit=limit)
+
+
+@router.get("/documents/list")
+async def list_documents(
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=20, ge=1, le=100),
+    type: Optional[str] = Query(default=None, alias="type"),
+    q: Optional[str] = None,
+    sort_by: str = Query(default="created_at"),
+    sort_order: str = Query(default="desc"),
+    db: Session = Depends(get_db)
+):
+    """문서 목록 (페이지네이션 + 필터)"""
+    service = get_statistics_service(db)
+    return service.list_documents(page=page, size=size, file_type=type, q=q, sort_by=sort_by, sort_order=sort_order)
+
+
+@router.get("/chunks/list")
+async def list_chunks(
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=20, ge=1, le=100),
+    status: Optional[str] = None,
+    q: Optional[str] = None,
+    sort_by: str = Query(default="created_at"),
+    sort_order: str = Query(default="desc"),
+    db: Session = Depends(get_db)
+):
+    """청크 목록 (페이지네이션 + 필터)"""
+    service = get_statistics_service(db)
+    return service.list_chunks(page=page, size=size, status=status, q=q, sort_by=sort_by, sort_order=sort_order)
+
+
+@router.get("/labels/list")
+async def list_labels(
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=20, ge=1, le=100),
+    label_type: Optional[str] = None,
+    q: Optional[str] = None,
+    sort_by: str = Query(default="name"),
+    sort_order: str = Query(default="asc"),
+    db: Session = Depends(get_db)
+):
+    """라벨 목록 (페이지네이션 + 필터)"""
+    service = get_statistics_service(db)
+    return service.list_labels(page=page, size=size, label_type=label_type, q=q, sort_by=sort_by, sort_order=sort_order)
+
+
+@router.get("/usage/list")
+async def list_usage(
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=20, ge=1, le=100),
+    mode: Optional[str] = None,
+    from_date: Optional[str] = None,
+    to_date: Optional[str] = None,
+    sort_by: str = Query(default="created_at"),
+    sort_order: str = Query(default="desc"),
+    db: Session = Depends(get_db)
+):
+    """추론 결과 목록 (페이지네이션 + 필터)"""
+    service = get_statistics_service(db)
+    return service.list_reasoning_results(page=page, size=size, mode=mode, from_date=from_date, to_date=to_date, sort_by=sort_by, sort_order=sort_order)
