@@ -76,6 +76,11 @@
     if (cancelBtn) {
       cancelBtn.addEventListener("click", cancelReasoning);
     }
+
+    // Phase 17-4: 세션 초기화
+    if (window.ReasonSession && window.ReasonSession.initSession) {
+      window.ReasonSession.initSession();
+    }
   });
 
   /**

@@ -85,12 +85,16 @@
       filters = { document_ids: window.__reasonDocumentIds };
     }
 
+    // Phase 17-4: 멀티턴 세션 ID
+    var currentSessionId = window.__currentSessionId || null;
+
     return {
       mode: mode,
       inputs: { projects: projects, labels: labels },
       question: question || null,
       model: model || null,
       filters: filters,
+      session_id: currentSessionId,
     };
   }
 
@@ -346,6 +350,10 @@
           }).catch(function () {});
         }
         restoreReasoningUI();
+        // Phase 17-4: 세션 스레드 갱신
+        if (window.ReasonSession && window.ReasonSession.refreshThread) {
+          window.ReasonSession.refreshThread();
+        }
         break;
       default:
         console.log("알 수 없는 이벤트:", eventType, data);

@@ -500,3 +500,108 @@ body {
 .rec-panel.active {
   display: block;
 }
+
+/* Phase 17-4: 대화 스레드 */
+.session-thread {
+  background: var(--bg-card, white);
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.session-thread-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.session-thread-header h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary, #1f2937);
+  margin: 0;
+}
+.btn-new-session {
+  padding: 5px 12px;
+  border: 1px solid #2563eb;
+  border-radius: 6px;
+  background: white;
+  color: #2563eb;
+  font-size: 12px;
+  cursor: pointer;
+}
+.btn-new-session:hover { background: #eff6ff; }
+.session-turns { display: flex; flex-direction: column; gap: 8px; }
+.thread-turn {
+  padding: 10px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.thread-turn:hover { border-color: #2563eb; background: #f8fafc; }
+.turn-number { font-size: 11px; color: #6b7280; font-weight: 600; margin-bottom: 2px; }
+.turn-question { font-size: 14px; color: var(--text-primary, #1f2937); }
+.turn-summary { font-size: 12px; color: #6b7280; margin-top: 4px; }
+.turn-time { font-size: 11px; color: #9ca3af; margin-top: 4px; }
+.thread-empty { font-size: 13px; color: #9ca3af; text-align: center; padding: 20px; }
+
+/* 이어서 질문하기 */
+.continue-question-area {
+  padding: 16px 0;
+  text-align: center;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 20px;
+}
+.btn-continue {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Phase 17-4: 대화 기록 */
+.session-history-section {
+  margin-top: 30px;
+}
+.session-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.session-history-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary, #1f2937);
+  margin: 0;
+}
+.session-history-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.session-card {
+  display: flex;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: var(--bg-card, white);
+  transition: all 0.15s;
+}
+.session-card:hover { border-color: #2563eb; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1); }
+.session-card-check { display: flex; align-items: flex-start; padding-top: 2px; }
+.session-checkbox { cursor: pointer; }
+.session-card-body { flex: 1; cursor: pointer; }
+.session-card-title { font-weight: 600; font-size: 14px; color: var(--text-primary, #1f2937); margin-bottom: 6px; }
+.session-card-meta { display: flex; gap: 12px; font-size: 12px; color: #6b7280; margin-bottom: 4px; }
+.session-card-last-q { font-size: 12px; color: #9ca3af; }
+
+/* 페이지네이션 */
+.session-pagination { margin-top: 16px; text-align: center; }
+.pagination-controls { display: flex; justify-content: center; align-items: center; gap: 12px; }
+.pagination-btn { padding: 6px 14px; border: 1px solid #d1d5db; border-radius: 6px; background: white; cursor: pointer; font-size: 13px; }
+.pagination-btn:hover:not(:disabled) { background: #f3f4f6; }
+.pagination-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.pagination-info { font-size: 13px; color: #6b7280; }

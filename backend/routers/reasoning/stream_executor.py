@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from backend.models.models import (
     Project, Document, KnowledgeChunk, Label, KnowledgeLabel, KnowledgeRelation,
+    ReasoningResult,
 )
 from backend.services.search.search_service import get_search_service
 from backend.services.reasoning.dynamic_reasoning_service import get_dynamic_reasoning_service
@@ -38,6 +39,35 @@ PROGRESS_STAGES = [
 def format_sse_event(event_type: str, data: dict) -> str:
     """SSE 형식으로 이벤트 포맷팅"""
     return f"event: {event_type}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
+# ---------------------------------------------------------------------------
+# Phase 17-4-3: 비동기 자동 요약 생성
+# ---------------------------------------------------------------------------
+
+async def _generate_summary(result_id: int, question: str, answer: str, db_url: str) -> None:
+    """비동기 요약 생성 — 별도 DB 세션 사용"""
+    try:
+        from backend.models.database import SessionLocal
+        from backend.services.reasoning.dynamic_reasoning_service import get_dynamic_reasoning_service
+
+        summary_db = SessionLocal()
+        try:
+            svc = get_dynamic_reasoning_service()
+            summary_prompt = (
+                f"다음 질문과 답변을 200자 이내 한국어로 요약하세요.\n\n"
+                f"질문: {question[:500]}\n답변: {answer[:1000]}"
+            )
+            summary = svc.generate_reasoning(summary_prompt, [], "design_explain", max_tokens=100)
+            if summary:
+                result = summary_db.query(ReasoningResult).filter(ReasoningResult.id == result_id).first()
+                if result:
+                    result.summary = summary[:200]
+                    summary_db.commit()
+        finally:
+            summary_db.close()
+    except Exception as e:
+        logger.warning("자동 요약 생성 실패: %s", e)
 
 
 # ---------------------------------------------------------------------------
@@ -203,6 +233,39 @@ async def execute_reasoning_with_progress(
                 document_ids = request.filters.document_ids
 
         question = (request.question or "").strip()
+
+        # Phase 17-4-2: 이전 대화 컨텍스트 주입
+        augmented_question = question
+        if hasattr(request, "session_id") and request.session_id:
+            try:
+                prev_results = (
+                    db.query(ReasoningResult)
+                    .filter(
+                        ReasoningResult.session_id == request.session_id,
+                        ReasoningResult.question != "",
+                    )
+                    .order_by(ReasoningResult.created_at.desc())
+                    .limit(3)
+                    .all()
+                )
+                if prev_results:
+                    prev_results = list(reversed(prev_results))
+                    prev_context_parts = []
+                    for prev in prev_results:
+                        if prev.summary:
+                            prev_context_parts.append(f"- {prev.summary}")
+                        else:
+                            q_excerpt = (prev.question or "")[:100]
+                            a_excerpt = (prev.answer or "")[:200]
+                            prev_context_parts.append(f"- Q: {q_excerpt}\n  A: {a_excerpt}")
+                    prev_context = "\n".join(prev_context_parts)
+                    augmented_question = (
+                        f"[이전 대화 맥락]\n{prev_context}\n\n[현재 질문]\n{question}"
+                    )
+                    reasoning_steps.append(f"이전 {len(prev_results)}개 대화 컨텍스트 주입")
+            except Exception as ctx_e:
+                logger.warning("이전 대화 컨텍스트 조회 실패: %s", ctx_e)
+
         await asyncio.sleep(0.1)
 
         # Stage 2: 관련 문서 검색
@@ -393,12 +456,12 @@ async def execute_reasoning_with_progress(
         reasoning_steps.append("Reasoning 실행 중...")
         dynamic_svc = get_dynamic_reasoning_service()
 
-        # Phase 10-4-1: 토큰 단위 스트리밍 시도
+        # Phase 10-4-1: 토큰 단위 스트리밍 시도 (Phase 17-4-2: augmented_question 사용)
         answer_parts = []
         try:
             async for token in _async_stream_tokens(
                 dynamic_svc.generate_reasoning_stream(
-                    request.question, context_chunks, request.mode,
+                    augmented_question, context_chunks, request.mode,
                     max_tokens=500, model=request.model
                 )
             ):
@@ -414,7 +477,7 @@ async def execute_reasoning_with_progress(
             answer = dynamic_svc._postprocess_reasoning("".join(answer_parts))
         else:
             answer = dynamic_svc.generate_reasoning(
-                request.question, context_chunks, request.mode, max_tokens=500, model=request.model
+                augmented_question, context_chunks, request.mode, max_tokens=500, model=request.model
             )
 
         if answer is None:
@@ -472,6 +535,34 @@ async def execute_reasoning_with_progress(
             "percent": 100,
             "elapsed": elapsed_time,
         })
+
+        # Phase 17-4-2: 세션에 결과 자동 저장
+        new_result = None
+        if hasattr(request, "session_id") and request.session_id:
+            try:
+                new_result = ReasoningResult(
+                    session_id=request.session_id,
+                    question=question,
+                    answer=answer,
+                    mode=request.mode,
+                    reasoning_steps=json.dumps(reasoning_steps, ensure_ascii=False),
+                    context_chunks=json.dumps(context_chunks, ensure_ascii=False),
+                    relations=json.dumps(relations, ensure_ascii=False),
+                    recommendations=json.dumps(recommendations or {}, ensure_ascii=False),
+                )
+                db.add(new_result)
+                db.commit()
+                db.refresh(new_result)
+                reasoning_steps.append("세션에 결과 저장 완료")
+            except Exception as save_e:
+                logger.warning("세션 결과 저장 실패: %s", save_e)
+
+        # Phase 17-4-3: 비동기 자동 요약 생성
+        if new_result and new_result.id:
+            try:
+                asyncio.create_task(_generate_summary(new_result.id, question, answer, ""))
+            except Exception as task_e:
+                logger.warning("요약 태스크 생성 실패: %s", task_e)
 
         # 최종 결과 전송
         result = {

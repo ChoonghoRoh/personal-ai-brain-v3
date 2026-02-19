@@ -1,5 +1,6 @@
-"""Reasoning 결과 공유·의사결정 문서 저장 API (Phase 10-4-2, 10-4-3, 11-5-6)"""
+"""Reasoning 결과 공유·의사결정 문서 저장 API (Phase 10-4-2, 10-4-3, 11-5-6, 17-4)"""
 import json
+import math
 import uuid
 import logging
 from datetime import datetime, timedelta
@@ -18,6 +19,30 @@ router = APIRouter(prefix="/api/reason", tags=["Reasoning Store"])
 
 
 # ---------- 요청 스키마 ----------
+
+# Phase 17-4-1: 세션 관리 스키마
+class SessionCreateRequest(BaseModel):
+    title: Optional[str] = None
+
+
+class SessionResponse(BaseModel):
+    session_id: str
+    title: Optional[str] = None
+
+
+class SessionListItem(BaseModel):
+    session_id: str
+    title: Optional[str] = None
+    turn_count: int
+    last_question: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+
+# Phase 17-4-4: 다중 삭제 스키마
+class BulkDeleteRequest(BaseModel):
+    session_ids: List[str]
+
 
 class ShareRequest(BaseModel):
     question: str
@@ -185,3 +210,190 @@ async def delete_decision(decision_id: int, db: Session = Depends(get_db)):
     db.delete(result)
     db.commit()
     return {"message": "삭제 완료", "id": decision_id}
+
+
+# ---------- Phase 17-4-1: 세션 관리 ----------
+
+@router.post("/sessions", response_model=SessionResponse)
+async def create_session(req: SessionCreateRequest, db: Session = Depends(get_db)):
+    """새 세션 생성. placeholder ReasoningResult 레코드로 세션을 초기화합니다."""
+    session_id = str(uuid.uuid4())
+    now = datetime.utcnow()
+    title = req.title if req.title else f"새 대화 {now.strftime('%Y-%m-%d %H:%M')}"
+
+    placeholder = ReasoningResult(
+        session_id=session_id,
+        question="",
+        answer="",
+        title=title,
+        mode=None,
+    )
+    db.add(placeholder)
+    db.commit()
+    db.refresh(placeholder)
+
+    return SessionResponse(session_id=session_id, title=title)
+
+
+@router.get("/sessions")
+async def list_sessions(page: int = 1, size: int = 10, db: Session = Depends(get_db)):
+    """세션 목록 조회 (페이지네이션). session_id가 있는 레코드를 그룹핑합니다."""
+    try:
+        # session_id가 있는 레코드 전체 조회
+        all_records = (
+            db.query(ReasoningResult)
+            .filter(ReasoningResult.session_id.isnot(None))
+            .order_by(ReasoningResult.created_at.asc())
+            .all()
+        )
+
+        # session_id별 그룹핑
+        session_map: dict = {}
+        for rec in all_records:
+            sid = rec.session_id
+            if sid not in session_map:
+                session_map[sid] = {
+                    "session_id": sid,
+                    "title": rec.title,
+                    "records": [],
+                    "created_at": rec.created_at,
+                    "updated_at": rec.created_at,
+                }
+            session_map[sid]["records"].append(rec)
+            if rec.created_at and rec.created_at > session_map[sid]["updated_at"]:
+                session_map[sid]["updated_at"] = rec.created_at
+
+        # 세션 목록 구성 (최신 updated_at 기준 내림차순)
+        sessions_sorted = sorted(
+            session_map.values(),
+            key=lambda s: s["updated_at"],
+            reverse=True,
+        )
+
+        total = len(sessions_sorted)
+        total_pages = math.ceil(total / size) if total > 0 else 1
+        offset = (page - 1) * size
+        page_sessions = sessions_sorted[offset: offset + size]
+
+        result_list = []
+        for s in page_sessions:
+            records = s["records"]
+            # placeholder 제외 실제 Q&A 턴
+            real_turns = [r for r in records if r.question and r.question.strip()]
+            turn_count = len(real_turns)
+            last_question = real_turns[-1].question[:100] if real_turns else None
+            # title: 세션 title이 없으면 첫 질문 사용
+            title = s["title"]
+            if not title and real_turns:
+                title = real_turns[0].question[:50]
+
+            result_list.append(SessionListItem(
+                session_id=s["session_id"],
+                title=title,
+                turn_count=turn_count,
+                last_question=last_question,
+                created_at=s["created_at"].isoformat() if s["created_at"] else None,
+                updated_at=s["updated_at"].isoformat() if s["updated_at"] else None,
+            ))
+
+        return {
+            "sessions": [item.dict() for item in result_list],
+            "total": total,
+            "page": page,
+            "size": size,
+            "total_pages": total_pages,
+        }
+    except Exception as e:
+        logger.error("세션 목록 조회 오류: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/sessions/{session_id}")
+async def get_session(session_id: str, db: Session = Depends(get_db)):
+    """세션 상세 조회. 해당 session_id의 모든 ReasoningResult를 시간순으로 반환합니다."""
+    try:
+        records = (
+            db.query(ReasoningResult)
+            .filter(ReasoningResult.session_id == session_id)
+            .order_by(ReasoningResult.created_at.asc())
+            .all()
+        )
+        if not records:
+            raise HTTPException(status_code=404, detail="세션을 찾을 수 없습니다.")
+
+        # title: 첫 레코드 기준
+        title = records[0].title
+        if not title:
+            real = [r for r in records if r.question and r.question.strip()]
+            title = real[0].question[:50] if real else None
+
+        turns = []
+        for r in records:
+            # placeholder 제외
+            if not r.question or not r.question.strip():
+                continue
+            turns.append({
+                "id": r.id,
+                "question": r.question,
+                "answer": r.answer,
+                "mode": r.mode,
+                "summary": r.summary,
+                "reasoning_steps": json.loads(r.reasoning_steps or "[]"),
+                "context_chunks": json.loads(r.context_chunks or "[]"),
+                "relations": json.loads(r.relations or "[]"),
+                "recommendations": json.loads(r.recommendations or "{}"),
+                "created_at": r.created_at.isoformat() if r.created_at else None,
+            })
+
+        return {
+            "session_id": session_id,
+            "title": title,
+            "turns": turns,
+            "turn_count": len(turns),
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("세션 상세 조회 오류: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/sessions/bulk")
+async def bulk_delete_sessions(req: BulkDeleteRequest, db: Session = Depends(get_db)):
+    """다중 세션 일괄 삭제."""
+    try:
+        deleted_count = 0
+        for sid in req.session_ids:
+            count = db.query(ReasoningResult).filter(
+                ReasoningResult.session_id == sid
+            ).delete()
+            deleted_count += count
+        db.commit()
+        return {
+            "message": "일괄 삭제 완료",
+            "deleted_count": deleted_count,
+            "session_count": len(req.session_ids),
+        }
+    except Exception as e:
+        logger.error("세션 일괄 삭제 오류: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/sessions/{session_id}")
+async def delete_session(session_id: str, db: Session = Depends(get_db)):
+    """세션 삭제. 해당 session_id의 모든 ReasoningResult를 삭제합니다."""
+    try:
+        deleted_count = (
+            db.query(ReasoningResult)
+            .filter(ReasoningResult.session_id == session_id)
+            .delete()
+        )
+        if deleted_count == 0:
+            raise HTTPException(status_code=404, detail="세션을 찾을 수 없습니다.")
+        db.commit()
+        return {"message": "삭제 완료", "deleted_count": deleted_count}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("세션 삭제 오류: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))

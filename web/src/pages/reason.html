@@ -93,6 +93,15 @@
 
       <div id="error-message" class="error" role="alert" style="display: none"></div>
 
+      <!-- Phase 17-4: 대화 스레드 -->
+      <div id="session-thread" class="session-thread" style="display: none">
+        <div class="session-thread-header">
+          <h3>대화 스레드</h3>
+          <button type="button" class="btn btn-sm btn-new-session" id="new-session-btn">새 대화</button>
+        </div>
+        <div id="session-turns" class="session-turns"></div>
+      </div>
+
       <div id="results" class="results" style="display: none" aria-label="Reasoning 결과">
         <!-- 진행 상태 영역 (Phase 10-1-1: 5단계 실시간 표시) -->
         <div id="results-loading" class="results-loading" style="display: none" role="status" aria-live="polite">
@@ -224,7 +233,24 @@
               <div id="explore-more" class="explore-list"></div>
             </div>
           </div>
+
+          <!-- Phase 17-4: 이어서 질문하기 -->
+          <div id="continue-question-area" class="continue-question-area" style="display: none">
+            <button type="button" class="btn btn-primary btn-continue" id="continue-question-btn">이어서 질문하기</button>
+          </div>
         </div>
+      </div>
+
+      <!-- Phase 17-4: 대화 기록 -->
+      <div id="session-history-section" class="session-history-section" style="display: none">
+        <div class="session-history-header">
+          <h3>대화 기록</h3>
+          <div class="session-history-actions">
+            <button type="button" class="btn btn-sm btn-danger" id="bulk-delete-btn" style="display: none">선택 삭제</button>
+          </div>
+        </div>
+        <div id="session-history-grid" class="session-history-grid"></div>
+        <div id="session-pagination" class="session-pagination"></div>
       </div>
     </div>
 
@@ -274,6 +300,7 @@
     <script src="/static/js/reason/reason-render.js"></script>
     <script src="/static/js/reason/reason-control.js"></script>
     <script src="/static/js/reason/reason-pdf-export.js"></script>
+    <script src="/static/js/reason/reason-session.js"></script>
     <script src="/static/js/reason/reason.js"></script>
   </body>
 </html>

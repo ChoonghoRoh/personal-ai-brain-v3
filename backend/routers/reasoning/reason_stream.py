@@ -48,6 +48,7 @@ class ReasonStreamRequest(BaseModel):
     question: Optional[str] = None
     filters: Optional[ReasonFilters] = None
     model: Optional[str] = None
+    session_id: Optional[str] = None  # Phase 17-4-2: 이어서 질문 세션 ID
 
 
 class ETAFeedbackBody(BaseModel):
