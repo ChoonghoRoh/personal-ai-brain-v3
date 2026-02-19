@@ -2,12 +2,294 @@
 
 라벨 CRUD, 키워드 그룹 관리, 청크-라벨 연결 등의 비즈니스 로직.
 """
+import logging
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import ProgrammingError
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from backend.models.models import Label, KnowledgeLabel, KnowledgeChunk
+
+logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# 트리 조회 (Phase 17-8)
+# ---------------------------------------------------------------------------
+
+
+def _build_tree_node(
+    label: Label,
+    db: Session,
+    current_depth: int,
+    max_depth: int,
+) -> Dict[str, Any]:
+    """라벨 노드를 재귀적으로 트리 구조 dict로 변환한다."""
+    node: Dict[str, Any] = {
+        "id": label.id,
+        "name": label.name,
+        "label_type": label.label_type,
+        "description": label.description,
+        "color": label.color,
+        "depth": current_depth,
+        "children": [],
+    }
+    if current_depth < max_depth:
+        children = (
+            db.query(Label)
+            .filter(Label.parent_label_id == label.id)
+            .order_by(Label.name)
+            .all()
+        )
+        node["children"] = [
+            _build_tree_node(c, db, current_depth + 1, max_depth)
+            for c in children
+        ]
+    return node
+
+
+async def handle_get_label_tree(
+    max_depth: int, db: Session
+) -> List[Dict[str, Any]]:
+    """전체 트리 조회 — keyword_group 루트 노드 + 재귀 하위 노드."""
+    roots = (
+        db.query(Label)
+        .filter(
+            Label.parent_label_id.is_(None),
+            Label.label_type == "keyword_group",
+        )
+        .order_by(Label.name)
+        .all()
+    )
+    return [_build_tree_node(r, db, 0, max_depth) for r in roots]
+
+
+async def handle_get_group_tree(
+    group_id: int, max_depth: int, db: Session
+) -> Dict[str, Any]:
+    """특정 그룹의 하위 트리 조회."""
+    group = (
+        db.query(Label)
+        .filter(Label.id == group_id, Label.label_type == "keyword_group")
+        .first()
+    )
+    if not group:
+        raise HTTPException(status_code=404, detail="키워드 그룹을 찾을 수 없습니다")
+    return _build_tree_node(group, db, 0, max_depth)
+
+
+# ---------------------------------------------------------------------------
+# 노드 이동 + Breadcrumb (Phase 17-8)
+# ---------------------------------------------------------------------------
+
+
+async def handle_move_label(
+    label_id: int, new_parent_id: Optional[int], db: Session
+) -> Dict[str, Any]:
+    """라벨의 부모를 변경(이동)한다. 순환 참조를 검증한다."""
+    label = db.query(Label).filter(Label.id == label_id).first()
+    if not label:
+        raise HTTPException(status_code=404, detail="라벨을 찾을 수 없습니다")
+
+    if new_parent_id is not None:
+        if new_parent_id == label_id:
+            raise HTTPException(status_code=400, detail="자기 자신을 부모로 설정할 수 없습니다")
+
+        parent = db.query(Label).filter(Label.id == new_parent_id).first()
+        if not parent:
+            raise HTTPException(status_code=404, detail="부모 라벨을 찾을 수 없습니다")
+
+        # 순환 참조 검증: new_parent_id 부터 ancestor를 타고 올라가며 label_id 확인
+        visited: set[int] = set()
+        current = parent
+        while current.parent_label_id is not None:
+            if current.parent_label_id == label_id:
+                raise HTTPException(
+                    status_code=400,
+                    detail="순환 참조가 발생합니다. 하위 노드를 부모로 설정할 수 없습니다",
+                )
+            if current.parent_label_id in visited:
+                break  # 기존 데이터의 순환 방지
+            visited.add(current.parent_label_id)
+            current = db.query(Label).filter(Label.id == current.parent_label_id).first()
+            if not current:
+                break
+
+    label.parent_label_id = new_parent_id
+    db.commit()
+    db.refresh(label)
+    return {"message": "라벨이 이동되었습니다", "id": label.id, "new_parent_id": new_parent_id}
+
+
+async def handle_get_breadcrumb(
+    label_id: int, db: Session
+) -> List[Dict[str, Any]]:
+    """루트부터 현재 노드까지의 경로(breadcrumb)를 반환한다."""
+    label = db.query(Label).filter(Label.id == label_id).first()
+    if not label:
+        raise HTTPException(status_code=404, detail="라벨을 찾을 수 없습니다")
+
+    path: List[Dict[str, Any]] = []
+    visited: set[int] = set()
+    current: Optional[Label] = label
+
+    while current is not None:
+        if current.id in visited:
+            break
+        visited.add(current.id)
+        path.append({
+            "id": current.id,
+            "name": current.name,
+            "label_type": current.label_type,
+        })
+        if current.parent_label_id is not None:
+            current = db.query(Label).filter(Label.id == current.parent_label_id).first()
+        else:
+            break
+
+    path.reverse()
+    return path
+
+
+# ---------------------------------------------------------------------------
+# AI 부모 노드 추천 (Phase 17-8)
+# ---------------------------------------------------------------------------
+
+
+def _build_tree_text(db: Session) -> str:
+    """전체 트리를 들여쓰기 텍스트로 변환한다 (LLM 프롬프트용)."""
+    roots = (
+        db.query(Label)
+        .filter(
+            Label.parent_label_id.is_(None),
+            Label.label_type == "keyword_group",
+        )
+        .order_by(Label.name)
+        .all()
+    )
+    lines: List[str] = []
+
+    def walk(label: Label, indent: int = 0) -> None:
+        prefix = "  " * indent
+        desc = f" - {label.description}" if label.description else ""
+        lines.append(f"{prefix}[{label.name}]{desc}")
+        children = (
+            db.query(Label)
+            .filter(Label.parent_label_id == label.id)
+            .order_by(Label.name)
+            .all()
+        )
+        for child in children:
+            walk(child, indent + 1)
+
+    for root in roots:
+        walk(root)
+    return "\n".join(lines)
+
+
+async def handle_suggest_parent(body: Any, db: Session) -> Dict[str, Any]:
+    """LLM 기반으로 새 키워드의 적합한 부모 그룹을 추천한다."""
+    keyword_name = body.keyword_name.strip()
+    if not keyword_name:
+        raise HTTPException(status_code=400, detail="키워드 이름을 입력해주세요")
+
+    tree_text = _build_tree_text(db)
+    if not tree_text:
+        return {
+            "suggested_parent": None,
+            "reason": "트리 구조가 비어 있습니다",
+            "source": "fallback",
+        }
+
+    # LLM 호출 시도
+    try:
+        from backend.services.reasoning.recommendation_llm import resolve_model
+        from backend.services.ai.ollama_client import ollama_generate, ollama_available
+
+        if not ollama_available():
+            raise RuntimeError("Ollama 사용 불가")
+
+        use_model = resolve_model(body.model)
+        prompt = (
+            f"다음은 키워드 트리 구조입니다:\n{tree_text}\n\n"
+            f"새 키워드 '{keyword_name}'이(가) 가장 적합한 부모 그룹(또는 키워드)의 이름을 추천하세요.\n"
+            f"적합한 위치가 없으면 \"없음\"이라고 작성하세요.\n"
+            f"부모 이름만 한 줄로 작성하세요."
+        )
+        raw = ollama_generate(prompt, max_tokens=100, temperature=0.3, model=use_model)
+        if raw:
+            suggested_name = raw.strip().split("\n")[0].strip().strip("[]")
+            if suggested_name and suggested_name != "없음":
+                # DB에서 매칭되는 그룹 찾기
+                matched = (
+                    db.query(Label)
+                    .filter(
+                        Label.name == suggested_name,
+                        Label.label_type == "keyword_group",
+                    )
+                    .first()
+                )
+                if not matched:
+                    # 부분 매칭 시도
+                    matched = (
+                        db.query(Label)
+                        .filter(
+                            Label.name.ilike(f"%{suggested_name}%"),
+                            Label.label_type == "keyword_group",
+                        )
+                        .first()
+                    )
+                if matched:
+                    return {
+                        "suggested_parent": {"id": matched.id, "name": matched.name},
+                        "reason": f"LLM이 '{keyword_name}'에 적합한 그룹으로 '{matched.name}'을(를) 추천했습니다",
+                        "source": "llm",
+                    }
+            return {
+                "suggested_parent": None,
+                "reason": f"LLM이 적합한 부모 그룹을 찾지 못했습니다",
+                "source": "llm",
+            }
+    except Exception as e:
+        logger.warning("suggest_parent LLM 호출 실패: %s", e)
+
+    # Fallback: 텍스트 유사도 매칭
+    groups = (
+        db.query(Label)
+        .filter(Label.label_type == "keyword_group")
+        .all()
+    )
+    keyword_lower = keyword_name.lower()
+    best_match: Optional[Label] = None
+    best_score = 0
+
+    for group in groups:
+        group_name_lower = group.name.lower()
+        # 포함 관계 확인
+        if keyword_lower in group_name_lower or group_name_lower in keyword_lower:
+            score = len(group_name_lower)
+            if score > best_score:
+                best_score = score
+                best_match = group
+        # 설명에 키워드가 포함되는지 확인
+        if group.description and keyword_lower in group.description.lower():
+            score = len(group_name_lower) + 1
+            if score > best_score:
+                best_score = score
+                best_match = group
+
+    if best_match:
+        return {
+            "suggested_parent": {"id": best_match.id, "name": best_match.name},
+            "reason": f"텍스트 매칭으로 '{best_match.name}' 그룹을 추천합니다",
+            "source": "fallback",
+        }
+
+    return {
+        "suggested_parent": None,
+        "reason": "적합한 부모 그룹을 찾지 못했습니다",
+        "source": "fallback",
+    }
 
 
 # ---------------------------------------------------------------------------

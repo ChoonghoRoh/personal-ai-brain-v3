@@ -39,6 +39,7 @@ class KeywordGroupManager {
     this.ui = new KeywordGroupUI(this);
     this.suggestion = new KeywordGroupSuggestion(this);
     this.search = new KeywordGroupSearch(this);
+    this.treeView = new KeywordGroupTreeView(this);
   }
 
   // ========== 그룹 CRUD 메서드 위임 ==========
