@@ -5,113 +5,127 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/static/css/dashboard.css" />
+    <script src="/static/libs/chartjs/chart.min.js"></script>
     <title>Personal AI Brain - Dashboard</title>
   </head>
   <body>
     <div class="container">
-      <!-- Header는 JavaScript로 동적 생성 -->
+      <!-- Header: JS 동적 생성 -->
 
-      <div class="stats-grid">
-        <div class="stat-card">
-          <h3>총 문서 수</h3>
-          <div class="value" id="total-docs">-</div>
-        </div>
-        <div class="stat-card">
-          <h3>Qdrant 포인트</h3>
-          <div class="value" id="qdrant-points">-</div>
-        </div>
-        <div class="stat-card">
-          <h3>프로젝트 수</h3>
-          <div class="value" id="projects-count">-</div>
-        </div>
-        <div class="stat-card">
-          <h3>총 작업 수</h3>
-          <div class="value" id="total-works">-</div>
-        </div>
+      <!-- 1단: 시스템 상태 한줄 요약 -->
+      <div class="system-status-bar" id="systemStatusBar">
+        <span class="status-ind" id="indPostgres"><span class="dot"></span> PostgreSQL</span>
+        <span class="status-ind" id="indQdrant"><span class="dot"></span> Qdrant</span>
+        <span class="status-ind" id="indRedis"><span class="dot"></span> Redis</span>
+        <span class="status-ind" id="indOllama"><span class="dot"></span> Ollama</span>
       </div>
 
-      <div class="status-section">
-        <h2>🚀 Reasoning Quick Start</h2>
-        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1)">
-          <p style="margin-bottom: 15px; color: #666">지식 구조를 탐색하고 Reasoning을 실행해보세요.</p>
-          <div style="display: flex; gap: 10px; flex-wrap: wrap">
-            <a href="/knowledge" style="padding: 10px 20px; background: #2563eb; color: white; text-decoration: none; border-radius: 6px; font-weight: 500">
-              📊 Knowledge Studio 열기
-            </a>
-            <a href="/reason" style="padding: 10px 20px; background: #10b981; color: white; text-decoration: none; border-radius: 6px; font-weight: 500"> 🧠 Reasoning Lab 열기 </a>
+      <!-- 2단: 등록 지식 현황 -->
+      <section class="dash-tier">
+        <h3 class="dash-tier-title">등록 지식 현황</h3>
+        <div class="knowledge-cards">
+          <div class="kc-card">
+            <div class="kc-icon">📄</div>
+            <div class="kc-value" id="dashTotalDocs">-</div>
+            <div class="kc-label">총 문서</div>
+          </div>
+          <div class="kc-card">
+            <div class="kc-icon">🧩</div>
+            <div class="kc-value" id="dashTotalChunks">-</div>
+            <div class="kc-label">총 청크</div>
+          </div>
+          <div class="kc-card">
+            <div class="kc-icon">🏷️</div>
+            <div class="kc-value" id="dashTotalLabels">-</div>
+            <div class="kc-label">총 라벨</div>
+          </div>
+          <div class="kc-card">
+            <div class="kc-icon">📁</div>
+            <div class="kc-value" id="dashTotalProjects">-</div>
+            <div class="kc-label">프로젝트</div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div class="status-section">
-        <h2>⚙️ 지식 관리</h2>
-        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1)">
-          <p style="margin-bottom: 15px; color: #666">라벨 관리 및 청크 승인을 수행하세요.</p>
-          <div style="display: flex; gap: 10px; flex-wrap: wrap">
-            <a href="/knowledge-admin" style="padding: 10px 20px; background: #7c3aed; color: white; text-decoration: none; border-radius: 6px; font-weight: 500">
-              ⚙️ Knowledge Admin 열기
-            </a>
+      <!-- 3단: Reasoning 가이드 -->
+      <section class="dash-tier">
+        <h3 class="dash-tier-title">Reasoning 가이드</h3>
+        <div class="reasoning-guide">
+          <div class="rg-card">
+            <div class="rg-icon">🏗️</div>
+            <div class="rg-title">설계/배경 설명</div>
+            <div class="rg-desc">코드 구조, 아키텍처 의도 분석</div>
+          </div>
+          <div class="rg-card">
+            <div class="rg-icon">⚠️</div>
+            <div class="rg-title">리스크 분석</div>
+            <div class="rg-desc">잠재적 문제점, 영향도 평가</div>
+          </div>
+          <div class="rg-card">
+            <div class="rg-icon">🚀</div>
+            <div class="rg-title">다음 단계 제안</div>
+            <div class="rg-desc">TODO, 구현 순서 추천</div>
+          </div>
+          <div class="rg-card">
+            <div class="rg-icon">📜</div>
+            <div class="rg-title">히스토리 추적</div>
+            <div class="rg-desc">변경이력, 의사결정 맥락</div>
           </div>
         </div>
-      </div>
+        <div class="rg-action">
+          <a href="/reason" class="dash-btn dash-btn-green">🧠 Reasoning Lab 시작하기</a>
+        </div>
+      </section>
 
-      <div class="status-section">
-        <h2>시스템 상태</h2>
-        <div id="system-status">
+      <!-- 4단: 주요 기능 바로가기 -->
+      <section class="dash-tier">
+        <h3 class="dash-tier-title">주요 기능</h3>
+        <div class="quick-links">
+          <a href="/knowledge" class="ql-card">
+            <div class="ql-icon ql-icon-blue">📊</div>
+            <div class="ql-body">
+              <div class="ql-title">Knowledge Studio</div>
+              <div class="ql-desc">지식 구조 탐색 및 분석</div>
+            </div>
+          </a>
+          <a href="/knowledge-admin" class="ql-card">
+            <div class="ql-icon ql-icon-purple">🔧</div>
+            <div class="ql-body">
+              <div class="ql-title">Knowledge Admin</div>
+              <div class="ql-desc">라벨 관리 및 청크 승인</div>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      <!-- 5단: 최근 업데이트 문서 -->
+      <section class="dash-tier">
+        <h3 class="dash-tier-title">최근 업데이트 문서</h3>
+        <div class="recent-docs-grid" id="recentDocsGrid">
           <div class="loading">로딩 중...</div>
         </div>
-      </div>
+      </section>
 
-      <div class="recent-work">
-        <h2>최근 작업</h2>
-        <div id="recent-work">
-          <div class="loading">로딩 중...</div>
+      <!-- 6단: 활동 분석 (통계 차트 재사용) -->
+      <section class="dash-tier">
+        <h3 class="dash-tier-title">활동 분석</h3>
+        <div class="dashboard-charts">
+          <div class="dash-chart-card">
+            <h4>문서 유형 분포</h4>
+            <div class="dash-chart-box"><canvas id="docTypeChart"></canvas></div>
+          </div>
+          <div class="dash-chart-card">
+            <h4>일별 트렌드 (최근 7일)</h4>
+            <div class="dash-chart-box-wide"><canvas id="trendsChart"></canvas></div>
+          </div>
         </div>
-      </div>
-
-      <div class="status-section">
-        <h2>자동화 상태</h2>
-        <div id="automation-status">
-          <div class="loading">로딩 중...</div>
-        </div>
-      </div>
-
-      <div class="recent-work">
-        <h2>최근 업데이트 문서</h2>
-        <div id="recent-documents">
-          <div class="loading">로딩 중...</div>
-        </div>
-      </div>
-
-      <div class="analytics-panel">
-        <h2>활동 분석</h2>
-        <div id="activity-chart">
-          <div class="loading">로딩 중...</div>
-        </div>
-        <div class="activity-summary" id="activity-summary"></div>
-      </div>
-
-      <div class="recent-work">
-        <h2>📄 문서 목록</h2>
-        <div style="margin-bottom: 15px">
-          <input
-            type="text"
-            id="document-search"
-            placeholder="문서 검색..."
-            style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px"
-            onkeyup="filterDocuments()"
-          />
-        </div>
-        <div id="documents-list">
-          <div class="loading">로딩 중...</div>
-        </div>
-      </div>
+      </section>
     </div>
 
     <script src="/static/js/components/layout-component.js"></script>
     <script src="/static/js/components/header-component.js"></script>
     <script src="/static/js/components/utils.js"></script>
-    <script src="/static/js/components/document-utils.js"></script>
+    <script src="/static/js/admin/statistics-charts.js"></script>
     <script src="/static/js/dashboard/dashboard-api.js"></script>
     <script src="/static/js/dashboard/dashboard.js"></script>
   </body>
