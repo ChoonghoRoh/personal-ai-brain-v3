@@ -196,44 +196,6 @@ td.loading {
   padding: 2rem;
 }
 
-/* System Status */
-.system-status {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.status-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  background: var(--status-bg, #f5f5f5);
-  border-radius: 8px;
-}
-
-.status-label {
-  font-weight: 500;
-  color: var(--text-secondary, #666);
-}
-
-.status-value {
-  font-weight: 600;
-  color: var(--text-primary, #333);
-}
-
-.status-value.success {
-  color: var(--success-color, #28a745);
-}
-
-.status-value.error {
-  color: var(--error-color, #dc3545);
-}
-
-.status-value.warning {
-  color: var(--warning-color, #ffc107);
-}
-
 /* Buttons */
 .btn {
   display: inline-flex;
@@ -307,6 +269,25 @@ td.loading {
   .summary-cards {
     grid-template-columns: 1fr;
   }
+}
+
+/* Phase 17-6: 4단 레이아웃 Tier 구조 */
+.stats-tier {
+  margin-bottom: 2rem;
+}
+
+.tier-header {
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--border-color, #e5e7eb);
+}
+
+.tier-subtitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  letter-spacing: 0.02em;
 }
 
 /* Phase 17-5: 카드 클릭 + 필터링 목록 */

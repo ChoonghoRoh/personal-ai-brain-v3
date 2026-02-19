@@ -26,7 +26,11 @@
           </button>
         </div>
 
-        <!-- Summary Cards -->
+        <!-- Phase 17-6: 1단 — 요약 수치 -->
+        <section class="stats-tier">
+          <div class="tier-header">
+            <h3 class="tier-subtitle">요약</h3>
+          </div>
         <section class="summary-cards">
           <div class="card summary-card" id="cardDocuments" data-category="documents">
             <div class="card-icon">📄</div>
@@ -65,7 +69,13 @@
           </div>
         </section>
 
-        <!-- Charts Row -->
+        </section><!-- /stats-tier 1단 -->
+
+        <!-- Phase 17-6: 2단 — 분포 차트 -->
+        <section class="stats-tier">
+          <div class="tier-header">
+            <h3 class="tier-subtitle">분포 현황</h3>
+          </div>
         <section class="charts-row">
           <div class="card chart-card">
             <h3>문서 유형 분포</h3>
@@ -89,7 +99,13 @@
           </div>
         </section>
 
-        <!-- Trends Chart -->
+        </section><!-- /stats-tier 2단 -->
+
+        <!-- Phase 17-6: 3단 — 트렌드 -->
+        <section class="stats-tier">
+          <div class="tier-header">
+            <h3 class="tier-subtitle">일일 트렌드</h3>
+          </div>
         <section class="trends-section">
           <div class="card">
             <div class="card-header">
@@ -106,7 +122,13 @@
           </div>
         </section>
 
-        <!-- Details Section -->
+        </section><!-- /stats-tier 3단 -->
+
+        <!-- Phase 17-6: 4단 — 상세 테이블 -->
+        <section class="stats-tier">
+          <div class="tier-header">
+            <h3 class="tier-subtitle">상세 현황</h3>
+          </div>
         <section class="details-section">
           <div class="card">
             <h3>인기 라벨 TOP 10</h3>
@@ -145,33 +167,8 @@
             </div>
           </div>
 
-          <!-- System Status -->
-          <div class="card">
-            <h3>시스템 상태</h3>
-            <div class="system-status" id="systemStatus">
-              <div class="status-item">
-                <span class="status-label">PostgreSQL</span>
-                <span class="status-value" id="dbStatus">-</span>
-              </div>
-              <div class="status-item">
-                <span class="status-label">Qdrant 벡터</span>
-                <span class="status-value" id="qdrantStatus">-</span>
-              </div>
-              <div class="status-item">
-                <span class="status-label">Redis</span>
-                <span class="status-value" id="redisStatus">-</span>
-              </div>
-              <div class="status-item">
-                <span class="status-label">Ollama LLM</span>
-                <span class="status-value" id="ollamaStatus">-</span>
-              </div>
-              <div class="status-item">
-                <span class="status-label">총 레코드</span>
-                <span class="status-value" id="totalRecords">-</span>
-              </div>
-            </div>
-          </div>
         </section>
+        </section><!-- /stats-tier 4단 -->
 
         <!-- Phase 17-5: 필터링 목록 -->
         <section id="filtered-list-section" class="filtered-list-section" style="display: none">
