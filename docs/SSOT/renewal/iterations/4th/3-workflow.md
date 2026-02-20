@@ -275,10 +275,30 @@ created_at: "2026-02-16T..."
 | **CHAIN-7** | Gate 의무 | G1~G4 생략 불가 (단독 실행 시 G2·G3는 자체 검증으로 대체 가능, status에 기록) |
 | **CHAIN-8** | Status 형식 | status.md는 YAML frontmatter 형식(§2.2 스키마) 준수 |
 | **CHAIN-9** | Task 문서 형식 | task-X-Y-N.md: 메타 필드 4종(우선순위/의존성/담당 팀원/상태) + §1~§4 섹션 번호 |
+| **CHAIN-10** | 파일 경로 규칙 | 아래 §8.7 디렉토리 구조 준수 필수. 기존 파일 패턴을 반드시 확인 후 생성 |
+
+### 8.7 Phase 문서 디렉토리 구조
+
+```
+docs/phases/
+├── phase-chain-{name}.md           ← Chain 정의 (phases 루트)
+├── phase-{N}-master-plan.md        ← 마스터 플랜 (phases 루트, 하위 폴더 아님)
+├── phase-{N}-{M}/                  ← 개별 Phase 산출물 폴더
+│    ├── phase-{N}-{M}-status.md    ← YAML 상태 파일 (ENTRY-1 진입점)
+│    ├── phase-{N}-{M}-plan.md      ← Phase 계획서
+│    ├── phase-{N}-{M}-todo-list.md ← Todo 체크리스트
+│    └── tasks/                     ← Task 명세 폴더
+│         └── task-{N}-{M}-{T}.md   ← 개별 Task 명세
+```
+
+**핵심 규칙**:
+- `master-plan.md`와 `phase-chain-*.md`는 **`docs/phases/` 루트**에 위치 (하위 폴더 생성 금지)
+- `status.md`, `plan.md`, `todo-list.md`, `tasks/`는 **`phase-{N}-{M}/` 폴더** 안에 위치
+- 새 파일 생성 전 **기존 파일 패턴을 `Glob`으로 확인** 후 동일 경로 레벨에 생성
 
 ---
 
 **문서 관리**:
 - 버전: 6.0-renewal-4th (4th iteration)
-- 최종 수정: 2026-02-17
+- 최종 수정: 2026-02-21
 - 단독 사용: 본 iterations/4th 세트만으로 SSOT 완결 (Phase Chain 포함)
