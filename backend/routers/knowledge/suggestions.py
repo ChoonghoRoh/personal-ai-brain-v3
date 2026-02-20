@@ -169,40 +169,62 @@ async def suggest_relations(
     chunk = db.query(KnowledgeChunk).filter(KnowledgeChunk.id == chunk_id).first()
     if not chunk:
         raise HTTPException(status_code=404, detail="청크를 찾을 수 없습니다.")
-    
-    if not chunk.qdrant_point_id:
-        raise HTTPException(status_code=400, detail="청크에 임베딩이 없습니다.")
-    
-    # Qdrant에서 유사 청크 검색
-    search_service = get_search_service()
-    
+
     try:
-        # 현재 청크의 임베딩을 가져와서 유사 청크 검색
-        # 실제로는 Qdrant에서 유사도 검색을 수행해야 함
-        # 여기서는 간단한 구현으로 대체
-        
-        # 같은 문서의 다른 청크들을 유사 청크로 제안 (실제로는 임베딩 기반)
-        similar_chunks = db.query(KnowledgeChunk).filter(
-            KnowledgeChunk.document_id == chunk.document_id,
-            KnowledgeChunk.id != chunk_id,
-            KnowledgeChunk.status == "approved"  # 승인된 청크만
-        ).limit(limit).all()
-        
         suggestions = []
-        for similar_chunk in similar_chunks:
-            # 간단한 유사도 점수 계산 (실제로는 임베딩 기반 코사인 유사도)
-            score = 0.7  # 기본값
-            
-            suggestions.append({
-                "target_chunk_id": similar_chunk.id,
-                "target_content_preview": similar_chunk.content[:100] + "..." if len(similar_chunk.content) > 100 else similar_chunk.content,
-                "relation_type": "similar",
-                "score": score
-            })
-        
+
+        # 1차: Qdrant 벡터 유사도 검색 (임베딩 있을 때)
+        if chunk.qdrant_point_id:
+            try:
+                search_service = get_search_service()
+                result = search_service.search(
+                    query=chunk.content[:500] if chunk.content else chunk.title or "",
+                    top_k=limit + 1,
+                    offset=0,
+                    use_cache=False,
+                )
+                for doc in result.get("results", []):
+                    target_id = doc.get("chunk_id")
+                    if target_id and int(target_id) != chunk_id:
+                        score = float(doc.get("score", 0.0))
+                        content = doc.get("content", "")
+                        preview = (content[:100] + "...") if len(content) > 100 else content
+                        suggestions.append({
+                            "target_chunk_id": int(target_id),
+                            "target_content_preview": preview,
+                            "relation_type": "similar",
+                            "score": round(score, 4),
+                            "source": "semantic",
+                        })
+                suggestions = suggestions[:limit]
+            except Exception:
+                pass  # fallback to DB search
+
+        # 2차: DB fallback (임베딩 없거나 Qdrant 실패 시)
+        if len(suggestions) < limit:
+            remaining = limit - len(suggestions)
+            existing_ids = {s["target_chunk_id"] for s in suggestions}
+            similar_chunks = db.query(KnowledgeChunk).filter(
+                KnowledgeChunk.document_id == chunk.document_id,
+                KnowledgeChunk.id != chunk_id,
+                KnowledgeChunk.id.notin_(existing_ids) if existing_ids else True,
+                KnowledgeChunk.status == "approved",
+            ).limit(remaining).all()
+
+            for similar_chunk in similar_chunks:
+                content = similar_chunk.content or ""
+                preview = (content[:100] + "...") if len(content) > 100 else content
+                suggestions.append({
+                    "target_chunk_id": similar_chunk.id,
+                    "target_content_preview": preview,
+                    "relation_type": "similar",
+                    "score": 0.5,
+                    "source": "fallback",
+                })
+
         return {
             "chunk_id": chunk_id,
-            "suggestions": suggestions
+            "suggestions": suggestions,
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"관계 추천 생성 실패: {str(e)}")

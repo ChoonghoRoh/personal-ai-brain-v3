@@ -102,7 +102,7 @@ class HybridSearchService:
             q = (
                 db.query(KnowledgeChunk)
                 .join(Document, KnowledgeChunk.document_id == Document.id)
-                .filter(KnowledgeChunk.status == "approved")
+                .filter(KnowledgeChunk.status.in_(["approved", "draft"]))
                 .filter(KnowledgeChunk.content.isnot(None))
             )
             # ILIKE OR 조건 (content + file_path)
