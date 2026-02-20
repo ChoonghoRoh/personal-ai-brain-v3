@@ -159,6 +159,30 @@ class KeywordGroupMatching {
       }
     }
 
+    // LLM 추천 버튼 상태 업데이트
+    const llmSuggestBtn = document.getElementById("llm-suggest-btn");
+    if (llmSuggestBtn) {
+      llmSuggestBtn.disabled = !this.manager.selectedGroupId;
+    }
+
+    // 하단 액션바 그룹 액션 버튼 상태 업데이트
+    const groupActionButtons = document.getElementById("group-action-buttons");
+    if (groupActionButtons) {
+      groupActionButtons.style.display = this.manager.selectedGroupId ? "flex" : "none";
+    }
+
+    // 연관 키워드 섹션 상태 업데이트
+    const relatedSection = document.getElementById("related-keywords-section");
+    if (relatedSection) {
+      relatedSection.style.display = this.manager.selectedGroupId ? "block" : "none";
+      // 그룹 변경 시 연관 키워드 초기화
+      if (!this.manager.selectedGroupId) {
+        document.getElementById("related-keyword-search").value = "";
+        document.getElementById("related-keywords-list").innerHTML = "";
+        document.getElementById("add-related-btn").style.display = "none";
+      }
+    }
+
     this.loadKeywords();
     this.manager.ui.updateMatchingUI();
   }

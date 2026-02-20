@@ -129,18 +129,21 @@ class KeywordGroupTreeView {
       e.dataTransfer.dropEffect = "move";
       if (self._dragSourceId && self._dragSourceId !== node.id) {
         content.classList.add("drag-over");
+        content.classList.add("drop-target-highlight");
       }
     });
 
     content.addEventListener("dragleave", function (e) {
       e.stopPropagation();
       content.classList.remove("drag-over");
+      content.classList.remove("drop-target-highlight");
     });
 
     content.addEventListener("drop", function (e) {
       e.preventDefault();
       e.stopPropagation();
       content.classList.remove("drag-over");
+      content.classList.remove("drop-target-highlight");
       var sourceId = parseInt(e.dataTransfer.getData("text/plain"), 10);
       if (sourceId && sourceId !== node.id) {
         self.moveNode(sourceId, node.id);
@@ -178,7 +181,7 @@ class KeywordGroupTreeView {
   selectNode(nodeId) {
     this.selectedNodeId = nodeId;
 
-    // 기존 그룹 선택과 연동
+    // 기존 그룹 선택과 연동 (2단 상세 패널 업데이트)
     if (this.manager && this.manager.matching) {
       this.manager.matching.selectGroup(nodeId);
     }
@@ -380,11 +383,13 @@ function switchView(view) {
   var listContainer = document.getElementById("groups-list");
   var treeContainer = document.getElementById("groups-tree");
   var paginationContainer = document.getElementById("groups-pagination");
-  var toggleBtns = document.querySelectorAll(".view-toggle .toggle-btn");
+  var breadcrumbContainer = document.getElementById("tree-breadcrumb");
 
-  toggleBtns.forEach(function (btn) {
+  // 탭 버튼 업데이트
+  var tabBtns = document.querySelectorAll(".tab-nav .tab-btn");
+  tabBtns.forEach(function (btn) {
     btn.classList.remove("active");
-    if (btn.dataset.view === view) {
+    if (btn.dataset.tab === view) {
       btn.classList.add("active");
     }
   });
@@ -393,6 +398,8 @@ function switchView(view) {
     if (listContainer) listContainer.style.display = "none";
     if (paginationContainer) paginationContainer.style.display = "none";
     if (treeContainer) treeContainer.style.display = "block";
+    // Breadcrumb는 트리 탭에서 항상 표시 (내용은 노드 선택 시 채워짐)
+    if (breadcrumbContainer) breadcrumbContainer.style.display = "block";
 
     // 트리 데이터 로드
     if (window.groupManager && window.groupManager.treeView) {
@@ -402,6 +409,8 @@ function switchView(view) {
     if (listContainer) listContainer.style.display = "";
     if (paginationContainer) paginationContainer.style.display = "";
     if (treeContainer) treeContainer.style.display = "none";
+    // Breadcrumb는 목록 탭에서는 숨김
+    if (breadcrumbContainer) breadcrumbContainer.style.display = "none";
   }
 }
 
@@ -409,6 +418,6 @@ function switchView(view) {
  * 현재 활성 뷰가 트리인지 확인
  */
 function isTreeViewActive() {
-  var activeBtn = document.querySelector(".view-toggle .toggle-btn.active");
-  return activeBtn && activeBtn.dataset.view === "tree";
+  var activeBtn = document.querySelector(".tab-nav .tab-btn.active");
+  return activeBtn && activeBtn.dataset.tab === "tree";
 }

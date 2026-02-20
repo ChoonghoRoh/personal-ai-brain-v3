@@ -40,9 +40,9 @@
           <div class="groups-col groups-col-list">
             <div class="col-header">
               <h4>그룹 목록</h4>
-              <div class="view-toggle">
-                <button class="toggle-btn active" data-view="list" onclick="switchView('list')">목록</button>
-                <button class="toggle-btn" data-view="tree" onclick="switchView('tree')">트리</button>
+              <div class="tab-nav">
+                <button class="tab-btn active" data-tab="list" onclick="switchTab('list')">목록</button>
+                <button class="tab-btn" data-tab="tree" onclick="switchTab('tree')">트리 연결</button>
               </div>
             </div>
             <div id="groups-list" class="groups-list-container">
@@ -69,18 +69,44 @@
           <div class="groups-col groups-col-keywords">
             <div class="col-header">
               <h4>키워드 목록</h4>
+              <button class="btn btn-sm btn-ai" id="llm-suggest-btn" onclick="suggestKeywordsForSelectedGroup()" disabled>🤖 LLM 추천</button>
             </div>
             <div id="keywords-list" class="keywords-list-container">
               <div class="loading">키워드 목록을 불러오는 중...</div>
             </div>
+            <div id="llm-suggestion-section" class="llm-suggestion-section" style="display: none">
+              <div class="llm-suggestion-header">
+                <h5>💡 LLM 추천 키워드</h5>
+                <button class="btn btn-sm btn-primary" id="add-suggested-btn" onclick="addSelectedSuggestedKeywords()">선택 추가</button>
+              </div>
+              <div id="llm-suggestion-error" class="error-message" style="display: none"></div>
+              <div id="llm-suggestion-success" class="success-message" style="display: none"></div>
+              <div id="llm-suggested-keywords-list" class="llm-suggested-keywords-list"></div>
+            </div>
+            <div id="related-keywords-section" class="related-keywords-section" style="display: none">
+              <div class="related-keywords-header">
+                <h5>🔗 연관 키워드 추천</h5>
+              </div>
+              <div class="related-search">
+                <input type="text" id="related-keyword-search" placeholder="키워드 검색..." />
+                <button class="btn btn-sm" onclick="searchRelatedKeywords()">조회</button>
+              </div>
+              <div id="related-keywords-error" class="error-message" style="display: none"></div>
+              <div id="related-keywords-list" class="related-keywords-list"></div>
+              <button class="btn btn-sm btn-primary" id="add-related-btn" onclick="addSelectedRelatedKeywords()" style="display: none">선택 추가</button>
+            </div>
           </div>
         </div>
 
-        <!-- 하단 고정 바: 선택 요약 + 일괄 적용 버튼 -->
+        <!-- 하단 고정 바: 선택 요약 + 그룹 액션 + 일괄 적용 버튼 -->
         <div id="matching-summary-bar" class="matching-summary-bar" style="display: none">
           <div class="matching-summary-inner">
             <div id="selection-summary" class="selection-summary"></div>
             <div class="matching-actions">
+              <div class="group-actions" id="group-action-buttons" style="display: none">
+                <button class="btn btn-secondary" onclick="showEditGroupModal(groupManager?.crud?.selectedGroupId)">수정</button>
+                <button class="btn btn-danger-light" onclick="deleteCurrentGroup()">삭제</button>
+              </div>
               <button class="btn btn-primary" id="apply-keywords-btn" onclick="applyGroupKeywords()" style="display: none">선택 연결</button>
               <button class="btn btn-danger-light" id="remove-keywords-btn" onclick="removeGroupKeywords()" style="display: none">선택 해제</button>
               <button class="btn btn-secondary-light" onclick="clearSelection()">선택 취소</button>

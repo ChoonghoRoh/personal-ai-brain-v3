@@ -1,6 +1,7 @@
-"""라벨 엔드포인트 핸들러 (labels.py에서 분리)
+"""라벨 CRUD 핸들러
 
-라벨 CRUD, 키워드 그룹 관리, 청크-라벨 연결 등의 비즈니스 로직.
+라벨 기본 CRUD, 키워드 그룹 관리, 청크-라벨 연결 등의 비즈니스 로직.
+labels_handlers.py에서 분리됨.
 """
 import logging
 from fastapi import HTTPException
@@ -14,282 +15,68 @@ logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
-# 트리 조회 (Phase 17-8)
+# Qdrant 유사도 검색 헬퍼 (graceful fallback)
 # ---------------------------------------------------------------------------
 
+def _try_qdrant_similarity_search(query: str, exclude_ids: List[int], limit: int) -> List[Dict[str, Any]]:
+    """Qdrant 유사도 검색 시도 (실패 시 빈 리스트 반환)
 
-def _build_tree_node(
-    label: Label,
-    db: Session,
-    current_depth: int,
-    max_depth: int,
-) -> Dict[str, Any]:
-    """라벨 노드를 재귀적으로 트리 구조 dict로 변환한다."""
-    node: Dict[str, Any] = {
-        "id": label.id,
-        "name": label.name,
-        "label_type": label.label_type,
-        "description": label.description,
-        "color": label.color,
-        "depth": current_depth,
-        "children": [],
-    }
-    if current_depth < max_depth:
-        children = (
-            db.query(Label)
-            .filter(Label.parent_label_id == label.id)
-            .order_by(Label.name)
-            .all()
-        )
-        node["children"] = [
-            _build_tree_node(c, db, current_depth + 1, max_depth)
-            for c in children
-        ]
-    return node
+    Args:
+        query: 검색어
+        exclude_ids: 제외할 Label ID 목록
+        limit: 최대 결과 수
 
-
-async def handle_get_label_tree(
-    max_depth: int, db: Session
-) -> List[Dict[str, Any]]:
-    """전체 트리 조회 — keyword_group 루트 노드 + 재귀 하위 노드."""
-    roots = (
-        db.query(Label)
-        .filter(
-            Label.parent_label_id.is_(None),
-            Label.label_type == "keyword_group",
-        )
-        .order_by(Label.name)
-        .all()
-    )
-    return [_build_tree_node(r, db, 0, max_depth) for r in roots]
-
-
-async def handle_get_group_tree(
-    group_id: int, max_depth: int, db: Session
-) -> Dict[str, Any]:
-    """특정 그룹의 하위 트리 조회."""
-    group = (
-        db.query(Label)
-        .filter(Label.id == group_id, Label.label_type == "keyword_group")
-        .first()
-    )
-    if not group:
-        raise HTTPException(status_code=404, detail="키워드 그룹을 찾을 수 없습니다")
-    return _build_tree_node(group, db, 0, max_depth)
-
-
-# ---------------------------------------------------------------------------
-# 노드 이동 + Breadcrumb (Phase 17-8)
-# ---------------------------------------------------------------------------
-
-
-async def handle_move_label(
-    label_id: int, new_parent_id: Optional[int], db: Session
-) -> Dict[str, Any]:
-    """라벨의 부모를 변경(이동)한다. 순환 참조를 검증한다."""
-    label = db.query(Label).filter(Label.id == label_id).first()
-    if not label:
-        raise HTTPException(status_code=404, detail="라벨을 찾을 수 없습니다")
-
-    if new_parent_id is not None:
-        if new_parent_id == label_id:
-            raise HTTPException(status_code=400, detail="자기 자신을 부모로 설정할 수 없습니다")
-
-        parent = db.query(Label).filter(Label.id == new_parent_id).first()
-        if not parent:
-            raise HTTPException(status_code=404, detail="부모 라벨을 찾을 수 없습니다")
-
-        # 순환 참조 검증: new_parent_id 부터 ancestor를 타고 올라가며 label_id 확인
-        visited: set[int] = set()
-        current = parent
-        while current.parent_label_id is not None:
-            if current.parent_label_id == label_id:
-                raise HTTPException(
-                    status_code=400,
-                    detail="순환 참조가 발생합니다. 하위 노드를 부모로 설정할 수 없습니다",
-                )
-            if current.parent_label_id in visited:
-                break  # 기존 데이터의 순환 방지
-            visited.add(current.parent_label_id)
-            current = db.query(Label).filter(Label.id == current.parent_label_id).first()
-            if not current:
-                break
-
-    label.parent_label_id = new_parent_id
-    db.commit()
-    db.refresh(label)
-    return {"message": "라벨이 이동되었습니다", "id": label.id, "new_parent_id": new_parent_id}
-
-
-async def handle_get_breadcrumb(
-    label_id: int, db: Session
-) -> List[Dict[str, Any]]:
-    """루트부터 현재 노드까지의 경로(breadcrumb)를 반환한다."""
-    label = db.query(Label).filter(Label.id == label_id).first()
-    if not label:
-        raise HTTPException(status_code=404, detail="라벨을 찾을 수 없습니다")
-
-    path: List[Dict[str, Any]] = []
-    visited: set[int] = set()
-    current: Optional[Label] = label
-
-    while current is not None:
-        if current.id in visited:
-            break
-        visited.add(current.id)
-        path.append({
-            "id": current.id,
-            "name": current.name,
-            "label_type": current.label_type,
-        })
-        if current.parent_label_id is not None:
-            current = db.query(Label).filter(Label.id == current.parent_label_id).first()
-        else:
-            break
-
-    path.reverse()
-    return path
-
-
-# ---------------------------------------------------------------------------
-# AI 부모 노드 추천 (Phase 17-8)
-# ---------------------------------------------------------------------------
-
-
-def _build_tree_text(db: Session) -> str:
-    """전체 트리를 들여쓰기 텍스트로 변환한다 (LLM 프롬프트용)."""
-    roots = (
-        db.query(Label)
-        .filter(
-            Label.parent_label_id.is_(None),
-            Label.label_type == "keyword_group",
-        )
-        .order_by(Label.name)
-        .all()
-    )
-    lines: List[str] = []
-
-    def walk(label: Label, indent: int = 0) -> None:
-        prefix = "  " * indent
-        desc = f" - {label.description}" if label.description else ""
-        lines.append(f"{prefix}[{label.name}]{desc}")
-        children = (
-            db.query(Label)
-            .filter(Label.parent_label_id == label.id)
-            .order_by(Label.name)
-            .all()
-        )
-        for child in children:
-            walk(child, indent + 1)
-
-    for root in roots:
-        walk(root)
-    return "\n".join(lines)
-
-
-async def handle_suggest_parent(body: Any, db: Session) -> Dict[str, Any]:
-    """LLM 기반으로 새 키워드의 적합한 부모 그룹을 추천한다."""
-    keyword_name = body.keyword_name.strip()
-    if not keyword_name:
-        raise HTTPException(status_code=400, detail="키워드 이름을 입력해주세요")
-
-    tree_text = _build_tree_text(db)
-    if not tree_text:
-        return {
-            "suggested_parent": None,
-            "reason": "트리 구조가 비어 있습니다",
-            "source": "fallback",
-        }
-
-    # LLM 호출 시도
+    Returns:
+        [{"id": int, "name": str, "similarity_score": float, "source": "qdrant"}, ...]
+    """
     try:
-        from backend.services.reasoning.recommendation_llm import resolve_model
-        from backend.services.ai.ollama_client import ollama_generate, ollama_available
+        from qdrant_client import QdrantClient
+        from qdrant_client.models import Filter, FieldCondition, MatchAny
+        from sentence_transformers import SentenceTransformer
+        from backend.config import QDRANT_HOST, QDRANT_PORT, EMBEDDING_MODEL
 
-        if not ollama_available():
-            raise RuntimeError("Ollama 사용 불가")
+        # Qdrant 컬렉션 이름 (라벨용, 실제 프로젝트에 맞게 조정 필요)
+        LABEL_COLLECTION = "labels"  # 라벨 임베딩 컬렉션이 있다면
 
-        use_model = resolve_model(body.model)
-        prompt = (
-            f"다음은 키워드 트리 구조입니다:\n{tree_text}\n\n"
-            f"새 키워드 '{keyword_name}'이(가) 가장 적합한 부모 그룹(또는 키워드)의 이름을 추천하세요.\n"
-            f"적합한 위치가 없으면 \"없음\"이라고 작성하세요.\n"
-            f"부모 이름만 한 줄로 작성하세요."
+        client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
+        model = SentenceTransformer(EMBEDDING_MODEL)
+
+        # 쿼리 임베딩 생성
+        query_vector = model.encode(query).tolist()
+
+        # Qdrant 검색 (exclude_ids 제외)
+        search_filter = None
+        if exclude_ids:
+            search_filter = Filter(
+                must_not=[
+                    FieldCondition(
+                        key="label_id",
+                        match=MatchAny(any=exclude_ids)
+                    )
+                ]
+            )
+
+        results = client.search(
+            collection_name=LABEL_COLLECTION,
+            query_vector=query_vector,
+            limit=limit,
+            query_filter=search_filter,
         )
-        raw = ollama_generate(prompt, max_tokens=100, temperature=0.3, model=use_model)
-        if raw:
-            suggested_name = raw.strip().split("\n")[0].strip().strip("[]")
-            if suggested_name and suggested_name != "없음":
-                # DB에서 매칭되는 그룹 찾기
-                matched = (
-                    db.query(Label)
-                    .filter(
-                        Label.name == suggested_name,
-                        Label.label_type == "keyword_group",
-                    )
-                    .first()
-                )
-                if not matched:
-                    # 부분 매칭 시도
-                    matched = (
-                        db.query(Label)
-                        .filter(
-                            Label.name.ilike(f"%{suggested_name}%"),
-                            Label.label_type == "keyword_group",
-                        )
-                        .first()
-                    )
-                if matched:
-                    return {
-                        "suggested_parent": {"id": matched.id, "name": matched.name},
-                        "reason": f"LLM이 '{keyword_name}'에 적합한 그룹으로 '{matched.name}'을(를) 추천했습니다",
-                        "source": "llm",
-                    }
-            return {
-                "suggested_parent": None,
-                "reason": f"LLM이 적합한 부모 그룹을 찾지 못했습니다",
-                "source": "llm",
+
+        return [
+            {
+                "id": hit.payload.get("label_id"),
+                "name": hit.payload.get("name"),
+                "similarity_score": hit.score,
+                "source": "qdrant"
             }
+            for hit in results
+            if hit.payload.get("label_id") is not None
+        ]
+
     except Exception as e:
-        logger.warning("suggest_parent LLM 호출 실패: %s", e)
-
-    # Fallback: 텍스트 유사도 매칭
-    groups = (
-        db.query(Label)
-        .filter(Label.label_type == "keyword_group")
-        .all()
-    )
-    keyword_lower = keyword_name.lower()
-    best_match: Optional[Label] = None
-    best_score = 0
-
-    for group in groups:
-        group_name_lower = group.name.lower()
-        # 포함 관계 확인
-        if keyword_lower in group_name_lower or group_name_lower in keyword_lower:
-            score = len(group_name_lower)
-            if score > best_score:
-                best_score = score
-                best_match = group
-        # 설명에 키워드가 포함되는지 확인
-        if group.description and keyword_lower in group.description.lower():
-            score = len(group_name_lower) + 1
-            if score > best_score:
-                best_score = score
-                best_match = group
-
-    if best_match:
-        return {
-            "suggested_parent": {"id": best_match.id, "name": best_match.name},
-            "reason": f"텍스트 매칭으로 '{best_match.name}' 그룹을 추천합니다",
-            "source": "fallback",
-        }
-
-    return {
-        "suggested_parent": None,
-        "reason": "적합한 부모 그룹을 찾지 못했습니다",
-        "source": "fallback",
-    }
+        logger.info(f"Qdrant 유사도 검색 실패 (fallback to text search): {e}")
+        return []
 
 
 # ---------------------------------------------------------------------------
@@ -441,80 +228,6 @@ async def handle_create_keyword_group(group, db: Session):
     db.commit()
     db.refresh(db_group)
     return db_group
-
-
-async def handle_suggest_keywords(body, db: Session):
-    """그룹 설명 기반 키워드 추천 — RecommendationService 통일 (청크 추천과 동일 로직)"""
-    from backend.services.reasoning.group_keyword_recommender import GroupKeywordRecommender
-    from backend.services.ai.ollama_client import ollama_connection_check
-
-    description = (body.description or "").strip()
-    if not description:
-        raise HTTPException(status_code=400, detail="설명을 입력해주세요")
-
-    import re
-    meaningful_text = re.sub(r'[^\w가-힣]', '', description)
-    MIN_DESCRIPTION_LENGTH = 2
-    if len(meaningful_text) < MIN_DESCRIPTION_LENGTH:
-        raise HTTPException(
-            status_code=400,
-            detail=f"키워드를 추출할 수 있도록 {MIN_DESCRIPTION_LENGTH}자 이상의 의미 있는 설명을 입력해주세요",
-        )
-
-    MAX_DESCRIPTION_LENGTH = 1000
-    if len(description) > MAX_DESCRIPTION_LENGTH:
-        raise HTTPException(
-            status_code=400,
-            detail=f"설명은 {MAX_DESCRIPTION_LENGTH}자 이하로 입력해주세요 (현재 {len(description)}자)",
-        )
-
-    ollama_feedback = ollama_connection_check()
-
-    # 사용자가 모델을 지정한 경우, 설치된 모델 목록에 있는지 검증
-    if body.model and ollama_feedback["available"]:
-        installed = [m["name"] for m in ollama_feedback.get("models", [])]
-        if body.model not in installed:
-            raise HTTPException(
-                status_code=400,
-                detail=f"모델 '{body.model}'을(를) 찾을 수 없습니다. 사용 가능한 모델: {', '.join(installed)}",
-            )
-
-    # 그룹에 이미 소속된 키워드 조회 (중복 추천 방지)
-    from backend.models.models import Label
-    existing_label_ids = []
-    existing_keyword_names = []
-    if body.group_id:
-        group_keywords = (
-            db.query(Label)
-            .filter(Label.parent_label_id == body.group_id, Label.label_type == "keyword")
-            .all()
-        )
-        existing_label_ids = [kw.id for kw in group_keywords]
-        existing_keyword_names = [kw.name for kw in group_keywords]
-
-    recommender = GroupKeywordRecommender(db)
-    result = recommender.recommend(
-        description=description,
-        existing_label_ids=existing_label_ids,
-        existing_keyword_names=existing_keyword_names,
-        limit=15,
-        model=body.model,
-    )
-
-    suggestions = result.get("suggestions", [])
-    new_keywords = result.get("new_keywords", [])
-
-    # 그룹 기존 키워드와 이름이 동일한 new_keywords도 제외
-    if existing_keyword_names:
-        existing_lower = {n.lower() for n in existing_keyword_names}
-        new_keywords = [kw for kw in new_keywords if kw.lower() not in existing_lower]
-
-    return {
-        "suggestions": suggestions,
-        "new_keywords": new_keywords,
-        "source": "llm",
-        "ollama_feedback": ollama_feedback,
-    }
 
 
 async def handle_update_keyword_group(group_id: int, group_update, db: Session):
@@ -746,3 +459,117 @@ async def handle_get_chunk_labels(chunk_id: int, db: Session):
     ).all()
 
     return [{"id": label.id, "name": label.name, "label_type": label.label_type} for label in labels]
+
+
+# ---------------------------------------------------------------------------
+# Phase 18-1: 연관 키워드 조회 (ILIKE + Qdrant 유사도)
+# ---------------------------------------------------------------------------
+
+async def handle_get_related_keywords(
+    group_id: int,
+    q: Optional[str],
+    limit: int,
+    db: Session,
+) -> Dict[str, Any]:
+    """그룹 연관 키워드 조회 (ILIKE + Qdrant 유사도)
+
+    Args:
+        group_id: 키워드 그룹 ID
+        q: 검색어 (ILIKE 사용, 없으면 전체 키워드)
+        limit: 최대 결과 수
+        db: 데이터베이스 세션
+
+    Returns:
+        {
+            "items": [
+                {"id": int, "name": str, "similarity_score": float, "source": "text"|"qdrant"},
+                ...
+            ],
+            "total": int
+        }
+    """
+    try:
+        # 1. 그룹 존재 확인
+        group = db.query(Label).filter(
+            Label.id == group_id,
+            Label.label_type == "keyword_group",
+        ).first()
+        if not group:
+            raise HTTPException(status_code=404, detail="키워드 그룹을 찾을 수 없습니다")
+
+        # 2. 그룹 소속 키워드 ID 목록 조회 → 제외 목록
+        group_keyword_ids = [
+            row[0] for row in db.query(Label.id).filter(
+                Label.label_type == "keyword",
+                Label.parent_label_id == group_id,
+            ).all()
+        ]
+
+        # 3. ILIKE 텍스트 검색
+        text_query = db.query(Label).filter(
+            Label.label_type == "keyword",
+            Label.id.notin_(group_keyword_ids) if group_keyword_ids else True,
+        )
+
+        if q and q.strip():
+            text_query = text_query.filter(Label.name.ilike(f"%{q.strip()}%"))
+
+        text_results = text_query.limit(limit * 2).all()  # Qdrant와 병합 위해 여유있게 조회
+
+        # ILIKE 결과를 딕셔너리로 변환
+        text_items = [
+            {
+                "id": label.id,
+                "name": label.name,
+                "similarity_score": 0.5,  # 기본 점수
+                "source": "text"
+            }
+            for label in text_results
+        ]
+
+        # 4. Qdrant 유사도 검색 (q가 있을 때만 시도)
+        qdrant_items: List[Dict[str, Any]] = []
+        if q and q.strip():
+            qdrant_items = _try_qdrant_similarity_search(
+                query=q.strip(),
+                exclude_ids=group_keyword_ids,
+                limit=limit * 2,
+            )
+
+        # 5. 두 결과 병합, 중복 제거 (id 기준)
+        merged_dict: Dict[int, Dict[str, Any]] = {}
+
+        # ILIKE 결과 먼저 추가
+        for item in text_items:
+            merged_dict[item["id"]] = item
+
+        # Qdrant 결과 병합 (높은 점수로 덮어쓰기)
+        for item in qdrant_items:
+            label_id = item["id"]
+            if label_id in merged_dict:
+                # 기존 항목보다 점수가 높으면 덮어쓰기
+                if item["similarity_score"] > merged_dict[label_id]["similarity_score"]:
+                    merged_dict[label_id] = item
+            else:
+                merged_dict[label_id] = item
+
+        # 6. similarity_score 기준 정렬
+        sorted_items = sorted(
+            merged_dict.values(),
+            key=lambda x: x["similarity_score"],
+            reverse=True
+        )
+
+        # 7. 상위 limit개 반환
+        final_items = sorted_items[:limit]
+
+        return {
+            "items": final_items,
+            "total": len(final_items),
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"연관 키워드 조회 중 오류: {e}")
+        raise HTTPException(status_code=500, detail=f"연관 키워드 조회 중 오류: {str(e)}")

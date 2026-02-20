@@ -10,14 +10,15 @@
 
 | # | 파일 경로 | 줄 수 | Lv | 상태 | 비고 |
 |---|----------|------:|:--:|:----:|------|
-| 1 | `backend/routers/knowledge/labels_handlers.py` | 748 | Lv1 | 조사 대기 | 연관 500줄+ 파일 없음. 트리 API + CRUD + 추천 핸들러 밀집 |
+| 1 | ~~`backend/routers/knowledge/labels_handlers.py`~~ | ~~748~~ | Lv1 | **해소** | Phase 18-0에서 3파일 분리 완료 |
+| 2 | `web/public/css/admin/admin-groups.css` | 805 | Lv2 | 조사 대기 | Phase 18-1에서 613→805줄 증가. `keyword-group-crud.js`(527줄) 동일 페이지 |
 
 ## 500줄 초과 — 모니터링 대상
 
 | # | 파일 경로 | 줄 수 | 잠재 Lv | 등록일 | 비고 |
 |---|----------|------:|:------:|:------:|------|
 | 1 | `backend/services/system/statistics_service.py` | 699 | Lv1 | 2026-02-21 | **700줄 1줄 차**. 증가 즉시 경고선 |
-| 2 | `web/public/css/admin/admin-groups.css` | 613 | Lv2 후보 | 2026-02-21 | `keyword-group-crud.js`(527줄)와 동일 페이지 로드 |
+| 2 | `web/public/css/admin/admin-groups.css` | ~~613~~ **805** | **Lv2 확정** | 2026-02-21 | 700줄 돌파 → 700줄 초과 섹션에 등록 |
 | 3 | `web/public/css/reason.css` | 607 | Lv2 후보 | 2026-02-21 | `reason-sections.css`(597줄)와 동일 페이지, 합산 1,204줄 |
 | 4 | `web/public/css/reason-sections.css` | 597 | Lv2 후보 | 2026-02-21 | #3과 쌍 |
 | 5 | `backend/routers/reasoning/stream_executor.py` | 588 | Lv1 | 2026-02-21 | `reason_helpers.py`(484줄) 근접 감시 |
@@ -30,13 +31,13 @@
 | 페이지 | 관련 파일 | 합산 줄 수 | 비고 |
 |--------|----------|----------:|------|
 | `reason.html` | `reason.css`(607) + `reason-sections.css`(597) | **1,204** | 한쪽 700줄 돌파 시 Lv2 확정 |
-| `admin/groups.html` | `admin-groups.css`(613) + `keyword-group-crud.js`(527) | **1,140** | 한쪽 700줄 돌파 시 Lv2 확정 |
+| `admin/groups.html` | `admin-groups.css`(**805**) + `keyword-group-crud.js`(527) | **1,332** | **Lv2 확정** — CSS 700줄 돌파 |
 
 ## 해소 이력
 
 | # | 원본 파일 (줄 수) | → 결과 파일 (줄 수, 관계) | 수행 Phase | 해소일 |
 |---|-------------------|-------------------------|-----------|:------:|
-| - | *(아직 없음)* | - | - | - |
+| 1 | `labels_handlers.py` (748줄) | `labels_crud.py`(396줄, 독립) + `labels_tree.py`(151줄, 독립) + `labels_suggest.py`(227줄, 참조:labels_tree) | Phase 18-0 | 2026-02-21 |
 
 ※ 관계: `독립` = 단독 수정 가능, `참조:파일명` = 수정 시 함께 확인 필요
 ※ Lv2 ADR: 수행 Phase의 plan.md 참조
@@ -56,6 +57,8 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-02-21 | Phase 18-1 완료: admin-groups.css 613→805줄 (Lv2 확정), labels_crud.py 396→575줄 (모니터링) |
+| 2026-02-21 | Phase 18-0 완료: labels_handlers.py(748줄) → 3파일 분리 해소. 테스트 168 passed |
 | 2026-02-21 | 해소 이력 섹션 + [재발] 태그 규칙 추가. 규정 v1.1 적용 |
 | 2026-02-21 | Level 분류 + 잠재 Lv 분석 + 페이지 단위 핫스팟 추가. 규정 v1.0 적용 |
 | 2026-02-21 | 초기 생성. 전체 스캔 (700줄+ 1건, 500줄+ 8건) |

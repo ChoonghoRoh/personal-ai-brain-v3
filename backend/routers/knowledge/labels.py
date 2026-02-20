@@ -7,8 +7,9 @@ from pydantic import BaseModel, field_serializer
 
 from backend.models.database import get_db
 
-# --- 핸들러 import (labels_handlers.py) ---
-from backend.routers.knowledge.labels_handlers import (
+# --- 핸들러 import ---
+# 라벨 CRUD + 키워드 그룹 + 청크-라벨 연결
+from backend.routers.knowledge.labels_crud import (
     handle_create_label,
     handle_list_labels,
     handle_get_label,
@@ -17,7 +18,6 @@ from backend.routers.knowledge.labels_handlers import (
     handle_list_keyword_groups,
     handle_get_keyword_group,
     handle_create_keyword_group,
-    handle_suggest_keywords,
     handle_update_keyword_group,
     handle_get_group_impact,
     handle_delete_keyword_group,
@@ -27,12 +27,19 @@ from backend.routers.knowledge.labels_handlers import (
     handle_add_label_to_chunk,
     handle_remove_label_from_chunk,
     handle_get_chunk_labels,
-    # Phase 17-8: 트리 + 이동 + AI 추천
+    handle_get_related_keywords,
+)
+# Phase 17-8: 트리 조회 + 노드 이동 + Breadcrumb
+from backend.routers.knowledge.labels_tree import (
     handle_get_label_tree,
     handle_get_group_tree,
     handle_move_label,
     handle_get_breadcrumb,
+)
+# Phase 17-8: AI 추천 (LLM 기반)
+from backend.routers.knowledge.labels_suggest import (
     handle_suggest_parent,
+    handle_suggest_keywords,
 )
 
 router = APIRouter(prefix="/api/labels", tags=["Labels"])
@@ -212,6 +219,17 @@ async def delete_keyword_group(group_id: int, db: Session = Depends(get_db)):
 async def list_group_keywords(group_id: int, db: Session = Depends(get_db)):
     """그룹 내 키워드 목록 조회"""
     return await handle_list_group_keywords(group_id, db)
+
+
+@router.get("/groups/{group_id}/related-keywords")
+async def get_related_keywords(
+    group_id: int,
+    q: Optional[str] = None,
+    limit: int = 20,
+    db: Session = Depends(get_db),
+):
+    """그룹 연관 키워드 조회 (ILIKE + Qdrant 유사도)"""
+    return await handle_get_related_keywords(group_id, q, limit, db)
 
 
 @router.post("/groups/{group_id}/keywords")
