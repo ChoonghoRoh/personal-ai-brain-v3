@@ -298,6 +298,70 @@ docs/phases/
 
 ---
 
+## 9. 컨텍스트 복구 프로토콜
+
+### 9.1 개요
+
+컨텍스트 압축, 세션 중단, 토큰 초과 등으로 작업이 중단된 후 복구하는 경우의 **필수 절차**를 정의한다.
+이 프로토콜을 건너뛰고 "이전 요약을 바탕으로 바로 작업 재개"하는 것은 **금지**한다.
+
+### 9.2 복구 절차
+
+```
+컨텍스트 복구 시점 (압축 발생 / 세션 재개 / /clear 후)
+  │
+  ▼
+[1] SSOT 리로드 ← FRESH-1 (0-entrypoint.md 읽기)
+  │
+  ▼
+[2] Phase Chain 파일 확인 (phase-chain-{name}.md)
+  │   → current_index, status 확인
+  │
+  ▼
+[3] 현재 Phase status.md 읽기 ← ENTRY-1
+  │   → current_state, task_progress, team_name 확인
+  │
+  ▼
+[4] 팀 상태 확인
+  │   ├── team_name 존재 → 팀 config 읽기, idle 팀원 확인
+  │   └── team_name null → 새 팀 생성 필수 (HR-1: 팀 없이 코드 수정 금지)
+  │
+  ▼
+[5] 미완료 Task 식별
+  │   → task_progress에서 status != "DONE" 항목 확인
+  │   → 해당 Task의 task-X-Y-N.md 읽기
+  │
+  ▼
+[6] 업무 재분배
+  │   ├── 기존 팀원 idle 상태 → SendMessage로 작업 재개 지시
+  │   ├── 기존 팀원 없음 → 새 팀원 스폰 + Task 할당
+  │   └── Task 미할당 → TaskUpdate(owner) 설정
+  │
+  ▼
+[7] 작업 재개 (BUILDING 상태부터)
+```
+
+### 9.3 복구 시 금지 사항
+
+| 금지 항목 | 이유 |
+|----------|------|
+| SSOT 리로드 없이 작업 재개 | 규칙 변경·버전 불일치 감지 불가 |
+| 팀 없이 Team Lead가 직접 코드 수정 | HR-1 위반. "빠르게 마무리"는 정당한 사유가 아님 |
+| 산출물(tasks/, todo-list) 생략 | HR-2 위반. 중단 복구 시에도 산출물 의무 동일 |
+| 이전 세션 요약만 보고 상태 추정 | status.md가 단일 진입점 (ENTRY-1). 요약은 참고일 뿐 |
+
+### 9.4 복구 판정 기준
+
+| 상황 | 처리 |
+|------|------|
+| current_state = DONE | 다음 Phase 진행 (Chain이면 current_index 확인) |
+| current_state = BUILDING, task 일부 DONE | 미완료 Task만 재할당 |
+| current_state = PLANNING/PLAN_REVIEW | planner 재스폰 후 계획 재수립 |
+| team_name 존재하나 팀원 응답 없음 | TeamDelete → 새 팀 생성 |
+| tasks/ 문서 미생성 상태 | 산출물 먼저 생성 후 BUILDING 진입 |
+
+---
+
 **문서 관리**:
 - 버전: 6.0-renewal-4th (4th iteration)
 - 최종 수정: 2026-02-21
