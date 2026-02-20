@@ -19,7 +19,7 @@ gate_results:
   G3_test_gate: "PASS (import OK, 회귀 26/26)"
   G4_final_gate: PASS
 task_progress:
-  17-7-1: { status: "DONE", domain: "[FE]", owner: "leader" }
+  17-7-1: { status: "DONE", domain: "[FE]", owner: "leader", desc: "대시보드 6단 레이아웃 전면 재구성 + CSS/JS 교체 + API 병렬 호출 + 삭제 정리" }
 error_log: []
 last_updated: "2026-02-19T13:30:00Z"
 ---

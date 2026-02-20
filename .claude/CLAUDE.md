@@ -45,3 +45,14 @@
 - `master-plan.md`, `phase-chain-*.md` → **`docs/phases/` 루트** (하위 폴더 생성 금지)
 - `status.md`, `plan.md`, `todo-list.md`, `tasks/` → **`docs/phases/phase-{N}-{M}/` 하위**
 - 상세: [3-workflow.md §8.7](docs/SSOT/renewal/iterations/4th/3-workflow.md#87-phase-문서-디렉토리-구조)
+
+## HR-5: 코드 유지관리 — 리팩토링 규정 (REFACTOR-1~3)
+
+- **Phase X-Y 완료 시**: 코드 스캔 → 500줄 초과 파일을 레지스트리에 **등록**
+- **Master Plan 작성 시**: 레지스트리 읽기 → 700줄 초과 시 **Level 분류 후 리팩토링 편성**
+  - **Lv1** (독립 분리 가능): Master Plan 내 선행 sub-phase
+  - **Lv2** (연관 파일 밀접): `phase-X-refactoring` 별도 Phase + git branch 분리 + 별도 팀
+- **초기 개발 시에도 적용**: 신규 파일 500줄 초과 사전 방지, G2에서 검출
+- **[예외]**: 영향도 조사 실시 + 분리 불가 입증 + 사용자 승인 3요건 필수
+- **규정 상세**: [docs/refactoring/refactoring-rules.md](docs/refactoring/refactoring-rules.md)
+- **워크플로우**: [3-workflow.md §10](docs/SSOT/renewal/iterations/4th/3-workflow.md#10-코드-유지관리-리팩토링)

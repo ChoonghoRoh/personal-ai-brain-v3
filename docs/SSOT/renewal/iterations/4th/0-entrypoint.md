@@ -218,6 +218,7 @@ Phase 실행 중 (PLANNING~E2E_REPORT)
 | **FRESH-5** | 장기 세션 중 주기적 확인 | Phase가 3개 이상의 Task를 처리한 경우 SSOT 버전 재확인 권장 |
 | **FRESH-6** | 팀원 역할별 로딩 | 각 팀원은 스폰 시 해당 **ROLES/*.md** 1개만 로딩 (본 4th 세트 내) |
 | **FRESH-7** | 컨텍스트 복구 시 SSOT 리로드 필수 | 컨텍스트 압축·세션 중단 후 복구 시, 작업 재개 전 반드시 SSOT 리로드 + status.md 확인 + 팀 재구성. [3-workflow.md §9](3-workflow.md#9-컨텍스트-복구-프로토콜) 참조. **팀 없이 코드 수정 절대 금지** |
+| **FRESH-8** | 리팩토링 레지스트리 관리 | ① Phase X-Y 완료(DONE) 시 코드 스캔→500줄 초과 파일을 레지스트리에 등록. ② 새 Master Plan 작성 시 레지스트리 읽기→700줄 초과 있으면 리팩토링 sub-phase 자동 편성. [3-workflow.md §10](3-workflow.md#10-코드-유지관리-리팩토링) 참조 |
 
 **로딩 순서 (Team Lead)**:
 ```

@@ -243,15 +243,16 @@ created_at: "2026-02-16T..."
 [1] Chain 파일 생성 (phase-chain-{name}.md)
 [2] Phase[current_index] Cold Start: SSOT 리로드 → TeamCreate + 팀원 스폰 → PLANNING → … → DONE
 [3] Phase DONE → TEAM_SHUTDOWN + TeamDelete → Chain 파일 current_index += 1 → 완료 리포트 출력
-[4] /clear 실행 (토큰 최적화, Chain 파일은 디스크에 유지)
-[5] current_index < len(phases)? → 다음 Phase Cold Start(Step 2), else Chain 완료
+[4] 리팩토링 레지스트리 갱신 ← REFACTOR-1 (500줄 초과 파일 스캔 → 등록만, 계획 삽입 아님)
+[5] /clear 실행 (토큰 최적화, Chain 파일은 디스크에 유지)
+[6] current_index < len(phases)? → 다음 Phase Cold Start(Step 2), else Chain 완료
 ```
 
 ### 8.4 `/clear` 후 컨텍스트 복구
 
-1. Chain 파일 읽기  
-2. current_index 확인  
-3. current_index < len(phases)? → 해당 Phase의 status.md 확인 → DONE 아니면 Warm Start, DONE이면 current_index += 1 후 다음 Phase  
+1. Chain 파일 읽기
+2. current_index 확인
+3. current_index < len(phases)? → 해당 Phase의 status.md 확인 → DONE 아니면 Warm Start, DONE이면 current_index += 1 후 다음 Phase
 4. SSOT 리로드(FRESH-1) 후 Phase Cold Start
 
 ### 8.5 Chain 중단·재개
@@ -359,6 +360,65 @@ docs/phases/
 | current_state = PLANNING/PLAN_REVIEW | planner 재스폰 후 계획 재수립 |
 | team_name 존재하나 팀원 응답 없음 | TeamDelete → 새 팀 생성 |
 | tasks/ 문서 미생성 상태 | 산출물 먼저 생성 후 BUILDING 진입 |
+
+---
+
+## 10. 코드 유지관리 (리팩토링)
+
+**상세 규정**: [docs/refactoring/refactoring-rules.md](../../../../docs/refactoring/refactoring-rules.md)
+**레지스트리**: [docs/refactoring/refactoring-registry.md](../../../../docs/refactoring/refactoring-registry.md)
+
+### 10.1 개요
+
+단일 파일의 코드 줄 수가 과도하게 증가하면 가독성·유지보수성이 저하된다.
+아래 규칙을 **초기 개발·Phase 진행·유지보수** 모든 단계에서 적용한다.
+
+### 10.2 임계값
+
+| 기준 | 줄 수 | 의미 |
+|------|------:|------|
+| 관심선 | **500줄** | 레지스트리 등록, 모니터링 |
+| 경고선 | **700줄** | Level 분류 + 리팩토링 검토 |
+| 위험선 | **1000줄** | 즉시 리팩토링 (다음 Master Plan 최우선) |
+
+### 10.3 Level 분류
+
+| Level | 조건 | 판별 기준 | 편성 |
+|:-----:|------|----------|------|
+| **Lv1** | 700줄 초과, 독립 분리 가능 | 연관 파일 중 500줄 초과 0개 또는 단방향만 | 다음 Master Plan 내 선행 sub-phase |
+| **Lv2** | 700줄 초과, 연관 파일과 양방향 밀접 | 연관 파일 중 500줄 초과 1개+ 양방향 참조 | `phase-X-refactoring` 별도 Phase |
+
+### 10.4 실행 규칙 (REFACTOR-1~3)
+
+| 규칙 | 시점 | 조치 |
+|------|------|------|
+| **REFACTOR-1** | Phase X-Y 완료(DONE) | 코드 스캔 → 500줄 초과 파일 레지스트리 **등록만** (§8.3 Step [4]) |
+| **REFACTOR-2** | Master Plan 작성 | 레지스트리 읽기 → 700줄 초과 시 Level별 리팩토링 편성 |
+| **REFACTOR-3** | PLANNING/BUILDING/G2 | 신규 코드 500줄 초과 **사전 방지** |
+
+### 10.5 phase-X-refactoring 운영 (Lv2)
+
+| 항목 | 규칙 |
+|------|------|
+| 명칭 | `phase-X-refactoring` (예: phase-19-refactoring) |
+| git branch | main에서 분기, sub-phase 단위로 main merge |
+| 팀 구성 | 기능 개발 팀과 **별도 팀** |
+| 동시 수정 금지 | 리팩토링 대상 파일을 기능 branch에서 수정 금지 |
+| 우선순위 | 대상 파일을 기능 Phase에서 수정 필요 → **리팩토링 먼저**. 무관 → 기능 먼저 가능 |
+| 선행 절차 | 영향도 조사 → 아키텍처 검토 → Plan → 사용자 승인 → 실행 |
+
+### 10.6 [예외] 확정 — 3요건 필수
+
+| # | 요건 |
+|---|------|
+| 1 | 영향도 조사 **실시** |
+| 2 | 분리 시도 또는 검토에서 **순환 의존/응집도 파괴 입증** |
+| 3 | 사용자 **승인** |
+
+### 10.7 점검 프로토콜 — 2단계
+
+**단계 1**: Phase X-Y 완료 → 코드 스캔 → 레지스트리 등록·갱신만 (계획 삽입 안 함)
+**단계 2**: Master Plan 작성 → 레지스트리 읽기 → Lv1은 선행 sub-phase, Lv2는 별도 phase-X-refactoring 편성
 
 ---
 
