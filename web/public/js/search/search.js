@@ -76,6 +76,68 @@ function highlightText(text, query) {
 }
 
 /**
+ * 검색 모드 배지 HTML 생성
+ * @param {string} mode - 검색 모드 (semantic|keyword|hybrid)
+ * @returns {string} 배지 HTML
+ */
+function buildModeBadge(mode) {
+  var config = {
+    semantic: { cls: "badge-semantic", label: "의미" },
+    keyword:  { cls: "badge-keyword",  label: "키워드" },
+    hybrid:   { cls: "badge-hybrid",   label: "하이브리드" },
+  };
+  var c = config[mode] || config.hybrid;
+  return '<span class="result-badge ' + c.cls + '">' + c.label + '</span>';
+}
+
+/**
+ * 점수 의미 배지 HTML 생성
+ * @param {number} score - 유사도 점수 (0~1)
+ * @returns {string} 배지 HTML
+ */
+function buildScoreBadge(score) {
+  var label, cls;
+  if (score >= 0.8) { label = "매우 관련"; cls = "score-high"; }
+  else if (score >= 0.6) { label = "관련"; cls = "score-mid"; }
+  else if (score >= 0.4) { label = "참고"; cls = "score-low"; }
+  else { label = "낮음"; cls = "score-none"; }
+  var pct = (score * 100).toFixed(1);
+  return '<span class="result-score ' + cls + '">' + label + ' ' + pct + '%</span>';
+}
+
+/**
+ * 점수 프로그레스 바 HTML 생성
+ * @param {number} score - 유사도 점수 (0~1)
+ * @returns {string} 프로그레스 바 HTML
+ */
+function buildScoreBar(score) {
+  var pct = Math.min(Math.round(score * 100), 100);
+  var cls;
+  if (score >= 0.8) cls = "bar-high";
+  else if (score >= 0.6) cls = "bar-mid";
+  else if (score >= 0.4) cls = "bar-low";
+  else cls = "bar-none";
+  return '<div class="score-bar"><div class="score-bar-fill ' + cls + '" style="width:' + pct + '%"></div></div>';
+}
+
+/**
+ * 문서 status 배지 HTML 생성
+ * @param {string|undefined} status - 문서 상태 (approved|draft|rejected)
+ * @returns {string} 배지 HTML (상태 없으면 빈 문자열)
+ */
+function buildStatusBadge(status) {
+  if (!status) return "";
+  var config = {
+    approved: { cls: "status-approved", label: "승인" },
+    draft:    { cls: "status-draft",    label: "초안" },
+    rejected: { cls: "status-rejected", label: "거절" },
+  };
+  var c = config[status];
+  if (!c) return "";
+  return '<span class="result-badge ' + c.cls + '">' + c.label + '</span>';
+}
+
+/**
  * 추천 문서 로드 (전체 목록 fetch 후 클라이언트사이드 필터링)
  */
 async function loadRecommended() {
@@ -247,15 +309,34 @@ async function search() {
       resultsDiv.innerHTML = '<div class="no-results">검색 결과가 없습니다.</div>';
     } else {
       const resultsHtml = results
-        .map((result) => {
-          const highlightedSnippet = highlightText(result.snippet || result.content || "", query);
+        .map((result, idx) => {
+          // BE highlighted_snippet 우선 사용 (이미 <mark> 태그 포함, sanitized)
+          const hasHighlighted = result.highlighted_snippet;
+          const snippetHtml = hasHighlighted
+            ? result.highlighted_snippet
+            : highlightText(result.snippet || result.content || "", query);
+          const fullContentHtml = highlightText(result.content || "", query);
+          const showToggle = (result.content || "").length > 300;
+          const score = result.score || 0;
+          const modeBadge = buildModeBadge(currentSearchMode);
+          const scoreBadge = buildScoreBadge(score);
+          const scoreBar = buildScoreBar(score);
+          const statusBadge = buildStatusBadge(result.status);
           return `
                     <div class="result-item" onclick="openDocument('${result.file.replace(/'/g, "\\'")}')">
+                        <div class="result-badges">
+                            ${modeBadge}${statusBadge}
+                        </div>
                         <div class="result-header">
                             <div class="result-file">${escapeHtml(result.file || "Unknown")}</div>
-                            <div class="result-score">유사도: ${(result.score * 100).toFixed(1)}%</div>
+                            <div class="result-score-group">
+                                ${scoreBadge}
+                            </div>
                         </div>
-                        <div class="result-snippet">${highlightedSnippet}</div>
+                        ${scoreBar}
+                        <div class="result-snippet" id="snippet-${idx}">${snippetHtml}</div>
+                        ${showToggle ? `<div class="result-full-content" id="full-${idx}" style="display:none;">${fullContentHtml}</div>
+                        <button class="snippet-toggle-btn" data-idx="${idx}" onclick="event.stopPropagation(); toggleFullContent(${idx})">전체 보기</button>` : ''}
                     </div>
                 `;
         })
@@ -268,6 +349,101 @@ async function search() {
   } finally {
     searchButton.disabled = false;
     searchButton.textContent = "검색";
+  }
+}
+
+/**
+ * snippet/전체 보기 토글
+ * @param {number} idx - 결과 인덱스
+ */
+function toggleFullContent(idx) {
+  var snippetEl = document.getElementById("snippet-" + idx);
+  var fullEl = document.getElementById("full-" + idx);
+  var btn = document.querySelector('.snippet-toggle-btn[data-idx="' + idx + '"]');
+  if (!snippetEl || !fullEl || !btn) return;
+
+  if (fullEl.style.display === "none") {
+    snippetEl.style.display = "none";
+    fullEl.style.display = "block";
+    btn.textContent = "간략히 보기";
+  } else {
+    snippetEl.style.display = "block";
+    fullEl.style.display = "none";
+    btn.textContent = "전체 보기";
+  }
+}
+
+/**
+ * 관계 추천 패널 로드 (Phase 18-4-5)
+ * @param {number} chunkId - 소스 청크 ID
+ * @param {HTMLElement} container - 추천 패널을 삽입할 컨테이너
+ */
+async function loadRelationRecommendations(chunkId, container) {
+  if (!chunkId || !container) return;
+  container.innerHTML = '<div class="loading">추천 로딩 중...</div>';
+  try {
+    var url = "/api/relations/recommendations?chunk_id=" + chunkId + "&top_k=5&cross_document_only=true";
+    var resp = await fetch(url);
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    var data = await resp.json();
+    var recs = data.recommendations || [];
+    if (recs.length === 0) {
+      container.innerHTML = '<div class="no-results">추천 관계가 없습니다.</div>';
+      return;
+    }
+    var typeIcons = { similar: "~", prerequisite: "->", extends: "+" };
+    var html = recs.map(function (rec) {
+      var icon = typeIcons[rec.suggested_type] || "~";
+      var simPct = (rec.similarity * 100).toFixed(1);
+      var relatedTag = rec.already_related ? '<span class="rec-tag rec-tag-exists">연결됨</span>' : '';
+      return '<div class="rec-relation-card">' +
+        '<div class="rec-relation-header">' +
+          '<span class="rec-type-icon" title="' + escapeHtml(rec.suggested_type) + '">[' + icon + ']</span>' +
+          '<span class="rec-doc-name">' + escapeHtml(rec.document_name) + '</span>' +
+          relatedTag +
+        '</div>' +
+        '<div class="rec-sim-bar"><div class="rec-sim-fill" style="width:' + simPct + '%"></div><span>' + simPct + '%</span></div>' +
+        '<div class="rec-relation-snippet">' + escapeHtml(rec.content_snippet) + '</div>' +
+        (!rec.already_related ? '<button class="rec-add-btn" onclick="event.stopPropagation(); addRelation(' + data.source_chunk_id + ',' + rec.chunk_id + ',\'' + escapeHtml(rec.suggested_type) + '\',' + rec.similarity + ', this)">관계 추가</button>' : '') +
+      '</div>';
+    }).join("");
+    container.innerHTML = html;
+  } catch (err) {
+    console.error("관계 추천 로드 오류:", err);
+    container.innerHTML = '<div class="no-results">추천 로드 실패</div>';
+  }
+}
+
+/**
+ * 관계 추가 (POST /api/relations)
+ */
+async function addRelation(sourceChunkId, targetChunkId, relationType, score, btnEl) {
+  if (btnEl) btnEl.disabled = true;
+  try {
+    var resp = await fetch("/api/relations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        source_chunk_id: sourceChunkId,
+        target_chunk_id: targetChunkId,
+        relation_type: relationType,
+        confidence: score,
+      }),
+    });
+    if (!resp.ok) {
+      var errData = await resp.json().catch(function () { return {}; });
+      throw new Error(errData.detail || "HTTP " + resp.status);
+    }
+    if (btnEl) {
+      btnEl.textContent = "추가됨";
+      btnEl.classList.add("rec-added");
+    }
+  } catch (err) {
+    console.error("관계 추가 실패:", err);
+    if (btnEl) {
+      btnEl.disabled = false;
+      btnEl.textContent = "실패 - 재시도";
+    }
   }
 }
 

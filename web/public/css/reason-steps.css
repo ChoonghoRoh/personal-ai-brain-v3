@@ -1,0 +1,191 @@
+/* reason-steps.css — Step UI + 기존 진행 인디케이터 + 로딩/ETA */
+
+/* Step UI 컨테이너 */
+.reason-steps-ui { margin-bottom: 20px; display: none; }
+
+.steps-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 16px 10px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.step-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+.step-indicator-icon { font-size: 12px; position: absolute; top: -16px; }
+.step-indicator-num {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: #e5e7eb; color: #9ca3af;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: 15px; transition: all 0.3s ease;
+}
+.step-indicator-check {
+  display: none; width: 36px; height: 36px; border-radius: 50%;
+  background: #10b981; color: #fff;
+  align-items: center; justify-content: center;
+  font-weight: 700; font-size: 18px;
+}
+.step-indicator-label {
+  font-size: 11px; color: #9ca3af; font-weight: 500;
+  text-align: center; max-width: 80px; transition: all 0.3s ease;
+}
+
+.step-connector {
+  width: 40px; height: 3px; background: #e5e7eb;
+  margin: 0 6px; transition: background 0.3s ease; margin-bottom: 18px;
+}
+
+/* Step indicator states */
+.step-indicator.pending .step-indicator-num { background: #e5e7eb; color: #9ca3af; }
+.step-indicator.active .step-indicator-num {
+  background: var(--badge-bg, #2563eb); color: #fff;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+  animation: pulse 1.5s infinite;
+}
+.step-indicator.active .step-indicator-label { color: var(--text-accent, #2563eb); font-weight: 600; }
+.step-indicator.completed .step-indicator-num { display: none; }
+.step-indicator.completed .step-indicator-check { display: flex; }
+.step-indicator.completed .step-indicator-label { color: #10b981; }
+.step-connector.active { background: var(--badge-bg, #2563eb); }
+.step-connector.completed { background: #10b981; }
+
+/* Step panels */
+.steps-panels { position: relative; }
+.step-panel {
+  padding: 16px; background: var(--bg-secondary);
+  border: 1px solid var(--border-color); border-radius: 8px;
+}
+.step-panel-body { min-height: 40px; }
+
+/* Step 1: docs list */
+.step-docs-list { display: flex; flex-direction: column; gap: 6px; }
+.step1-doc-item {
+  padding: 6px 10px; background: var(--bg-primary); border-radius: 4px;
+  border-left: 3px solid var(--text-accent); font-size: 13px; color: var(--text-secondary);
+}
+.step-empty-msg { color: var(--text-muted); font-size: 13px; text-align: center; padding: 10px; margin: 0; }
+
+/* Step 2: progress + preview */
+.step2-progress-wrap { margin-bottom: 12px; }
+.step2-progress-bg { width: 100%; height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; }
+.step2-progress-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--badge-bg, #2563eb), #3b82f6);
+  border-radius: 3px; transition: width 0.3s ease;
+}
+.step2-preview {
+  padding: 12px; background: var(--bg-primary);
+  border: 1px solid var(--border-color); border-radius: 6px; margin-top: 8px;
+}
+.step2-preview-label { font-size: 12px; font-weight: 600; color: var(--text-accent); margin-bottom: 6px; }
+.step2-preview-content {
+  font-size: 13px; color: var(--text-secondary); line-height: 1.6;
+  white-space: pre-wrap; max-height: 200px; overflow-y: auto;
+}
+
+/* Step 3: result slot */
+.step3-result-slot { min-height: 20px; }
+
+/* Step 4: action buttons */
+.step4-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; padding: 8px 0; }
+.step4-action-btn {
+  padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: all 0.2s;
+  border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);
+}
+.step4-action-btn:hover { border-color: var(--text-accent); background: var(--summary-bg); }
+.step4-btn-continue { background: var(--badge-bg); color: #fff; border-color: var(--badge-bg); }
+.step4-btn-continue:hover { background: #1d4ed8; }
+.step4-btn-export { background: var(--export-bg); color: #fff; border-color: var(--export-bg); }
+.step4-btn-export:hover { background: var(--export-hover); }
+.step4-btn-share { background: #0d9488; color: #fff; border-color: #0d9488; }
+.step4-btn-share:hover { background: #0f766e; }
+.step4-btn-save { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+.step4-btn-save:hover { background: #6d28d9; }
+
+/* Step UI responsive */
+@media (max-width: 768px) {
+  .steps-header-bar { flex-wrap: wrap; gap: 8px; padding: 12px 8px; }
+  .step-connector { display: none; }
+  .step-indicator-num, .step-indicator-check { width: 30px; height: 30px; font-size: 13px; }
+  .step-indicator-label { font-size: 10px; max-width: 60px; }
+  .step4-actions { flex-direction: column; }
+  .step4-action-btn { width: 100%; }
+}
+
+/* ---- 기존 5단계 진행 인디케이터 + 로딩 + ETA ---- */
+
+.results-loading { text-align: center; padding: 40px 20px; }
+.results-loading .reasoning-loading-main,
+.reasoning-loading .reasoning-loading-main { font-size: 1rem; margin-bottom: 8px; color: #374151; }
+.results-loading .reasoning-loading-elapsed,
+.reasoning-loading .reasoning-loading-elapsed { font-size: 0.9rem; color: #6b7280; margin: 0; }
+#progress-message { font-size: 16px; color: var(--text-secondary); margin-bottom: 8px; }
+
+.eta-display {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 20px; background: var(--eta-bg); border-radius: 8px;
+  margin-bottom: 24px; font-size: 14px; color: var(--eta-text);
+}
+.eta-icon { font-size: 18px; }
+
+.progress-stages {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0; margin-bottom: 24px; padding: 20px 10px;
+}
+.progress-stage { display: flex; flex-direction: column; align-items: center; gap: 8px; transition: all 0.3s ease; }
+.stage-icon {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: #e5e7eb; color: #9ca3af;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: 16px; transition: all 0.3s ease;
+}
+.stage-label { font-size: 12px; color: #9ca3af; font-weight: 500; text-align: center; max-width: 80px; transition: all 0.3s ease; }
+.progress-stage.pending .stage-icon { background: #e5e7eb; color: #9ca3af; }
+.progress-stage.active .stage-icon {
+  background: #2563eb; color: white;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2); animation: pulse 1.5s infinite;
+}
+.progress-stage.active .stage-label { color: #2563eb; font-weight: 600; }
+.progress-stage.completed .stage-icon { background: #10b981; color: white; }
+.progress-stage.completed .stage-label { color: #10b981; }
+
+.progress-connector {
+  width: 40px; height: 3px; background: #e5e7eb;
+  margin: 0 4px; transition: background 0.3s ease; margin-bottom: 20px;
+}
+.progress-connector.active { background: #2563eb; }
+.progress-connector.completed { background: #10b981; }
+
+.progress-bar-container {
+  width: 100%; height: 8px; background: #e5e7eb;
+  border-radius: 4px; overflow: hidden; margin-bottom: 20px;
+}
+.progress-bar {
+  height: 100%; background: linear-gradient(90deg, #2563eb, #3b82f6);
+  border-radius: 4px; transition: width 0.3s ease;
+}
+.progress-cancelled .progress-bar { background: #ef4444; }
+.progress-cancelled .progress-stage.active .stage-icon { background: #ef4444; box-shadow: none; animation: none; }
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2); }
+  50% { box-shadow: 0 0 0 8px rgba(37, 99, 235, 0.1); }
+}
+
+@media (max-width: 768px) {
+  .progress-stages { flex-wrap: wrap; gap: 8px; }
+  .progress-connector { display: none; }
+  .stage-icon { width: 32px; height: 32px; font-size: 14px; }
+  .stage-label { font-size: 10px; max-width: 60px; }
+}

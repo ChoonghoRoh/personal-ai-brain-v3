@@ -136,9 +136,9 @@ class SearchService:
         """Qdrant 필터 생성"""
         if not filters:
             return None
-        
+
         conditions = []
-        
+
         # 파일 경로 필터
         if filters.get('file_path'):
             conditions.append(
@@ -147,7 +147,7 @@ class SearchService:
                     match=MatchValue(value=filters['file_path'])
                 )
             )
-        
+
         # 청크 인덱스 필터
         if filters.get('chunk_index') is not None:
             conditions.append(
@@ -156,10 +156,19 @@ class SearchService:
                     match=MatchValue(value=filters['chunk_index'])
                 )
             )
-        
+
+        # status 필터 (Phase 18-4: approved/draft/rejected)
+        if filters.get('status'):
+            conditions.append(
+                FieldCondition(
+                    key="status",
+                    match=MatchValue(value=filters['status'])
+                )
+            )
+
         if not conditions:
             return None
-        
+
         return Filter(must=conditions)
     
     def search(

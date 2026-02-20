@@ -1,5 +1,7 @@
 """Hybrid Search 서비스 — 키워드 + 의미 검색, RRF 결합 (Phase 9-3-3)"""
+import html
 import logging
+import re
 from typing import List, Dict, Optional, Any
 
 from sqlalchemy.orm import Session
@@ -34,6 +36,7 @@ class HybridSearchService:
         query: str,
         top_k: int = 10,
         filters: Optional[Dict[str, Any]] = None,
+        status: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """의미 검색 (기존 Qdrant 검색 래핑).
 
@@ -41,17 +44,22 @@ class HybridSearchService:
             query: 검색 쿼리
             top_k: 반환할 결과 수
             filters: Qdrant 필터 (file_path, chunk_index 등)
+            status: 청크 status 필터 (approved, draft, rejected). None이면 필터 안함
 
         Returns:
             [{"document_id", "content", "score", "chunk_id", "file", "snippet", "chunk_index"}, ...]
         """
         try:
             search_service = get_search_service()
+            # status 필터를 filters dict에 병합
+            merged_filters = dict(filters) if filters else {}
+            if status:
+                merged_filters["status"] = status
             result = search_service.search(
                 query=query,
                 top_k=top_k,
                 offset=0,
-                filters=filters,
+                filters=merged_filters if merged_filters else None,
                 use_cache=True,
             )
             documents = []
@@ -78,6 +86,7 @@ class HybridSearchService:
         top_k: int = 10,
         project_id: Optional[int] = None,
         label_ids: Optional[List[int]] = None,
+        status: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """키워드 검색 (PostgreSQL ILIKE 기반).
 
@@ -87,6 +96,7 @@ class HybridSearchService:
             top_k: 반환할 결과 수
             project_id: 프로젝트 필터 (선택)
             label_ids: 라벨 필터 (선택)
+            status: 청크 status 필터 (approved, draft, rejected). None이면 기존 동작 유지
 
         Returns:
             [{"document_id", "content", "score", "chunk_id", "file", "source": "keyword"}, ...]
@@ -102,9 +112,13 @@ class HybridSearchService:
             q = (
                 db.query(KnowledgeChunk)
                 .join(Document, KnowledgeChunk.document_id == Document.id)
-                .filter(KnowledgeChunk.status.in_(["approved", "draft"]))
                 .filter(KnowledgeChunk.content.isnot(None))
             )
+            # status 필터: 명시적 값이면 해당 값만, None이면 기존 동작(approved+draft)
+            if status:
+                q = q.filter(KnowledgeChunk.status == status)
+            else:
+                q = q.filter(KnowledgeChunk.status.in_(["approved", "draft"]))
             # ILIKE OR 조건 (content + file_path)
             if terms:
                 content_filters = [KnowledgeChunk.content.ilike(f"%{t}%") for t in terms]
@@ -239,6 +253,7 @@ class HybridSearchService:
         filters: Optional[Dict[str, Any]] = None,
         project_id: Optional[int] = None,
         label_ids: Optional[List[int]] = None,
+        status: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """Hybrid 검색: 의미 + 키워드 후 RRF 결합.
 
@@ -251,12 +266,13 @@ class HybridSearchService:
             filters: Qdrant 필터 (semantic 검색에만 적용)
             project_id: 프로젝트 필터 (keyword 검색에 적용)
             label_ids: 라벨 필터 (keyword 검색에 적용)
+            status: 청크 status 필터 (semantic/keyword 양쪽 적용)
 
         Returns:
             RRF로 결합된 결과 리스트 (score 0~1, source="hybrid")
         """
-        sem = self.semantic_search(query, top_k=top_k, filters=filters)
-        kw = self.keyword_search(db, query, top_k=top_k, project_id=project_id, label_ids=label_ids)
+        sem = self.semantic_search(query, top_k=top_k, filters=filters, status=status)
+        kw = self.keyword_search(db, query, top_k=top_k, project_id=project_id, label_ids=label_ids, status=status)
         fused = self.fuse_results(sem, kw, semantic_weight, keyword_weight)
         return fused[:top_k]
 
@@ -270,3 +286,62 @@ def get_hybrid_search_service(
         semantic_weight=semantic_weight,
         keyword_weight=keyword_weight,
     )
+
+
+def create_highlighted_snippet(
+    content: str,
+    query: str,
+    context_chars: int = 100,
+    max_length: int = 300,
+) -> Optional[str]:
+    """검색 쿼리 키워드를 <mark> 태그로 하이라이트한 snippet을 생성.
+
+    Args:
+        content: 원본 텍스트
+        query: 검색 쿼리 (공백으로 분리된 키워드)
+        context_chars: 매칭 위치 앞뒤로 추출할 문자 수
+        max_length: snippet 최대 길이
+
+    Returns:
+        HTML escape 후 <mark> 태그가 적용된 snippet. 매칭이 없으면 None
+    """
+    if not content or not query or not query.strip():
+        return None
+
+    terms = [t.strip() for t in query.strip().split() if t.strip()]
+    if not terms:
+        return None
+
+    content_lower = content.lower()
+
+    # 첫 번째 매칭 위치 찾기
+    first_pos = len(content)
+    for term in terms:
+        pos = content_lower.find(term.lower())
+        if pos != -1 and pos < first_pos:
+            first_pos = pos
+
+    if first_pos == len(content):
+        return None
+
+    # 매칭 위치 기준 +-context_chars 추출
+    start = max(0, first_pos - context_chars)
+    end = min(len(content), first_pos + context_chars + len(terms[0]))
+    # max_length 제한
+    if end - start > max_length:
+        end = start + max_length
+
+    snippet_raw = content[start:end]
+    prefix = "..." if start > 0 else ""
+    suffix = "..." if end < len(content) else ""
+
+    # HTML escape 먼저
+    escaped = html.escape(snippet_raw)
+
+    # 키워드를 <mark> 태그로 래핑 (대소문자 무시)
+    for term in terms:
+        escaped_term = html.escape(term)
+        pattern = re.compile(re.escape(escaped_term), re.IGNORECASE)
+        escaped = pattern.sub(lambda m: f"<mark>{m.group(0)}</mark>", escaped)
+
+    return prefix + escaped + suffix

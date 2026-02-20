@@ -189,6 +189,14 @@ async function loadDocument() {
         </div>
       `;
     }
+
+    // Phase 18-2: Breadcrumb 삽입
+    if (typeof renderKnowledgeBreadcrumb === "function" && data.file_path) {
+      const header = viewer.querySelector(".document-header");
+      if (header) {
+        renderKnowledgeBreadcrumb(data.file_path, header);
+      }
+    }
   } catch (error) {
     console.error("문서 로드 오류:", error);
     document.getElementById("document-viewer").innerHTML = `
@@ -207,7 +215,7 @@ function viewKnowledgeStructure(documentId) {
     console.error("viewKnowledgeStructure: 유효하지 않은 documentId:", documentId);
     return;
   }
-  window.location.href = `/knowledge?document_id=${documentId}`;
+  window.location.href = `/knowledge-studio?document_id=${documentId}`;
 }
 
 // 페이지 로드 시 실행

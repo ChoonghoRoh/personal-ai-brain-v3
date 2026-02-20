@@ -4,7 +4,8 @@
 """
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from typing import Optional
+from sqlalchemy import func
+from typing import Optional, List, Dict, Any
 
 from backend.models.models import (
     KnowledgeChunk, Label, KnowledgeLabel, Document, Project,
@@ -264,3 +265,194 @@ async def handle_extract_keywords(document_id: int, top_n: int, use_llm: bool, d
         "labels_created": len(keyword_to_label_id),
         "chunks_labeled": labeled_count,
     }
+
+
+# ---------------------------------------------------------------------------
+# 폴더 계층 트리 (Phase 18-2)
+# ---------------------------------------------------------------------------
+
+def _build_folder_tree(
+    documents: List[Document],
+    chunk_counts: Dict[int, int],
+) -> Dict[str, Any]:
+    """Document.file_path 목록을 폴더 트리 딕셔너리로 변환한다."""
+    root: Dict[str, Any] = {}
+
+    for doc in documents:
+        path = doc.file_path or doc.file_name or ""
+        parts = [p for p in path.split("/") if p]
+        node = root
+        for part in parts[:-1]:
+            node = node.setdefault(part, {})
+        if parts:
+            file_name = parts[-1]
+            node[file_name] = {
+                "__file__": True,
+                "document_id": doc.id,
+                "chunk_count": chunk_counts.get(doc.id, 0),
+            }
+
+    def _to_tree(name: str, subtree: Dict) -> Dict[str, Any]:
+        if subtree.get("__file__"):
+            return {
+                "name": name,
+                "type": "file",
+                "document_id": subtree["document_id"],
+                "chunk_count": subtree["chunk_count"],
+            }
+        children = []
+        file_count = 0
+        for key, val in sorted(subtree.items()):
+            child = _to_tree(key, val)
+            children.append(child)
+            if child["type"] == "file":
+                file_count += 1
+            else:
+                file_count += child.get("file_count", 0)
+        return {
+            "name": name,
+            "type": "folder",
+            "file_count": file_count,
+            "children": children,
+        }
+
+    return _to_tree("root", root)
+
+
+async def handle_get_folder_tree(
+    project_id: Optional[int],
+    db: Session,
+) -> Dict[str, Any]:
+    """GET /api/knowledge/folder-tree — 프로젝트 폴더 계층 트리 반환."""
+    query = db.query(Document)
+    if project_id is not None:
+        query = query.filter(Document.project_id == project_id)
+    documents = query.all()
+
+    if not documents:
+        return {"name": "root", "type": "folder", "file_count": 0, "children": []}
+
+    doc_ids = [d.id for d in documents]
+    rows = (
+        db.query(KnowledgeChunk.document_id, func.count(KnowledgeChunk.id))
+        .filter(KnowledgeChunk.document_id.in_(doc_ids))
+        .group_by(KnowledgeChunk.document_id)
+        .all()
+    )
+    chunk_counts: Dict[int, int] = {doc_id: cnt for doc_id, cnt in rows}
+
+    return _build_folder_tree(documents, chunk_counts)
+
+
+# ---------------------------------------------------------------------------
+# 통합 지식 트리 (Phase 18-2, Task 18-2-3)
+# ---------------------------------------------------------------------------
+
+def _build_knowledge_tree(
+    documents: List[Document],
+    chunks_by_doc: Dict[int, List[Dict[str, Any]]],
+    include_chunks: bool,
+    max_depth: int,
+) -> Dict[str, Any]:
+    """폴더 트리에 Chunk 레벨까지 포함한 통합 트리를 구성한다."""
+    root: Dict[str, Any] = {}
+
+    for doc in documents:
+        path = doc.file_path or doc.file_name or ""
+        parts = [p for p in path.split("/") if p]
+        node = root
+        for part in parts[:-1]:
+            node = node.setdefault(part, {})
+        if parts:
+            file_entry: Dict[str, Any] = {
+                "__file__": True,
+                "document_id": doc.id,
+                "chunk_count": len(chunks_by_doc.get(doc.id, [])),
+            }
+            if include_chunks:
+                file_entry["chunks"] = chunks_by_doc.get(doc.id, [])
+            node[parts[-1]] = file_entry
+
+    def _to_tree(name: str, subtree: Dict, depth: int) -> Dict[str, Any]:
+        if subtree.get("__file__"):
+            result: Dict[str, Any] = {
+                "name": name,
+                "type": "file",
+                "document_id": subtree["document_id"],
+                "chunk_count": subtree["chunk_count"],
+            }
+            if "chunks" in subtree:
+                result["children"] = [
+                    {"name": c.get("title") or f"Chunk #{c['chunk_index']}",
+                     "type": "chunk", **c}
+                    for c in subtree["chunks"]
+                ]
+            return result
+
+        children = []
+        file_count = 0
+        if depth < max_depth:
+            for key, val in sorted(subtree.items()):
+                child = _to_tree(key, val, depth + 1)
+                children.append(child)
+                if child["type"] == "file":
+                    file_count += 1
+                else:
+                    file_count += child.get("file_count", 0)
+        return {
+            "name": name,
+            "type": "folder",
+            "file_count": file_count,
+            "children": children,
+        }
+
+    return _to_tree("root", root, 0)
+
+
+async def handle_get_knowledge_tree(
+    project_id: Optional[int],
+    include_chunks: bool,
+    max_depth: int,
+    db: Session,
+) -> Dict[str, Any]:
+    """GET /api/knowledge/tree — 통합 지식 트리 반환."""
+    query = db.query(Document)
+    if project_id is not None:
+        query = query.filter(Document.project_id == project_id)
+    documents = query.all()
+
+    if not documents:
+        return {"name": "root", "type": "folder", "file_count": 0, "children": []}
+
+    doc_ids = [d.id for d in documents]
+
+    # Chunk 기본 정보 + label_count 집계
+    chunk_rows = (
+        db.query(
+            KnowledgeChunk.id,
+            KnowledgeChunk.document_id,
+            KnowledgeChunk.chunk_index,
+            KnowledgeChunk.title,
+            KnowledgeChunk.status,
+            func.count(KnowledgeLabel.id).label("label_count"),
+        )
+        .outerjoin(KnowledgeLabel, KnowledgeLabel.chunk_id == KnowledgeChunk.id)
+        .filter(KnowledgeChunk.document_id.in_(doc_ids))
+        .group_by(KnowledgeChunk.id)
+        .order_by(KnowledgeChunk.document_id, KnowledgeChunk.chunk_index)
+        .all()
+    )
+
+    chunks_by_doc: Dict[int, List[Dict[str, Any]]] = {}
+    for row in chunk_rows:
+        chunk_dict = {
+            "chunk_id": row.id,
+            "chunk_index": row.chunk_index,
+            "title": row.title,
+            "status": row.status,
+            "label_count": row.label_count,
+            "relation_count": 0,
+        }
+        chunks_by_doc.setdefault(row.document_id, []).append(chunk_dict)
+
+    return _build_knowledge_tree(documents, chunks_by_doc, include_chunks, max_depth)

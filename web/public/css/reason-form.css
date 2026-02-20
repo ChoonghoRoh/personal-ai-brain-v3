@@ -1,0 +1,351 @@
+/* ========================================
+   reason-form.css — 입력 폼, 모드 선택, form-group
+   Phase 18-3-4: reason.css에서 분리
+   ======================================== */
+
+.reasoning-form {
+  background: var(--bg-primary);
+  padding: 30px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px var(--shadow);
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--input-bg);
+  color: var(--text-primary);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--text-accent);
+}
+
+.form-group textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.form-group-primary textarea {
+  min-height: 120px;
+}
+
+.form-hint {
+  display: block;
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.form-section.form-section-auxiliary {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.form-section-title {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.form-section-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.form-group select[multiple] {
+  min-height: 80px;
+}
+
+.input-fallback {
+  margin-top: 8px;
+  font-size: 13px;
+  padding: 8px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn-cancel {
+  background: #ef4444;
+}
+
+.btn-cancel:hover {
+  background: #dc2626;
+}
+
+/* 모드 예시 패널 */
+.mode-example-panel {
+  margin-top: 20px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.mode-example-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.mode-example-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--badge-bg);
+  color: #fff;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.mode-example-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 14px;
+  flex: 1;
+}
+
+.mode-example-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.mode-example-close:hover {
+  color: var(--error-text);
+}
+
+.mode-example-question {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.mode-example-q-label {
+  font-weight: 700;
+  color: var(--text-accent);
+}
+
+.mode-example-content {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* 예시: 트리 다이어그램 */
+.example-diagram-title {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.example-tree {
+  padding-left: 0;
+}
+
+.tree-node {
+  display: inline-block;
+  padding: 4px 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.tree-root {
+  font-weight: 700;
+  background: var(--badge-bg);
+  color: #fff;
+  border-color: var(--badge-bg);
+}
+
+.tree-leaf {
+  background: var(--summary-bg);
+  border-color: var(--summary-border);
+  color: var(--summary-brief-text);
+}
+
+.tree-children {
+  padding-left: 24px;
+  border-left: 2px solid var(--border-color);
+  margin-left: 12px;
+}
+
+.tree-branch {
+  margin-bottom: 4px;
+}
+
+.example-desc {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* 예시: 리스크 테이블 */
+.example-risk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.example-risk-table th,
+.example-risk-table td {
+  padding: 6px 10px;
+  border: 1px solid var(--border-color);
+  text-align: left;
+}
+
+.example-risk-table th {
+  background: var(--detail-toggle-bg);
+  font-weight: 600;
+}
+
+.risk-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.risk-badge.risk-high {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.risk-badge.risk-medium {
+  background: #fef9c3;
+  color: #92400e;
+}
+
+.risk-badge.risk-low {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+/* 예시: 단계별 추천 */
+.example-step-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.example-step-item:last-child {
+  border-bottom: none;
+}
+
+.example-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--badge-bg);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.example-step-body p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* 예시: 타임라인 */
+.example-timeline {
+  position: relative;
+  padding-left: 20px;
+  border-left: 2px solid var(--border-color);
+  margin-left: 6px;
+}
+
+.example-timeline-item {
+  position: relative;
+  padding-bottom: 12px;
+}
+
+.example-timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+.example-timeline-dot {
+  position: absolute;
+  left: -25px;
+  top: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--badge-bg);
+}
+
+.example-timeline-body p {
+  margin: 2px 0 0;
+  font-size: 12px;
+}
+
+.example-timeline-date {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .form-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+  }
+}

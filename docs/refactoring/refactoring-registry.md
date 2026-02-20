@@ -19,8 +19,8 @@
 |---|----------|------:|:------:|:------:|------|
 | 1 | `backend/services/system/statistics_service.py` | 699 | Lv1 | 2026-02-21 | **700줄 1줄 차**. 증가 즉시 경고선 |
 | 2 | `web/public/css/admin/admin-groups.css` | ~~613~~ **805** | **Lv2 확정** | 2026-02-21 | 700줄 돌파 → 700줄 초과 섹션에 등록 |
-| 3 | `web/public/css/reason.css` | 607 | Lv2 후보 | 2026-02-21 | `reason-sections.css`(597줄)와 동일 페이지, 합산 1,204줄 |
-| 4 | `web/public/css/reason-sections.css` | 597 | Lv2 후보 | 2026-02-21 | #3과 쌍 |
+| 3 | ~~`web/public/css/reason.css`~~ | ~~607~~ | ~~Lv2~~ | **해소** | Phase 18-3 CSS 재구성: 5파일 분리 |
+| 4 | ~~`web/public/css/reason-sections.css`~~ | ~~597~~ | ~~Lv2~~ | **해소** | Phase 18-3 CSS 재구성: 5파일 분리 |
 | 5 | `backend/routers/reasoning/stream_executor.py` | 588 | Lv1 | 2026-02-21 | `reason_helpers.py`(484줄) 근접 감시 |
 | 6 | `backend/routers/automation/automation.py` | 542 | Lv1 | 2026-02-21 | 독립적 |
 | 7 | `web/public/css/admin/settings-common.css` | 534 | Lv1 | 2026-02-21 | 5개 설정 페이지 공유 |
@@ -30,7 +30,7 @@
 
 | 페이지 | 관련 파일 | 합산 줄 수 | 비고 |
 |--------|----------|----------:|------|
-| `reason.html` | `reason.css`(607) + `reason-sections.css`(597) | **1,204** | 한쪽 700줄 돌파 시 Lv2 확정 |
+| ~~`reason.html`~~ | ~~`reason.css`(607) + `reason-sections.css`(597)~~ | ~~**1,204**~~ | **해소** Phase 18-3: 5파일 분리 (base 227 + form 351 + steps 191 + results 170 + actions 432) |
 | `admin/groups.html` | `admin-groups.css`(**805**) + `keyword-group-crud.js`(527) | **1,332** | **Lv2 확정** — CSS 700줄 돌파 |
 
 ## 해소 이력
@@ -38,6 +38,7 @@
 | # | 원본 파일 (줄 수) | → 결과 파일 (줄 수, 관계) | 수행 Phase | 해소일 |
 |---|-------------------|-------------------------|-----------|:------:|
 | 1 | `labels_handlers.py` (748줄) | `labels_crud.py`(396줄, 독립) + `labels_tree.py`(151줄, 독립) + `labels_suggest.py`(227줄, 참조:labels_tree) | Phase 18-0 | 2026-02-21 |
+| 2 | `reason.css`(607줄) + `reason-sections.css`(597줄) | `reason-base.css`(227줄) + `reason-form.css`(351줄) + `reason-steps.css`(191줄) + `reason-results.css`(170줄) + `reason-actions.css`(432줄) | Phase 18-3 | 2026-02-21 |
 
 ※ 관계: `독립` = 단독 수정 가능, `참조:파일명` = 수정 시 함께 확인 필요
 ※ Lv2 ADR: 수행 Phase의 plan.md 참조
@@ -57,6 +58,9 @@
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-02-21 | Phase 18-4 완료: search 관련 파일 500줄 이내 유지 (hybrid_search 347줄, search.js 452줄) |
+| 2026-02-21 | Phase 18-3 완료: reason.css+reason-sections.css 1,204줄 핫스팟 해소 → 5파일 분리 (max 432줄) |
+| 2026-02-21 | Phase 18-2 완료: document_handlers.py 458줄, folder-tree.js 275줄, knowledge-tree.js 326줄 |
 | 2026-02-21 | Phase 18-1 완료: admin-groups.css 613→805줄 (Lv2 확정), labels_crud.py 396→575줄 (모니터링) |
 | 2026-02-21 | Phase 18-0 완료: labels_handlers.py(748줄) → 3파일 분리 해소. 테스트 168 passed |
 | 2026-02-21 | 해소 이력 섹션 + [재발] 태그 규칙 추가. 규정 v1.1 적용 |

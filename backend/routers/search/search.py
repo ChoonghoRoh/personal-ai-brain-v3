@@ -6,7 +6,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from backend.services.search.search_service import get_search_service
-from backend.services.search.hybrid_search import get_hybrid_search_service
+from backend.services.search.hybrid_search import get_hybrid_search_service, create_highlighted_snippet
 from backend.models.database import get_db, SessionLocal
 from backend.models.models import KnowledgeChunk, Document, Project
 
@@ -41,6 +41,7 @@ async def search(
     ),
     project_id: Optional[int] = Query(None, description="프로젝트 필터 (hybrid/keyword 시 적용)"),
     label_ids: Optional[List[int]] = Query(None, description="라벨 필터 (hybrid/keyword 시 적용)"),
+    status: Optional[str] = Query(None, description="청크 status 필터 (approved, draft, rejected)"),
     db: Session = Depends(get_db),
 ) -> Dict:
     """문서 검색 (최적화된 버전).
@@ -64,6 +65,7 @@ async def search(
                 filters=filters,
                 project_id=project_id,
                 label_ids=label_ids,
+                status=status,
             )
         else:
             rows = hybrid_svc.keyword_search(
@@ -72,19 +74,22 @@ async def search(
                 top_k=limit + offset,
                 project_id=project_id,
                 label_ids=label_ids,
+                status=status,
             )
-        # API 응답 형식 통일 (document_id, file, score, content, snippet, chunk_index)
+        # API 응답 형식 통일 (document_id, file, score, content, snippet, chunk_index, highlighted_snippet)
         results = []
         for r in rows[offset : offset + limit]:
             content_preview = (r.get("content") or "")[:200]
             if len(r.get("content") or "") > 200:
                 content_preview += "..."
+            highlighted = create_highlighted_snippet(r.get("content", ""), q.strip())
             results.append({
                 "document_id": r.get("document_id", ""),
                 "file": r.get("file", ""),
                 "score": r.get("score", 0.0),
                 "content": r.get("content", ""),
                 "snippet": r.get("snippet") or content_preview,
+                "highlighted_snippet": highlighted,
                 "chunk_index": r.get("chunk_index", 0),
             })
         return {
@@ -98,6 +103,8 @@ async def search(
     filters = {}
     if file_path:
         filters["file_path"] = file_path
+    if status:
+        filters["status"] = status
     result = service.search(
         query=q.strip(),
         top_k=limit,
@@ -106,6 +113,12 @@ async def search(
         use_cache=use_cache,
         search_mode="semantic",
     )
+    # highlighted_snippet 추가
+    if "results" in result:
+        for r in result["results"]:
+            r["highlighted_snippet"] = create_highlighted_snippet(
+                r.get("content", ""), q.strip()
+            )
     if sort_by == "score" and "results" in result:
         if sort_order.lower() == "asc":
             result["results"].sort(key=lambda x: x.get("score", 0))

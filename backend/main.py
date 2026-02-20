@@ -12,7 +12,7 @@ from backend.routers.search import search, documents
 from backend.routers.system import system, backup, integrity, logs, error_logs, statistics
 from backend.routers.system.backup import legacy_router as backup_legacy_router
 from backend.routers.ai import ai, conversations
-from backend.routers.knowledge import knowledge, labels, relations, approval, suggestions, knowledge_integration, folder_management, graph
+from backend.routers.knowledge import knowledge, labels, relations, relation_recommendations, approval, suggestions, knowledge_integration, folder_management, graph
 from backend.routers.reasoning import reason, reasoning_chain, reasoning_results, recommendations, reason_stream, reason_store, reason_document
 from backend.routers.cognitive import memory, context, learning, personality, metacognition
 from backend.routers.automation import automation, workflow
@@ -247,6 +247,7 @@ app.include_router(documents.router)
 app.include_router(ai.router)
 app.include_router(logs.router)
 app.include_router(labels.router)
+app.include_router(relation_recommendations.router)
 app.include_router(relations.router)
 app.include_router(recommendations.router)
 app.include_router(reason.router)
@@ -306,7 +307,8 @@ _HTML_ROUTES = [
     ("/search", "search.html", "검색"),
     ("/ask", "ask.html", "AI 질의"),
     ("/logs", "logs.html", "로그"),
-    ("/knowledge", "knowledge/knowledge.html", "Knowledge Studio"),
+    ("/knowledge", "knowledge-tree.html", "지식 구조"),
+    ("/knowledge-studio", "knowledge/knowledge.html", "Knowledge Studio"),
     ("/knowledge-detail", "knowledge/knowledge-detail.html", "청크 상세"),
     ("/knowledge-label-matching", "knowledge/knowledge-label-matching.html", "라벨 매칭"),
     ("/knowledge-relation-matching", "knowledge/knowledge-relation-matching.html", "관계 매칭"),

@@ -25,6 +25,8 @@ from backend.routers.knowledge.document_handlers import (
     handle_get_document,
     handle_list_projects,
     handle_extract_keywords,
+    handle_get_folder_tree,
+    handle_get_knowledge_tree,
 )
 
 router = APIRouter(prefix="/api/knowledge", tags=["Knowledge"])
@@ -215,6 +217,28 @@ async def get_document_suggestions(
 ):
     """문서에 대한 카테고리/유사 문서 추천 (Phase 9-3-2)."""
     return await handle_get_document_suggestions(document_id, db)
+
+
+# ========== Phase 18-2: 폴더 계층 트리 API ==========
+
+@router.get("/folder-tree", summary="폴더 계층 트리 조회 (Phase 18-2)")
+async def get_folder_tree(
+    project_id: Optional[int] = Query(None, description="프로젝트 ID (None이면 전체)"),
+    db: Session = Depends(get_db),
+):
+    """프로젝트의 문서를 file_path 기반 폴더 계층 트리로 반환합니다."""
+    return await handle_get_folder_tree(project_id, db)
+
+
+@router.get("/tree", summary="통합 지식 트리 조회 (Phase 18-2)")
+async def get_knowledge_tree(
+    project_id: Optional[int] = Query(None, description="프로젝트 ID (None이면 전체)"),
+    include_chunks: bool = Query(True, description="Chunk 레벨 포함 여부"),
+    max_depth: int = Query(4, ge=1, le=10, description="트리 최대 깊이"),
+    db: Session = Depends(get_db),
+):
+    """폴더 > 문서 > 청크 계층을 포함한 통합 지식 트리를 반환합니다."""
+    return await handle_get_knowledge_tree(project_id, include_chunks, max_depth, db)
 
 
 # ========== Phase 7.7: 문서 카테고리 설정 API ==========

@@ -1,3 +1,59 @@
+/* 시각화 기본 레이아웃 (reason-results.css에서 이동) */
+.mode-viz-container {
+  margin-top: 20px;
+  padding: 20px;
+  background: var(--viz-bg);
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
+}
+
+.mode-viz-title {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  color: var(--text-primary);
+}
+
+.mode-viz-panel {
+  min-height: 60px;
+  max-height: 70vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.viz-fallback,
+.viz-error {
+  color: #64748b;
+  font-size: 14px;
+  margin: 0;
+}
+
+.viz-error {
+  color: var(--error-text, #dc2626);
+}
+
+.viz-retry-btn {
+  margin-top: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  color: var(--text-accent);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.viz-retry-btn:hover {
+  background: var(--bg-tertiary);
+}
+
+.mermaid-viz-wrapper {
+  overflow-x: auto;
+  padding: 16px;
+  background: var(--bg-primary);
+  border-radius: 6px;
+  border: 1px solid var(--border-light);
+}
+
 .mermaid-viz svg {
   max-width: 100%;
   height: auto;
@@ -279,207 +335,4 @@
   }
 }
 
-/* ========================================
-   Phase 10-4-2: 공유 토스트·버튼
-   ======================================== */
-.share-toast {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  z-index: 10000;
-  box-shadow: 0 4px 12px var(--shadow);
-  max-width: 90vw;
-  text-align: center;
-  animation: toast-in 0.3s ease;
-}
-.toast-success {
-  background: #065f46;
-  color: #ecfdf5;
-}
-.toast-error {
-  background: var(--error-bg);
-  color: var(--error-text);
-}
-@keyframes toast-in {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-}
-
-.btn-share {
-  background: #0d9488 !important;
-}
-.btn-share:hover {
-  background: #0f766e !important;
-}
-.btn-save-decision {
-  background: #7c3aed !important;
-}
-.btn-save-decision:hover {
-  background: #6d28d9 !important;
-}
-
-/* Phase 15-3: 문서 컨텍스트 뱃지 */
-.document-context-badge { margin: 8px 0 16px; }
-.doc-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  border-radius: 8px;
-  font-size: 14px;
-  color: #1e40af;
-}
-.doc-badge-icon { font-size: 18px; }
-.doc-badge-close {
-  background: none; border: none;
-  font-size: 18px; color: #6b7280;
-  cursor: pointer; padding: 0 2px; line-height: 1;
-}
-.doc-badge-close:hover { color: #dc2626; }
-
-/* ========================================
-   Phase 10-4-3: 의사결정 저장 모달
-   ======================================== */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9000;
-}
-.modal-content {
-  background: var(--card-bg);
-  color: var(--text-primary);
-  border-radius: 12px;
-  padding: 28px;
-  width: 90%;
-  max-width: 480px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-}
-.modal-content h3 {
-  margin: 0 0 18px 0;
-  font-size: 1.125rem;
-}
-.modal-content .form-group {
-  margin-bottom: 14px;
-}
-.modal-content label {
-  display: block;
-  margin-bottom: 4px;
-  font-weight: 600;
-  font-size: 0.875rem;
-}
-.modal-content input[type="text"],
-.modal-content textarea {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  font-size: 0.875rem;
-  background: var(--input-bg);
-  color: var(--text-primary);
-  box-sizing: border-box;
-}
-.modal-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  margin-top: 18px;
-}
-
-/* 11-5-5: 다크 모드 일관성 — 모달·공유 영역 */
-[data-theme="dark"] .modal-content {
-  border: 1px solid var(--border-color);
-}
-[data-theme="dark"] .viz-retry-btn {
-  color: var(--text-accent);
-  background: var(--input-bg);
-  border-color: var(--border-color);
-}
-
-/* ========================================
-   Phase 10-4-3: 의사결정 문서 목록
-   ======================================== */
-.decisions-list-section {
-  margin-top: 24px;
-  padding: 20px;
-  background: var(--card-bg);
-  border-radius: 12px;
-  box-shadow: 0 1px 4px var(--shadow);
-}
-.decisions-list-section h3 {
-  margin: 0 0 14px 0;
-  font-size: 1rem;
-  color: var(--text-primary);
-}
-.decision-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px;
-  border-bottom: 1px solid var(--border-color);
-  gap: 12px;
-}
-.decision-item:last-child {
-  border-bottom: none;
-}
-.decision-info {
-  flex: 1;
-  min-width: 0;
-}
-.decision-info strong {
-  display: block;
-  color: var(--text-primary);
-  font-size: 0.9rem;
-}
-.decision-summary-text {
-  margin: 4px 0 0 0;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.decision-meta {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-.decision-actions {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
-}
-.btn-sm {
-  padding: 4px 10px;
-  font-size: 0.75rem;
-  border-radius: 4px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  cursor: pointer;
-}
-.btn-sm:hover {
-  background: var(--border-color);
-}
-.btn-danger {
-  color: var(--error-text);
-  border-color: var(--error-text);
-}
-.btn-danger:hover {
-  background: var(--error-bg);
-}
+/* 공유/모달/의사결정 스타일은 reason-actions.css에서 관리 */

@@ -1,16 +1,16 @@
 ---
 chain_name: "phase-18-refactor-ui-renewal"
 phases: ["18-0", "18-1", "18-2", "18-3", "18-4"]
-current_index: 2
-status: "running"
+current_index: 5
+status: "completed"
 ssot_version: "6.0-renewal-4th"
 created_at: "2026-02-21T09:00:00Z"
 phase_summaries:
   "18-0": "선행 리팩토링 완료 — labels_handlers.py(748줄) → labels_crud.py(396) + labels_tree.py(151) + labels_suggest.py(227) 3파일 분리. 테스트 168 passed"
   "18-1": "키워드 그룹 트리 탭 UI + LLM 추천 복구 + 연관 키워드 API/UI + 하단 액션바 통합 완료. 테스트 168 passed. admin-groups.css 805줄 Lv2 확정"
-  "18-2": ""
-  "18-3": ""
-  "18-4": ""
+  "18-2": "지식 구조 UI 완료 — 폴더 트리 API + 통합 트리 API (BE), 폴더 트리뷰 컴포넌트 + 통합 트리 페이지 + Breadcrumb (FE). 테스트 168 passed"
+  "18-3": "Reasoning 리뉴얼 완료 — Step 1~4 순차 진행 UI + SSE 연동 + 모드 예시 + CSS 5파일 분리(607+597→base/form/steps/results/actions) + 중간 미리보기 + 세션 UI 개선. 테스트 168 passed"
+  "18-4": "검색 품질 + 관계 추천 완료 — Qdrant status 필터 + 검색 UI 차별화(배지/점수) + snippet 하이라이트 + cross-document 관계 추천 API + 관계 타입 자동 분류. 테스트 168 passed"
 ---
 
 # Phase Chain: 18-0 ~ 18-4

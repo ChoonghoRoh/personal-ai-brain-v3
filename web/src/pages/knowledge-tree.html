@@ -4,22 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/static/css/document.css" />
-    <title>Personal AI Brain - Document Viewer</title>
-    <script src="/static/libs/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="/static/css/components/folder-tree.css" />
+    <link rel="stylesheet" href="/static/css/knowledge-tree.css" />
+    <title>Personal AI Brain - 지식 구조</title>
   </head>
   <body>
     <div class="container">
       <!-- Header는 JavaScript로 동적 생성 -->
-
-      <div class="document-viewer" id="document-viewer">
-        <div class="loading">문서를 불러오는 중...</div>
+      <div id="knowledge-tree-container">
+        <div class="loading">로딩 중...</div>
       </div>
     </div>
-
+    <script src="/static/js/components/utils.js"></script>
     <script src="/static/js/components/layout-component.js"></script>
     <script src="/static/js/components/header-component.js"></script>
-    <script src="/static/js/components/knowledge-breadcrumb.js"></script>
-    <script src="/static/js/document/document.js"></script>
+    <script src="/static/js/components/folder-tree.js"></script>
+    <script src="/static/js/knowledge/knowledge-tree.js"></script>
   </body>
 </html>

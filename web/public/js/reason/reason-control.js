@@ -197,6 +197,7 @@
 
     render().clearReasoningResults && render().clearReasoningResults();
     resetProgressStages();
+    if (window.ReasonSteps) window.ReasonSteps.reset();
 
     if (errorDiv) errorDiv.style.display = "none";
     if (resultsContent) resultsContent.style.display = "none";
@@ -276,6 +277,16 @@
 
   // ---------- 스트리밍 답변 (Phase 10-4-1) ----------
   function showStreamingAnswer(token) {
+    // Step 3 활성화 보장 + 미리보기 내용 이동
+    if (window.ReasonSteps && !window.ReasonSteps.isActive(3)) {
+      var previewText = window.ReasonSteps.getPreviewContent();
+      if (previewText) {
+        var answerDiv = document.getElementById("answer");
+        if (answerDiv && !answerDiv.textContent) answerDiv.textContent = previewText;
+      }
+      window.ReasonSteps.complete(2);
+      window.ReasonSteps.activate(3);
+    }
     var resultsContent = document.getElementById("results-content");
     if (resultsContent && resultsContent.style.display === "none") {
       resultsContent.style.display = "block";
@@ -322,22 +333,63 @@
       case "progress":
         if (data.task_id && !st.taskId) st.taskId = data.task_id;
         updateProgressStage(data.stage, data.message, data.percent);
+        // Step UI 연동
+        if (window.ReasonSteps) {
+          if (data.stage <= 2) {
+            window.ReasonSteps.activate(1);
+          } else if (data.stage === 3) {
+            window.ReasonSteps.complete(1);
+            window.ReasonSteps.activate(2);
+          } else if (data.stage >= 4) {
+            window.ReasonSteps.complete(2);
+            window.ReasonSteps.activate(3);
+          }
+          if (data.percent != null) window.ReasonSteps.updateProgress(data.percent);
+        }
         break;
       case "answer_token":
-        showStreamingAnswer(data.token);
+        // Step 2 활성 상태에서 answer_token → 미리보기에 추가
+        if (window.ReasonSteps && window.ReasonSteps.isActive(2)) {
+          window.ReasonSteps.appendPreviewToken(data.token);
+        } else {
+          // Step 3 활성화 보장 (answer_token 수신 = 분석 완료)
+          if (window.ReasonSteps && !window.ReasonSteps.isActive(3)) {
+            // Step 2 미리보기 내용을 answer 영역으로 이동
+            var previewText = window.ReasonSteps.getPreviewContent();
+            if (previewText) {
+              var answerDiv = document.getElementById("answer");
+              if (answerDiv) answerDiv.textContent = previewText;
+            }
+            window.ReasonSteps.complete(2);
+            window.ReasonSteps.activate(3);
+          }
+          showStreamingAnswer(data.token);
+        }
         break;
       case "result":
+        // Step 3 완료 + Step 4 활성화
+        if (window.ReasonSteps) {
+          window.ReasonSteps.complete(3);
+          window.ReasonSteps.activate(4);
+        }
         processReasoningResult(data);
         break;
       case "cancelled":
+        if (window.ReasonSteps) window.ReasonSteps.reset();
         showCancelledState();
         restoreReasoningUI();
         break;
       case "error":
+        if (window.ReasonSteps) window.ReasonSteps.reset();
         showReasoningError(new Error(data.message));
         restoreReasoningUI();
         break;
       case "done":
+        // Step 3 완료 + Step 4 활성화 (result 없이 done만 올 경우 대비)
+        if (window.ReasonSteps) {
+          window.ReasonSteps.complete(3);
+          window.ReasonSteps.activate(4);
+        }
         // 11-5-3: ETA 피드백 — 실제 소요 시간 전송 (향후 예측 보정용)
         if (st.startTime) {
           var actualSeconds = Math.round((Date.now() - st.startTime) / 1000);

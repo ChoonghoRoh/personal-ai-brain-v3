@@ -1,0 +1,432 @@
+/* ========================================
+   reason-actions.css — 세션, 히스토리, 모달, 후속 작업, 공유, 의사결정
+   Phase 18-3-4: reason.css + reason-sections.css에서 분리
+   추천(인사이트) 카드/패널 스타일은 reason-results.css에서 관리
+   ======================================== */
+
+/* 대화 스레드 */
+.session-thread {
+  background: var(--bg-card, white);
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.session-thread-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.session-thread-header h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary, #1f2937);
+  margin: 0;
+}
+
+.btn-new-session {
+  padding: 5px 12px;
+  border: 1px solid #2563eb;
+  border-radius: 6px;
+  background: white;
+  color: #2563eb;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn-new-session:hover {
+  background: #eff6ff;
+}
+
+.session-turns {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.thread-turn {
+  padding: 10px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.thread-turn:hover {
+  border-color: #2563eb;
+  background: #f8fafc;
+}
+
+.turn-number {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.turn-question {
+  font-size: 14px;
+  color: var(--text-primary, #1f2937);
+}
+
+.turn-summary {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.turn-time {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 4px;
+}
+
+.thread-empty {
+  font-size: 13px;
+  color: #9ca3af;
+  text-align: center;
+  padding: 20px;
+}
+
+/* 이어서 질문하기 */
+.continue-question-area {
+  padding: 16px 0;
+  text-align: center;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 20px;
+}
+
+.btn-continue {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* 대화 기록 */
+.session-history-section {
+  margin-top: 30px;
+}
+
+.session-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.session-history-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary, #1f2937);
+  margin: 0;
+}
+
+.session-history-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.session-card {
+  display: flex;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: var(--bg-card, white);
+  transition: all 0.15s;
+}
+
+.session-card:hover {
+  border-color: #2563eb;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+}
+
+.session-card-check {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 2px;
+}
+
+.session-checkbox {
+  cursor: pointer;
+}
+
+.session-card-body {
+  flex: 1;
+  cursor: pointer;
+}
+
+.session-card-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-primary, #1f2937);
+  margin-bottom: 6px;
+}
+
+.session-card-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.session-card-last-q {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* 페이지네이션 */
+.session-pagination {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.pagination-btn {
+  padding: 6px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* 공유 토스트 */
+.share-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  z-index: 10000;
+  box-shadow: 0 4px 12px var(--shadow);
+  max-width: 90vw;
+  text-align: center;
+  animation: toast-in 0.3s ease;
+}
+
+.toast-success {
+  background: #065f46;
+  color: #ecfdf5;
+}
+
+.toast-error {
+  background: var(--error-bg);
+  color: var(--error-text);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.btn-share {
+  background: #0d9488 !important;
+}
+
+.btn-share:hover {
+  background: #0f766e !important;
+}
+
+.btn-save-decision {
+  background: #7c3aed !important;
+}
+
+.btn-save-decision:hover {
+  background: #6d28d9 !important;
+}
+
+/* 문서 컨텍스트 뱃지 */
+.document-context-badge {
+  margin: 8px 0 16px;
+}
+
+.doc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1e40af;
+}
+
+.doc-badge-icon {
+  font-size: 18px;
+}
+
+.doc-badge-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.doc-badge-close:hover {
+  color: #dc2626;
+}
+
+/* 의사결정 저장 모달 */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9000;
+}
+
+.modal-content {
+  background: var(--card-bg);
+  color: var(--text-primary);
+  border-radius: 12px;
+  padding: 28px;
+  width: 90%;
+  max-width: 480px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content h3 {
+  margin: 0 0 18px 0;
+  font-size: 1.125rem;
+}
+
+.modal-content .form-group {
+  margin-bottom: 14px;
+}
+
+.modal-content label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.modal-content input[type="text"],
+.modal-content textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: var(--input-bg);
+  color: var(--text-primary);
+  box-sizing: border-box;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+[data-theme="dark"] .modal-content {
+  border: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] .viz-retry-btn {
+  color: var(--text-accent);
+  background: var(--input-bg);
+  border-color: var(--border-color);
+}
+
+/* 의사결정 문서 목록 */
+.decisions-list-section {
+  margin-top: 24px;
+  padding: 20px;
+  background: var(--card-bg);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px var(--shadow);
+}
+
+.decisions-list-section h3 {
+  margin: 0 0 14px 0;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.decision-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-bottom: 1px solid var(--border-color);
+  gap: 12px;
+}
+
+.decision-item:last-child {
+  border-bottom: none;
+}
+
+.decision-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.decision-info strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.decision-summary-text {
+  margin: 4px 0 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.decision-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.decision-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
