@@ -17,7 +17,7 @@
 │                                                               │
 │  ┌──────────┐  ┌──────────┐  ┌───────┐  ┌────────────────┐  │
 │  │PostgreSQL│  │  Qdrant  │  │ Redis │  │    Backend      │  │
-│  │  :5433   │  │  :6343   │  │ :6380 │  │ (FastAPI) :8001 │  │
+│  │  :5433   │  │  :6343   │  │ :6379 │  │ (FastAPI) :8001 │  │
 │  │          │  │          │  │       │  │                  │  │
 │  │ 메타데이터│  │ 벡터 검색 │  │ 캐시  │  │ API+Static Files│  │
 │  └──────────┘  └──────────┘  └───────┘  └────────────────┘  │
@@ -44,16 +44,18 @@
 | `pab-backend-ver3` | Dockerfile.backend (Python 3.12-slim) | 8001:8000 | `./:/app` (소스 마운트) |
 | `pab-postgres-ver3` | postgres:15 | 5433:5432 | `postgres-data-ver3` |
 | `qdrant-ver3` | qdrant/qdrant:latest | 6343:6333, 6344:6334 | `./qdrant-data-ver3` |
-| `pab-redis-ver3` | redis:7-alpine | 6380:6379 | `redis-data-ver3` (AOF) |
+| `pab-redis-ver3` | redis:7-alpine | 6379:6379 | `redis-data-ver3` (AOF) |
 | Ollama | ollama/ollama (호스트) | 11434 | — |
 
 **ver3 전용 포트**:
 - PostgreSQL: `5433` (ver2는 5432)
 - Qdrant: `6343` (ver2는 6333)
-- Redis: `6380` (ver2는 6379)
 - Backend: `8001` (ver2는 8000)
 
-**환경 격리**: ver2와 ver3가 동일 머신에서 독립 실행 가능하도록 포트와 볼륨명을 분리했다.
+**공유 포트**:
+- Redis: `6379` (ver2와 동일 포트, 충돌 가능)
+
+**환경 격리**: PostgreSQL/Qdrant/Backend는 포트와 볼륨명을 분리했다. Redis는 동일 포트를 사용하므로 동시 실행 시 충돌 위험이 있다.
 
 ➜ [상세 인프라 구성](../claude/2-architecture-ssot.md#1-시스템-아키텍처)
 

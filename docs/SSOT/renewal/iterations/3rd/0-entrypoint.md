@@ -1,6 +1,6 @@
-# SSOT 진입점 (v5.0-renewal-r2)
+# SSOT 진입점 (v5.0-renewal-r3)
 
-**버전**: 5.0-renewal-r2  
+**버전**: 5.0-renewal-r3  
 **릴리스**: 2026-02-17  
 **전략**: 요약+상세 분리 (방안 C)  
 **목표 읽기 시간**: 10-15분 (500줄)
@@ -29,10 +29,10 @@
 
 | 역할 | 읽기 분량 | 읽기 시간 | 체크리스트로 이동 |
 |------|----------|----------|------------------|
-| **Backend Developer** | 500줄 | 10분 | [§2.1](#21-backend-developer) |
-| **Frontend Developer** | 500줄 | 10분 | [§2.2](#22-frontend-developer) |
-| **Verifier** | 700줄 | 15분 | [§2.3](#23-verifier) |
-| **Tester** | 400줄 | 8분 | [§2.4](#24-tester) |
+| **Backend Developer** | 400줄 | 8분 | [§2.1](#21-backend-developer) |
+| **Frontend Developer** | 400줄 | 8분 | [§2.2](#22-frontend-developer) |
+| **Verifier** | 600줄 | 12분 | [§2.3](#23-verifier) |
+| **Tester** | 350줄 | 7분 | [§2.4](#24-tester) |
 | **Team Lead** | 전체 | 25분 | [§2.5](#25-team-lead) |
 
 ---

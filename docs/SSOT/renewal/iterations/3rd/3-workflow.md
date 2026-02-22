@@ -1,6 +1,6 @@
 # SSOT — 워크플로우 (요약 v2)
 
-**버전**: 5.0-renewal-r2  
+**버전**: 5.0-renewal-r3  
 **최종 수정**: 2026-02-17  
 **기반**: 3-workflow-ssot.md (v4.5, 1,059줄)
 
@@ -108,7 +108,7 @@ docs/phases/phase-X-Y/phase-X-Y-status.md
 ```yaml
 ---
 phase: "X-Y"
-ssot_version: "5.0-renewal-r2"    # 현재 참조 중인 SSOT 버전
+ssot_version: "5.0-renewal-r3"    # 현재 참조 중인 SSOT 버전
 ssot_loaded_at: "2026-02-17T10:00:00Z"
 current_state: "BUILDING"          # 상태 머신의 현재 상태
 current_task: "X-Y-2"              # 현재 작업 중인 Task ID

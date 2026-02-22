@@ -1,8 +1,8 @@
 # SSOT 진입점 (v5.0-renewal-r2)
 
-**버전**: 5.0-renewal-r2  
-**릴리스**: 2026-02-17  
-**전략**: 요약+상세 분리 (방안 C)  
+**버전**: 5.0-renewal-r2
+**릴리스**: 2026-02-17
+**전략**: 요약+상세 분리 (방안 C)
 **목표 읽기 시간**: 10-15분 (500줄)
 
 ---
@@ -19,21 +19,21 @@
 
 ### 실행 환경
 
-| 항목 | 내용 |
-|------|------|
-| **도구** | Claude Code Agent Teams (TeamCreate / SendMessage / TaskList) |
-| **프로젝트** | Personal AI Brain v3 (Docker Compose 기반) |
-| **현재 Phase** | Phase 14 완료, Phase 15 계획 수립 대기 |
+| 항목           | 내용                                                          |
+| -------------- | ------------------------------------------------------------- |
+| **도구**       | Claude Code Agent Teams (TeamCreate / SendMessage / TaskList) |
+| **프로젝트**   | Personal AI Brain v3 (Docker Compose 기반)                    |
+| **현재 Phase** | Phase 14 완료, Phase 15 계획 수립 대기                        |
 
 ### 당신의 역할은?
 
-| 역할 | 읽기 분량 | 읽기 시간 | 체크리스트로 이동 |
-|------|----------|----------|------------------|
-| **Backend Developer** | 500줄 | 10분 | [§2.1](#21-backend-developer) |
-| **Frontend Developer** | 500줄 | 10분 | [§2.2](#22-frontend-developer) |
-| **Verifier** | 700줄 | 15분 | [§2.3](#23-verifier) |
-| **Tester** | 400줄 | 8분 | [§2.4](#24-tester) |
-| **Team Lead** | 전체 | 25분 | [§2.5](#25-team-lead) |
+| 역할                   | 읽기 분량 | 읽기 시간 | 체크리스트로 이동              |
+| ---------------------- | --------- | --------- | ------------------------------ |
+| **Backend Developer**  | 500줄     | 10분      | [§2.1](#21-backend-developer)  |
+| **Frontend Developer** | 500줄     | 10분      | [§2.2](#22-frontend-developer) |
+| **Verifier**           | 700줄     | 15분      | [§2.3](#23-verifier)           |
+| **Tester**             | 400줄     | 8분       | [§2.4](#24-tester)             |
+| **Team Lead**          | 전체      | 25분      | [§2.5](#25-team-lead)          |
 
 ---
 
@@ -101,7 +101,7 @@
 - [ ] [1-project.md](1-project.md)
 - [ ] [2-architecture.md](2-architecture.md)
 - [ ] [3-workflow.md](3-workflow.md)
-- [ ] [ROLES/*.md](ROLES/)
+- [ ] [ROLES/\*.md](ROLES/)
 
 **핵심 원칙**: 코드 직접 수정 금지, Hub-and-Spoke 통신, 상태 기반 판정, SSOT 리로드 필수
 
@@ -121,6 +121,7 @@ Team Lead (메인 세션)
 ```
 
 **코드 편집 원칙**:
+
 - Team Lead: ❌ 코드 수정 금지 (조율·판정만)
 - backend-dev: ✅ `backend/`, `tests/`, `scripts/` 편집
 - frontend-dev: ✅ `web/`, `e2e/` 편집
@@ -136,7 +137,7 @@ IDLE → TEAM_SETUP → PLANNING → PLAN_REVIEW → TASK_SPEC
   → INTEGRATION → E2E → E2E_REPORT → TEAM_SHUTDOWN → DONE
 ```
 
-**실패 시**: REWINDING → 이전 상태로 복귀  
+**실패 시**: REWINDING → 이전 상태로 복귀
 **차단 시**: BLOCKED → 이슈 해결 후 복귀
 
 ---
@@ -144,11 +145,13 @@ IDLE → TEAM_SETUP → PLANNING → PLAN_REVIEW → TASK_SPEC
 ### 3.3 Hub-and-Spoke 통신 모델
 
 **모든 팀원 통신은 Team Lead 경유**:
+
 - 팀원 → SendMessage → Team Lead
 - Team Lead → SendMessage → 특정 팀원
 - 팀원끼리 직접 메시지 금지
 
 **예시**:
+
 1. backend-dev가 구현 완료 → SendMessage → Team Lead
 2. Team Lead → SendMessage → verifier (검증 지시)
 3. verifier → SendMessage → Team Lead (판정 보고)
@@ -158,15 +161,16 @@ IDLE → TEAM_SETUP → PLANNING → PLAN_REVIEW → TASK_SPEC
 
 ### 3.4 SSOT Lock Rules
 
-| 규칙 ID | 규칙 | 설명 |
-|---------|------|------|
+| 규칙 ID    | 규칙                         | 설명                                                            |
+| ---------- | ---------------------------- | --------------------------------------------------------------- |
 | **LOCK-1** | Phase 실행 중 SSOT 변경 금지 | `current_state`가 `IDLE` 또는 `DONE`이 아닌 동안 SSOT 수정 불가 |
-| **LOCK-2** | 변경 필요 시 Phase 일시정지 | SSOT 수정 불가피하면 `current_state`를 `BLOCKED`로 전이 후 변경 |
-| **LOCK-3** | 변경 후 리로드 필수 | SSOT 변경 후 모든 팀원에게 SendMessage로 리로드 지시 |
-| **LOCK-4** | 팀원 SSOT 수정 금지 | 팀원은 SSOT를 읽기 전용으로만 참조 |
-| **LOCK-5** | 변경 이력 필수 기록 | SSOT 변경 시 버전 히스토리에 반드시 기록 |
+| **LOCK-2** | 변경 필요 시 Phase 일시정지  | SSOT 수정 불가피하면 `current_state`를 `BLOCKED`로 전이 후 변경 |
+| **LOCK-3** | 변경 후 리로드 필수          | SSOT 변경 후 모든 팀원에게 SendMessage로 리로드 지시            |
+| **LOCK-4** | 팀원 SSOT 수정 금지          | 팀원은 SSOT를 읽기 전용으로만 참조                              |
+| **LOCK-5** | 변경 이력 필수 기록          | SSOT 변경 시 버전 히스토리에 반드시 기록                        |
 
 **Lock 상태 머신**:
+
 ```
 Phase 실행 중 (PLANNING~E2E_REPORT)
   │
@@ -184,16 +188,17 @@ Phase 실행 중 (PLANNING~E2E_REPORT)
 
 ### 3.5 SSOT Freshness Rules
 
-| 규칙 ID | 규칙 | 설명 |
-|---------|------|------|
-| **FRESH-1** | 세션 시작 시 SSOT 리로드 | 새 AI 세션 시작 시 SSOT 4개 파일을 순서대로 로딩 (0→1→2→3) |
-| **FRESH-2** | 새 Phase 시작 시 버전 확인 | Phase 시작 전 SSOT 버전이 `ssot_version`과 일치하는지 확인 |
-| **FRESH-3** | 버전 불일치 시 갱신 우선 | SSOT 버전이 변경되었으면 Phase 진행 전 SSOT를 먼저 리로드 |
-| **FRESH-4** | 리로드 시각 기록 | SSOT 로딩 완료 시 `ssot_loaded_at`에 타임스탬프 기록 |
-| **FRESH-5** | 장기 세션 중 주기적 확인 | Phase가 3개 이상의 Task를 처리한 경우 SSOT 버전 재확인 권장 |
-| **FRESH-6** | 팀원 역할별 로딩 | 각 팀원은 스폰 시 해당 `role-*-ssot.md` 1개만 로딩 (컨텍스트 최소화) |
+| 규칙 ID     | 규칙                       | 설명                                                                 |
+| ----------- | -------------------------- | -------------------------------------------------------------------- |
+| **FRESH-1** | 세션 시작 시 SSOT 리로드   | 새 AI 세션 시작 시 SSOT 4개 파일을 순서대로 로딩 (0→1→2→3)           |
+| **FRESH-2** | 새 Phase 시작 시 버전 확인 | Phase 시작 전 SSOT 버전이 `ssot_version`과 일치하는지 확인           |
+| **FRESH-3** | 버전 불일치 시 갱신 우선   | SSOT 버전이 변경되었으면 Phase 진행 전 SSOT를 먼저 리로드            |
+| **FRESH-4** | 리로드 시각 기록           | SSOT 로딩 완료 시 `ssot_loaded_at`에 타임스탬프 기록                 |
+| **FRESH-5** | 장기 세션 중 주기적 확인   | Phase가 3개 이상의 Task를 처리한 경우 SSOT 버전 재확인 권장          |
+| **FRESH-6** | 팀원 역할별 로딩           | 각 팀원은 스폰 시 해당 `role-*-ssot.md` 1개만 로딩 (컨텍스트 최소화) |
 
 **로딩 순서 (Team Lead)**:
+
 ```
 [0] 0-entrypoint.md (진입점, 역할별 체크리스트)
   ↓
@@ -210,15 +215,16 @@ Phase 실행 중 (PLANNING~E2E_REPORT)
 
 Phase 실행의 **단일 진입점**은 `phase-X-Y-status.md` 파일이다.
 
-| 규칙 ID | 규칙 | 설명 |
-|---------|------|------|
-| **ENTRY-1** | 단일 진입점 | 모든 Phase 작업은 `docs/phases/phase-X-Y/phase-X-Y-status.md`를 먼저 읽는 것으로 시작 |
-| **ENTRY-2** | 상태 기반 분기 | `current_state` 값에 따라 다음 행동을 결정 |
-| **ENTRY-3** | SSOT 버전 확인 | 진입 시 `ssot_version` 필드와 현재 SSOT 버전의 일치 여부를 확인 |
-| **ENTRY-4** | Blocker 우선 확인 | `blockers` 배열이 비어있지 않으면 다른 작업보다 Blocker 해결을 우선 |
-| **ENTRY-5** | 진입점 외 직접 시작 금지 | status 파일을 읽지 않고 Task 구현을 바로 시작하는 것을 금지 |
+| 규칙 ID     | 규칙                     | 설명                                                                                  |
+| ----------- | ------------------------ | ------------------------------------------------------------------------------------- |
+| **ENTRY-1** | 단일 진입점              | 모든 Phase 작업은 `docs/phases/phase-X-Y/phase-X-Y-status.md`를 먼저 읽는 것으로 시작 |
+| **ENTRY-2** | 상태 기반 분기           | `current_state` 값에 따라 다음 행동을 결정                                            |
+| **ENTRY-3** | SSOT 버전 확인           | 진입 시 `ssot_version` 필드와 현재 SSOT 버전의 일치 여부를 확인                       |
+| **ENTRY-4** | Blocker 우선 확인        | `blockers` 배열이 비어있지 않으면 다른 작업보다 Blocker 해결을 우선                   |
+| **ENTRY-5** | 진입점 외 직접 시작 금지 | status 파일을 읽지 않고 Task 구현을 바로 시작하는 것을 금지                           |
 
 **ENTRYPOINT 플로우**:
+
 ```
 세션 시작 / Phase 재개
   │
@@ -260,6 +266,7 @@ Phase 실행의 **단일 진입점**은 `phase-X-Y-status.md` 파일이다.
 ```
 
 **판정 기준**:
+
 - **G1 PASS**: 완료 기준 명확, Task 3~7개, 도메인 분류 완료
 - **G2 PASS**: Critical 0건 (ORM 사용, Pydantic 검증, CDN 미사용, XSS 방지)
 - **G3 PASS**: pytest PASS, 커버리지 ≥80%, E2E PASS, 회귀 테스트 통과
@@ -270,6 +277,7 @@ Phase 실행의 **단일 진입점**은 `phase-X-Y-status.md` 파일이다.
 ### 3.8 도메인 태그
 
 모든 Task는 도메인 태그 필수:
+
 - `[BE]`: 백엔드 (API, 서비스 로직)
 - `[FE]`: 프론트엔드 (UI, 페이지)
 - `[FS]`: 풀스택 (BE → FE 순서 또는 병렬)
@@ -281,14 +289,14 @@ Phase 실행의 **단일 진입점**은 `phase-X-Y-status.md` 파일이다.
 
 ## 4. 백엔드 핵심 규칙
 
-| 규칙 | 설명 |
-|------|------|
-| **ORM 필수** | raw SQL 절대 금지, SQLAlchemy ORM만 사용 |
-| **Pydantic 검증** | 모든 API 입력은 Pydantic 스키마로 검증 |
-| **타입 힌트** | 함수 파라미터 + 반환 타입 힌트 필수 |
-| **에러 핸들링** | try-except + HTTPException 패턴 |
-| **비동기** | async/await 활용 |
-| **네이밍** | snake_case |
+| 규칙              | 설명                                     |
+| ----------------- | ---------------------------------------- |
+| **ORM 필수**      | raw SQL 절대 금지, SQLAlchemy ORM만 사용 |
+| **Pydantic 검증** | 모든 API 입력은 Pydantic 스키마로 검증   |
+| **타입 힌트**     | 함수 파라미터 + 반환 타입 힌트 필수      |
+| **에러 핸들링**   | try-except + HTTPException 패턴          |
+| **비동기**        | async/await 활용                         |
+| **네이밍**        | snake_case                               |
 
 **금지**: raw SQL, 타입 힌트 생략, 입력 검증 생략, 에러 처리 생략
 
@@ -298,13 +306,13 @@ Phase 실행의 **단일 진입점**은 `phase-X-Y-status.md` 파일이다.
 
 ## 5. 프론트엔드 핵심 규칙
 
-| 규칙 | 설명 |
-|------|------|
-| **ESM import/export** | `type="module"` 필수 |
-| **innerHTML + esc()** | XSS 방지 필수 |
-| **외부 CDN 금지** | 모든 리소스는 로컬에서 제공 (`web/public/libs/`) |
-| **window 전역 금지** | 기존 것 제외하고 새로 할당 금지 |
-| **컴포넌트 재사용** | `layout-component.js`, `header-component.js` 활용 |
+| 규칙                  | 설명                                              |
+| --------------------- | ------------------------------------------------- |
+| **ESM import/export** | `type="module"` 필수                              |
+| **innerHTML + esc()** | XSS 방지 필수                                     |
+| **외부 CDN 금지**     | 모든 리소스는 로컬에서 제공 (`web/public/libs/`)  |
+| **window 전역 금지**  | 기존 것 제외하고 새로 할당 금지                   |
+| **컴포넌트 재사용**   | `layout-component.js`, `header-component.js` 활용 |
 
 **금지**: CDN 참조, innerHTML without esc(), 새 window 전역 변수
 
@@ -317,24 +325,28 @@ Phase 실행의 **단일 진입점**은 `phase-X-Y-status.md` 파일이다.
 ### 6.1 백엔드 (G2_be)
 
 **Critical (필수)**:
+
 - [ ] ORM 사용 (raw SQL 없음)
 - [ ] Pydantic 검증 존재
 - [ ] 타입 힌트 완전
 - [ ] 기존 테스트 깨지지 않음
 
 **High (권장)**:
+
 - [ ] 에러 핸들링 존재
 - [ ] 새 기능 테스트 파일 존재
 
 ### 6.2 프론트엔드 (G2_fe)
 
 **Critical (필수)**:
+
 - [ ] CDN 참조 없음
 - [ ] innerHTML 시 esc() 사용
 - [ ] ESM import/export 패턴
 - [ ] 페이지 로드 시 콘솔 에러 없음
 
 **High (권장)**:
+
 - [ ] window 전역 변수 할당 없음
 - [ ] 기존 컴포넌트 재사용
 - [ ] API 에러 핸들링
@@ -345,23 +357,23 @@ Phase 실행의 **단일 진입점**은 `phase-X-Y-status.md` 파일이다.
 
 ## 7. 상세 가이드 링크
 
-| 주제 | 링크 |
-|------|------|
-| **팀 구성·역할 상세** | [1-project.md](1-project.md) |
-| **아키텍처 (인프라·BE·FE)** | [2-architecture.md](2-architecture.md) |
-| **워크플로우·상태머신** | [3-workflow.md](3-workflow.md) |
-| **Backend 개발 가이드** | [ROLES/backend-dev.md](ROLES/backend-dev.md) |
-| **Frontend 개발 가이드** | [ROLES/frontend-dev.md](ROLES/frontend-dev.md) |
-| **Verifier 검증 가이드** | [ROLES/verifier.md](ROLES/verifier.md) |
-| **Tester 테스트 가이드** | [ROLES/tester.md](ROLES/tester.md) |
-| **기존 SSOT 상세 (3,174줄)** | [../claude/](../claude/) |
+| 주제                         | 링크                                           |
+| ---------------------------- | ---------------------------------------------- |
+| **팀 구성·역할 상세**        | [1-project.md](1-project.md)                   |
+| **아키텍처 (인프라·BE·FE)**  | [2-architecture.md](2-architecture.md)         |
+| **워크플로우·상태머신**      | [3-workflow.md](3-workflow.md)                 |
+| **Backend 개발 가이드**      | [ROLES/backend-dev.md](ROLES/backend-dev.md)   |
+| **Frontend 개발 가이드**     | [ROLES/frontend-dev.md](ROLES/frontend-dev.md) |
+| **Verifier 검증 가이드**     | [ROLES/verifier.md](ROLES/verifier.md)         |
+| **Tester 테스트 가이드**     | [ROLES/tester.md](ROLES/tester.md)             |
+| **기존 SSOT 상세 (3,174줄)** | [../claude/](../claude/)                       |
 
 ---
 
 ## 8. 버전 관리
 
-**현재 버전**: 5.0-renewal-r2  
-**릴리스 날짜**: 2026-02-17  
+**현재 버전**: 5.0-renewal-r2
+**릴리스 날짜**: 2026-02-17
 **Breaking Changes**: v4.x → v5.0 (파일 구조 변경, 진입점 변경)
 
 ➜ [상세 버전 정보: VERSION.md](VERSION.md)
@@ -369,6 +381,7 @@ Phase 실행의 **단일 진입점**은 `phase-X-Y-status.md` 파일이다.
 ---
 
 **문서 관리**:
+
 - 버전: 5.0-renewal-r2 (2nd iteration)
 - 최종 수정: 2026-02-17
 - 1차 대비 변경: FRESH-2~6 추가, 줄 수 축약 (612줄 → 490줄)

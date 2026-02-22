@@ -1,7 +1,7 @@
 # Backend 작업지시 가이드
 
-**버전**: 5.0-renewal-r3  
-**대상**: backend-dev 팀원  
+**버전**: 5.0-renewal-r3
+**대상**: backend-dev 팀원
 **용도**: Task 실행 프로세스 상세 지침
 
 ---
@@ -132,6 +132,7 @@ def process_documents(doc_ids):
 ---
 
 **문서 관리**:
+
 - 버전: 1.0 (3rd iteration)
 - 최종 수정: 2026-02-17
 - 기반: backend-dev.md § 4 (작업지시 분리)
