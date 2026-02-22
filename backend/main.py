@@ -2,7 +2,7 @@
 from fastapi import FastAPI, Request
 from fastapi.openapi.utils import get_openapi
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -316,9 +316,7 @@ _HTML_ROUTES = [
     ("/knowledge-admin", "knowledge/knowledge-admin.html", "Knowledge Admin"),
     ("/admin/labels", "admin/labels.html", "라벨 관리"),
     ("/admin/groups", "admin/groups.html", "키워드 그룹 관리"),
-    ("/admin/approval", "admin/approval.html", "청크 승인 센터"),
-    ("/admin/chunk-labels", "admin/chunk-labels.html", "청크 관리"),
-    ("/admin/chunk-create", "admin/chunk-create.html", "청크 생성"),
+    ("/admin/knowledge-workflow", "admin/knowledge-workflow.html", "지식 워크플로우"),
     ("/admin/knowledge-files", "admin/knowledge-files.html", "파일관리"),
     ("/admin/ai-automation", "admin/ai-automation.html", "AI 자동화"),
     ("/admin/users", "admin/users.html", "사용자 관리"),
@@ -330,6 +328,27 @@ _HTML_ROUTES = [
     ("/admin/settings/policy-sets", "admin/settings/policy-sets.html", "정책 관리"),
     ("/admin/settings/audit-logs", "admin/settings/audit-logs.html", "변경 이력"),
 ]
+
+
+# ============================================
+# Chunk Management Redirects (Phase 19-4-5)
+# ============================================
+# 기존 청크 관리 페이지들을 통합 워크플로우 페이지로 리다이렉트
+_CHUNK_REDIRECTS = [
+    ("/admin/chunk-create", "/admin/knowledge-workflow?tab=create"),
+    ("/admin/approval", "/admin/knowledge-workflow?tab=approval"),
+    ("/admin/chunk-labels", "/admin/knowledge-workflow?tab=manage"),
+]
+
+
+def _register_chunk_redirects(application: FastAPI) -> None:
+    """청크 관리 리다이렉트 등록"""
+    for from_path, to_path in _CHUNK_REDIRECTS:
+        def _make_redirect_handler(_to=to_path):
+            async def _redirect_handler():
+                return RedirectResponse(url=_to, status_code=302)
+            return _redirect_handler
+        application.get(from_path)(_make_redirect_handler())
 
 
 def _register_html_routes(application: FastAPI) -> None:
@@ -348,6 +367,7 @@ def _register_html_routes(application: FastAPI) -> None:
         application.get(route_path, response_class=HTMLResponse)(_make_handler())
 
 
+_register_chunk_redirects(app)  # Phase 19-4-5: 리다이렉트를 먼저 등록
 _register_html_routes(app)
 
 

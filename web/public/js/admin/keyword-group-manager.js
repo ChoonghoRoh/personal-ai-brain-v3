@@ -25,8 +25,8 @@ class KeywordGroupManager {
     this.suggestionErrorId = config.suggestionErrorId || "keyword-suggestion-error";
     this.suggestionSuccessId = config.suggestionSuccessId || "keyword-suggestion-success";
     this.suggestionModelSelectId = config.suggestionModelSelectId || "keyword-suggestion-model";
-    this.matchingSummaryBarId = config.matchingSummaryBarId || "matching-summary-bar";
-    this.selectionSummaryId = config.selectionSummaryId || "selection-summary";
+    this.matchingSummaryBarId = config.matchingSummaryBarId || "matching-actions-inline";
+    this.selectionSummaryId = config.selectionSummaryId || "selection-summary-inline";
     this.applyKeywordsBtnId = config.applyKeywordsBtnId || "apply-keywords-btn";
     this.removeKeywordsBtnId = config.removeKeywordsBtnId || "remove-keywords-btn";
     this.groupNameInputId = config.groupNameInputId || "group-name-input";
@@ -69,6 +69,7 @@ class KeywordGroupManager {
   async applyGroupKeywords() { return this.matching.applyGroupKeywords(); }
   async removeGroupKeywords() { return this.matching.removeGroupKeywords(); }
   async addKeywordsToGroup(groupId, keywordNames) { return this.matching.addKeywordsToGroup(groupId, keywordNames); }
+  searchKeywords() { return this.matching.searchKeywords(); }
 
   // ========== UI 업데이트 메서드 위임 ==========
   updateMatchingUI() { return this.ui.updateMatchingUI(); }

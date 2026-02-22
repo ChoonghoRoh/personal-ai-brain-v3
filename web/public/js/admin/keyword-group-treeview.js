@@ -1,6 +1,6 @@
 /**
  * 키워드 그룹 트리뷰 모듈
- * 트리 구조 표시, 접기/펼치기, 드래그 & 드롭 이동 기능
+ * 트리 구조 표시, 접기/펼치기, 폴더형 UI, 우클릭 메뉴 기반 노드 이동
  */
 class KeywordGroupTreeView {
   constructor(manager) {
@@ -8,22 +8,27 @@ class KeywordGroupTreeView {
     this.treeData = [];
     this.expandedNodes = new Set();
     this.selectedNodeId = null;
-    this._dragSourceId = null;
+    this.contextMenu = new KeywordGroupContextMenu(this);
   }
 
-  /**
-   * 트리 데이터 로드 (GET /api/labels/tree?max_depth=5)
-   */
+  /** 트리 데이터 로드 */
   async loadTree() {
+    const depthEl = document.getElementById("kg-tree-max-depth");
+    const maxDepth = depthEl ? (depthEl.value || "5") : "5";
     try {
-      const response = await fetch("/api/labels/tree?max_depth=5");
+      const response = await fetch("/api/labels/tree?max_depth=" + encodeURIComponent(maxDepth));
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ detail: "HTTP " + response.status }));
         throw new Error(errorData.detail || "트리 로드 실패 (" + response.status + ")");
       }
       var data = await response.json();
       // API가 단일 루트 객체 또는 배열을 반환할 수 있음
-      this.treeData = Array.isArray(data) ? data : [data];
+      var rawData = Array.isArray(data) ? data : [data];
+      this.treeData = this._filterGroupsOnly(rawData);
+      // manager.selectedGroupId와 트리 선택 상태 동기화
+      if (this.manager && this.manager.selectedGroupId) {
+        this.selectedNodeId = this.manager.selectedGroupId;
+      }
       this.renderTree(this.treeData);
     } catch (error) {
       console.error("트리 로드 실패:", error);
@@ -34,9 +39,19 @@ class KeywordGroupTreeView {
     }
   }
 
-  /**
-   * 트리 렌더링
-   */
+  /** 그룹 노드만 필터링 */
+  _filterGroupsOnly(nodes) {
+    if (!nodes) return [];
+    return nodes
+      .filter(function (node) { return node.label_type !== "keyword"; })
+      .map(function (node) {
+        return Object.assign({}, node, {
+          children: this._filterGroupsOnly(node.children)
+        });
+      }.bind(this));
+  }
+
+  /** 트리 렌더링 */
   renderTree(treeData) {
     const container = document.getElementById("groups-tree");
     if (!container) return;
@@ -55,9 +70,7 @@ class KeywordGroupTreeView {
     container.appendChild(ul);
   }
 
-  /**
-   * 단일 노드 HTML 생성 (재귀)
-   */
+  /** 단일 노드 렌더링 */
   _renderNode(node, depth) {
     var self = this;
     var hasChildren = node.children && node.children.length > 0;
@@ -66,7 +79,6 @@ class KeywordGroupTreeView {
     var li = document.createElement("li");
     li.className = "tree-node";
     li.dataset.nodeId = node.id;
-    li.draggable = true;
 
     // 노드 내용 컨테이너
     var content = document.createElement("div");
@@ -89,6 +101,14 @@ class KeywordGroupTreeView {
     }
     content.appendChild(toggle);
 
+    // 폴더 아이콘
+    if (hasChildren) {
+      var folderIcon = document.createElement("span");
+      folderIcon.className = "tree-folder-icon";
+      folderIcon.textContent = isExpanded ? "\uD83D\uDCC2" : "\uD83D\uDCC1"; // 📂 or 📁
+      content.appendChild(folderIcon);
+    }
+
     // 노드 이름
     var name = document.createElement("span");
     name.className = "tree-name";
@@ -107,48 +127,14 @@ class KeywordGroupTreeView {
       content.appendChild(count);
     }
 
+    // 우클릭 컨텍스트 메뉴
+    content.addEventListener("contextmenu", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      self.contextMenu.show(e, node);
+    });
+
     li.appendChild(content);
-
-    // D&D 이벤트
-    li.addEventListener("dragstart", function (e) {
-      e.stopPropagation();
-      self._dragSourceId = node.id;
-      e.dataTransfer.effectAllowed = "move";
-      e.dataTransfer.setData("text/plain", String(node.id));
-      li.classList.add("dragging");
-    });
-
-    li.addEventListener("dragend", function () {
-      li.classList.remove("dragging");
-      self._dragSourceId = null;
-    });
-
-    content.addEventListener("dragover", function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      e.dataTransfer.dropEffect = "move";
-      if (self._dragSourceId && self._dragSourceId !== node.id) {
-        content.classList.add("drag-over");
-        content.classList.add("drop-target-highlight");
-      }
-    });
-
-    content.addEventListener("dragleave", function (e) {
-      e.stopPropagation();
-      content.classList.remove("drag-over");
-      content.classList.remove("drop-target-highlight");
-    });
-
-    content.addEventListener("drop", function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      content.classList.remove("drag-over");
-      content.classList.remove("drop-target-highlight");
-      var sourceId = parseInt(e.dataTransfer.getData("text/plain"), 10);
-      if (sourceId && sourceId !== node.id) {
-        self.moveNode(sourceId, node.id);
-      }
-    });
 
     // 자식 노드 (재귀)
     if (hasChildren) {
@@ -163,9 +149,7 @@ class KeywordGroupTreeView {
     return li;
   }
 
-  /**
-   * 노드 접기/펼치기 토글
-   */
+  /** 노드 접기/펼치기 */
   toggleNode(nodeId) {
     if (this.expandedNodes.has(nodeId)) {
       this.expandedNodes.delete(nodeId);
@@ -175,9 +159,7 @@ class KeywordGroupTreeView {
     this.renderTree(this.treeData);
   }
 
-  /**
-   * 노드 선택
-   */
+  /** 노드 선택 */
   selectNode(nodeId) {
     this.selectedNodeId = nodeId;
 
@@ -194,16 +176,36 @@ class KeywordGroupTreeView {
     var selectedNode = document.querySelector('#groups-tree .tree-node[data-node-id="' + nodeId + '"] > .tree-node-content');
     if (selectedNode) {
       selectedNode.classList.add("selected");
+      // 선택된 노드로 자동 스크롤
+      selectedNode.scrollIntoView({ block: "nearest", behavior: "smooth" });
     }
 
     // Breadcrumb 렌더링
     this.renderBreadcrumb(nodeId);
   }
 
-  /**
-   * 노드 이동 (PATCH /api/labels/{sourceId}/move)
-   */
+  /** 노드 이동 (낙관적 UI) */
   async moveNode(sourceId, targetId) {
+    var sourceEl = document.querySelector('[data-node-id="' + sourceId + '"] > .tree-node-content');
+
+    // 1. 로딩 스피너 표시
+    if (sourceEl) sourceEl.classList.add("loading");
+
+    // 2. 백업 (딥카피)
+    var backup = JSON.parse(JSON.stringify(this.treeData));
+
+    // 3. 낙관적 UI: 클라이언트 즉시 이동
+    var moved = this._moveNodeLocal(sourceId, targetId);
+    if (!moved) {
+      if (sourceEl) sourceEl.classList.remove("loading");
+      showError("노드를 찾을 수 없습니다.");
+      return;
+    }
+
+    // 이동된 트리 즉시 렌더링
+    this.renderTree(this.treeData);
+
+    // 4. API 호출
     try {
       var response = await fetch("/api/labels/" + sourceId + "/move", {
         method: "PATCH",
@@ -217,16 +219,63 @@ class KeywordGroupTreeView {
       }
 
       showSuccess("노드가 이동되었습니다.");
+
+      // API 성공 시 전체 트리 리로드 (서버 상태와 동기화)
       await this.loadTree();
+
+      if (this.manager && this.manager.matching && this.manager.selectedGroupId) {
+        await this.manager.matching.loadKeywords();
+      }
     } catch (error) {
       console.error("노드 이동 실패:", error);
+
+      // 5. 실패 시 백업 복구
+      this.treeData = backup;
+      this.renderTree(this.treeData);
+
       showError(error.message || "노드 이동 중 오류가 발생했습니다.");
+    } finally {
+      // 6. 로딩 스피너 제거
+      if (sourceEl) sourceEl.classList.remove("loading");
     }
   }
 
-  /**
-   * Breadcrumb 경로 렌더링 (GET /api/labels/{labelId}/breadcrumb)
-   */
+  /** 로컬 노드 이동 */
+  _moveNodeLocal(sourceId, targetId) {
+    var sourceNode = this._removeNodeById(sourceId, this.treeData);
+    if (!sourceNode) return false;
+
+    if (targetId === null) {
+      this.treeData.push(sourceNode);
+      return true;
+    }
+
+    var targetNode = this._findNode(targetId);
+    if (!targetNode) {
+      this.treeData.push(sourceNode);
+      return false;
+    }
+
+    if (!targetNode.children) targetNode.children = [];
+    targetNode.children.push(sourceNode);
+    return true;
+  }
+
+  /** 노드 제거 */
+  _removeNodeById(nodeId, nodes) {
+    for (var i = 0; i < nodes.length; i++) {
+      if (nodes[i].id === nodeId) {
+        return nodes.splice(i, 1)[0];
+      }
+      if (nodes[i].children && nodes[i].children.length > 0) {
+        var found = this._removeNodeById(nodeId, nodes[i].children);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  /** Breadcrumb 렌더링 */
   async renderBreadcrumb(labelId) {
     var container = document.getElementById("tree-breadcrumb");
     if (!container) return;
@@ -278,9 +327,7 @@ class KeywordGroupTreeView {
     }
   }
 
-  /**
-   * 검색 결과 하이라이트 (트리 노드 중 query 매칭 노드에 .highlight 추가)
-   */
+  /** 검색 결과 하이라이트 */
   highlightSearchResults(query) {
     this.clearHighlight();
     if (!query || !query.trim()) return;
@@ -311,9 +358,7 @@ class KeywordGroupTreeView {
     });
   }
 
-  /**
-   * 매칭 노드 재귀 검색
-   */
+  /** 매칭 노드 검색 */
   _findMatchingNodes(nodes, lowerQuery, result) {
     if (!nodes) return;
     for (var i = 0; i < nodes.length; i++) {
@@ -326,9 +371,7 @@ class KeywordGroupTreeView {
     }
   }
 
-  /**
-   * 모든 하이라이트 제거
-   */
+  /** 하이라이트 제거 */
   clearHighlight() {
     var highlighted = document.querySelectorAll("#groups-tree .tree-node-content.highlight");
     highlighted.forEach(function (el) {
@@ -336,9 +379,7 @@ class KeywordGroupTreeView {
     });
   }
 
-  /**
-   * 트리에서 특정 노드를 ID로 찾기 (재귀)
-   */
+  /** 노드 ID로 찾기 */
   _findNode(nodeId, nodes) {
     if (!nodes) nodes = this.treeData;
     for (var i = 0; i < nodes.length; i++) {
@@ -351,9 +392,7 @@ class KeywordGroupTreeView {
     return null;
   }
 
-  /**
-   * 노드의 모든 부모를 펼침 상태로 설정
-   */
+  /** 부모 노드 펼치기 */
   _expandParents(nodeId, nodes, parentChain) {
     if (!nodes) nodes = this.treeData;
     if (!parentChain) parentChain = [];
@@ -374,50 +413,58 @@ class KeywordGroupTreeView {
     }
     return false;
   }
-}
 
-/**
- * 뷰 전환 (목록 <-> 트리)
- */
-function switchView(view) {
-  var listContainer = document.getElementById("groups-list");
-  var treeContainer = document.getElementById("groups-tree");
-  var paginationContainer = document.getElementById("groups-pagination");
-  var breadcrumbContainer = document.getElementById("tree-breadcrumb");
 
-  // 탭 버튼 업데이트
-  var tabBtns = document.querySelectorAll(".tab-nav .tab-btn");
-  tabBtns.forEach(function (btn) {
-    btn.classList.remove("active");
-    if (btn.dataset.tab === view) {
-      btn.classList.add("active");
+  /** 부모 ID 찾기 */
+  _findParentId(nodeId, nodes, parentId) {
+    if (!nodes) nodes = this.treeData;
+    if (parentId === undefined) parentId = null;
+    for (var i = 0; i < nodes.length; i++) {
+      if (nodes[i].id === nodeId) return parentId;
+      if (nodes[i].children && nodes[i].children.length > 0) {
+        var found = this._findParentId(nodeId, nodes[i].children, nodes[i].id);
+        if (found !== undefined) return found;
+      }
     }
-  });
-
-  if (view === "tree") {
-    if (listContainer) listContainer.style.display = "none";
-    if (paginationContainer) paginationContainer.style.display = "none";
-    if (treeContainer) treeContainer.style.display = "block";
-    // Breadcrumb는 트리 탭에서 항상 표시 (내용은 노드 선택 시 채워짐)
-    if (breadcrumbContainer) breadcrumbContainer.style.display = "block";
-
-    // 트리 데이터 로드
-    if (window.groupManager && window.groupManager.treeView) {
-      window.groupManager.treeView.loadTree();
-    }
-  } else {
-    if (listContainer) listContainer.style.display = "";
-    if (paginationContainer) paginationContainer.style.display = "";
-    if (treeContainer) treeContainer.style.display = "none";
-    // Breadcrumb는 목록 탭에서는 숨김
-    if (breadcrumbContainer) breadcrumbContainer.style.display = "none";
+    return undefined;
   }
 }
 
 /**
- * 현재 활성 뷰가 트리인지 확인
+ * 뷰 전환 (파일관리형에서는 트리 단일 뷰 — 호환용 no-op)
+ */
+function switchView(view) {
+  var listView = document.getElementById("list-view");
+  var treeView = document.getElementById("tree-view");
+  if (!listView && !treeView) return;
+
+  var viewTabs = document.querySelectorAll(".view-mode-tabs .view-tab");
+  viewTabs.forEach(function (btn) {
+    btn.style.borderBottom = "";
+    btn.style.color = "#6b7280";
+    btn.style.fontWeight = "500";
+    if (btn.dataset.view === view) {
+      btn.style.borderBottom = "2px solid #2563eb";
+      btn.style.color = "#2563eb";
+      btn.style.fontWeight = "600";
+    }
+  });
+
+  if (view === "tree") {
+    if (listView) listView.style.display = "none";
+    if (treeView) treeView.style.display = "block";
+    if (window.groupManager && window.groupManager.treeView) {
+      window.groupManager.treeView.loadTree();
+    }
+  } else {
+    if (listView) listView.style.display = "";
+    if (treeView) treeView.style.display = "none";
+  }
+}
+
+/**
+ * 현재 활성 뷰가 트리인지 확인 (파일관리형에서는 항상 트리)
  */
 function isTreeViewActive() {
-  var activeBtn = document.querySelector(".tab-nav .tab-btn.active");
-  return activeBtn && activeBtn.dataset.tab === "tree";
+  return true;
 }

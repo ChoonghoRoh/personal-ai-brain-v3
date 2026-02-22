@@ -25,6 +25,14 @@ def _build_tree_node(
     max_depth: int,
 ) -> Dict[str, Any]:
     """라벨 노드를 재귀적으로 트리 구조 dict로 변환한다."""
+    keyword_count = (
+        db.query(Label)
+        .filter(
+            Label.parent_label_id == label.id,
+            Label.label_type == "keyword",
+        )
+        .count()
+    )
     node: Dict[str, Any] = {
         "id": label.id,
         "name": label.name,
@@ -32,6 +40,7 @@ def _build_tree_node(
         "description": label.description,
         "color": label.color,
         "depth": current_depth,
+        "keyword_count": keyword_count,
         "children": [],
     }
     if current_depth < max_depth:

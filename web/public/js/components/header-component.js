@@ -36,9 +36,7 @@ const USER_MENU = [
 const ADMIN_MENU = [
   { path: "/admin/groups", label: "키워드 관리", icon: "📦" },
   { path: "/admin/labels", label: "라벨 관리", icon: "🏷️" },
-  { path: "/admin/chunk-create", label: "청크 생성", icon: "➕" },
-  { path: "/admin/approval", label: "청크 승인", icon: "✅" },
-  { path: "/admin/chunk-labels", label: "청크 관리", icon: "📝" },
+  { path: "/admin/knowledge-workflow", label: "지식 워크플로우", icon: "📋" },
   { path: "/admin/knowledge-files", label: "파일관리", icon: "📁" },
   { path: "/admin/ai-automation", label: "AI 자동화", icon: "🤖" },
   { path: "/knowledge-graph", label: "지식 그래프", icon: "🕸️" },

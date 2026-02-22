@@ -170,100 +170,27 @@ class KeywordGroupCRUD {
   }
 
   // ============================
-  // 상세 패널 (2단) — 보기/편집 모드
+  // 상세 패널 (2단) — 편집 모드 직접 표시
   // ============================
 
-  /**
-   * 상세 패널 렌더링 (보기 모드)
-   */
+  /** 상세 패널 렌더링 (편집 폼 직접 표시) */
   renderDetailPanel(group) {
     const panel = document.getElementById("group-detail-panel");
     if (!panel) return;
-
-    panel.innerHTML = `
-      <div class="detail-view-mode">
-        <div class="detail-field">
-          <span class="detail-field-label">이름</span>
-          <span class="detail-field-value">${escapeHtml(group.name)}</span>
-        </div>
-        <div class="detail-field">
-          <span class="detail-field-label">설명</span>
-          <span class="detail-field-value ${group.description ? "" : "empty"}">${group.description ? escapeHtml(group.description) : "설명 없음"}</span>
-        </div>
-        <div class="detail-field">
-          <span class="detail-field-label">색상</span>
-          <span class="detail-field-value">
-            ${group.color ? `<span class="detail-color-swatch" style="background:${escapeHtml(group.color)}"></span>${escapeHtml(group.color)}` : '<span class="empty">미지정</span>'}
-          </span>
-        </div>
-        <div class="detail-actions">
-          <button class="btn btn-primary btn-small" onclick="window.groupManager.showEditGroupInline(${group.id})">수정</button>
-          <button class="btn btn-danger btn-small" onclick="window.groupManager.deleteGroup(${group.id})">삭제</button>
-        </div>
-      </div>
-    `;
+    this.manager.editingGroupId = group.id;
+    panel.innerHTML = this._buildEditFormHTML(group, false);
+    if (typeof loadOllamaModelOptions === "function") {
+      loadOllamaModelOptions("keyword-suggestion-model");
+    }
   }
 
-  /**
-   * 상세 패널 — 편집 모드 (인라인)
-   */
+  /** 레거시 호환: showEditGroupInline은 이제 renderDetailPanel을 호출 */
   async showEditGroupInline(groupId) {
     try {
       const response = await fetch(`/api/labels/groups/${groupId}`);
       if (!response.ok) throw new Error("그룹 정보를 불러올 수 없습니다.");
       const group = await response.json();
-      this.manager.editingGroupId = groupId;
-
-      const panel = document.getElementById("group-detail-panel");
-      if (!panel) return;
-
-      panel.innerHTML = `
-        <div class="detail-edit-mode">
-          <div class="form-group">
-            <label>그룹 이름 *</label>
-            <input type="text" id="group-name-input" value="${escapeHtml(group.name)}" required placeholder="예: AI 인프라" />
-          </div>
-          <div class="form-group">
-            <label>설명</label>
-            <textarea id="group-description-input" rows="3" placeholder="그룹에 대한 설명을 입력하세요">${group.description ? escapeHtml(group.description) : ""}</textarea>
-            <div id="keyword-suggestion-error" style="display:none"></div>
-            <div id="keyword-suggestion-success" style="display:none"></div>
-            <div class="detail-suggestion-area">
-              <div class="form-group">
-                <label style="font-size:12px;color:#666">LLM 모델 (키워드 추천)</label>
-                <select id="keyword-suggestion-model" style="min-width:180px;padding:6px 10px;font-size:13px;border-radius:6px;border:1px solid #e5e7eb">
-                  <option value="">기본 (env)</option>
-                </select>
-              </div>
-              <button type="button" class="btn btn-small" style="background:#f3f4f6;color:#333" onclick="suggestKeywordsFromDescription()" id="suggest-keywords-btn">
-                설명 기반 키워드 추천
-              </button>
-              <div id="suggested-keywords-container" style="display:none;margin-top:8px;padding:10px;background:#f9fafb;border-radius:6px;border:1px solid #e5e7eb">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-                  <div style="font-size:12px;color:#666;font-weight:500">추천 키워드:</div>
-                  <button type="button" class="btn btn-small" style="padding:4px 8px;font-size:11px;background:#fee2e2;color:#991b1b" onclick="clearSuggestedKeywords()">전체삭제</button>
-                </div>
-                <div id="suggested-keywords-list" style="display:flex;flex-wrap:wrap;gap:6px"></div>
-              </div>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>색상 코드</label>
-            <input type="text" id="group-color-input" value="${group.color ? escapeHtml(group.color) : ""}" placeholder="#4F46E5" pattern="^#[0-9A-Fa-f]{6}$" />
-            <small style="color:#666;font-size:12px;display:block;margin-top:4px">16진수 색상 코드 (예: #4F46E5)</small>
-          </div>
-          <div class="detail-edit-actions">
-            <button type="button" class="btn btn-secondary-light btn-small" onclick="window.groupManager.cancelEditInline()">취소</button>
-            <button type="button" class="btn btn-primary btn-small" onclick="window.groupManager.saveEditInline()">저장</button>
-          </div>
-        </div>
-      `;
-
-      // LLM 모델 목록 로드
-      if (typeof loadOllamaModelOptions === "function") {
-        loadOllamaModelOptions("keyword-suggestion-model");
-      }
-
+      this.renderDetailPanel(group);
       document.getElementById("group-name-input")?.focus();
     } catch (error) {
       console.error("편집 모드 전환 실패:", error);
@@ -271,42 +198,53 @@ class KeywordGroupCRUD {
     }
   }
 
-  /**
-   * 새 그룹 생성 — 상세 패널에서 인라인으로 표시
-   */
+  /** 새 그룹 생성 모드 */
   showCreateGroupModal() {
     this.manager.editingGroupId = null;
     this.manager.selectedSuggestedKeywords.clear();
+    this.manager.selectedGroupId = null;
+    this.manager.ui.updateMatchingUI();
 
     const panel = document.getElementById("group-detail-panel");
     if (!panel) return;
 
-    // 그룹 선택 해제
-    this.manager.selectedGroupId = null;
-    this.manager.ui.updateMatchingUI();
+    panel.innerHTML = this._buildEditFormHTML(null, true);
+    if (typeof loadOllamaModelOptions === "function") {
+      loadOllamaModelOptions("keyword-suggestion-model");
+    }
+    document.getElementById("group-name-input")?.focus();
+  }
 
-    panel.innerHTML = `
+  /** 편집/생성 폼 HTML 생성 */
+  _buildEditFormHTML(group, isNew) {
+    const title = isNew ? '<div style="font-weight:600;color:#2563eb;margin-bottom:12px;font-size:15px">새 키워드 그룹 생성</div>' : '';
+    const nameVal = isNew ? '' : escapeHtml(group.name);
+    const descVal = isNew ? '' : (group.description ? escapeHtml(group.description) : '');
+    const colorVal = isNew ? '#4F46E5' : (group.color || '#4F46E5');
+    const colorInputVal = isNew ? '' : (group.color ? escapeHtml(group.color) : '');
+    const saveBtn = isNew ? '생성' : '저장';
+    const deleteBtn = isNew ? '' : '<button type="button" class="btn btn-danger btn-small" onclick="window.groupManager.deleteGroup(' + group.id + ')">삭제</button>';
+
+    return `
       <div class="detail-edit-mode">
-        <div style="font-weight:600;color:#2563eb;margin-bottom:12px;font-size:15px">새 키워드 그룹 생성</div>
+        ${title}
         <div class="form-group">
           <label>그룹 이름 *</label>
-          <input type="text" id="group-name-input" required placeholder="예: AI 인프라" />
+          <input type="text" id="group-name-input" value="${nameVal}" required placeholder="예: AI 인프라" />
         </div>
         <div class="form-group">
           <label>설명</label>
-          <textarea id="group-description-input" rows="3" placeholder="그룹에 대한 설명을 입력하세요"></textarea>
+          <textarea id="group-description-input" rows="3" placeholder="그룹에 대한 설명을 입력하세요">${descVal}</textarea>
+          <button type="button" class="btn btn-small btn-suggest" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; border: none; cursor: pointer; box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3); margin-top: 8px;" onclick="suggestKeywordsFromDescription()">AI 키워드 추천</button>
           <div id="keyword-suggestion-error" style="display:none"></div>
           <div id="keyword-suggestion-success" style="display:none"></div>
           <div class="detail-suggestion-area">
             <div class="form-group">
-              <label style="font-size:12px;color:#666">LLM 모델 (키워드 추천)</label>
+              <label style="font-size:12px;color:#666">LLM 모델</label>
               <select id="keyword-suggestion-model" style="min-width:180px;padding:6px 10px;font-size:13px;border-radius:6px;border:1px solid #e5e7eb">
                 <option value="">기본 (env)</option>
               </select>
             </div>
-            <button type="button" class="btn btn-small" style="background:#f3f4f6;color:#333" onclick="suggestKeywordsFromDescription()" id="suggest-keywords-btn">
-              설명 기반 키워드 추천
-            </button>
             <div id="suggested-keywords-container" style="display:none;margin-top:8px;padding:10px;background:#f9fafb;border-radius:6px;border:1px solid #e5e7eb">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
                 <div style="font-size:12px;color:#666;font-weight:500">추천 키워드:</div>
@@ -318,27 +256,22 @@ class KeywordGroupCRUD {
         </div>
         <div class="form-group">
           <label>색상 코드</label>
-          <input type="text" id="group-color-input" placeholder="#4F46E5" pattern="^#[0-9A-Fa-f]{6}$" />
+          <div style="display: flex; align-items: center; gap: 8px">
+            <input type="color" id="group-color-picker" value="${colorVal}" style="width: 40px; height: 36px; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; padding: 2px" onchange="document.getElementById('group-color-input').value = this.value" />
+            <input type="text" id="group-color-input" value="${colorInputVal}" placeholder="#4F46E5" pattern="^#[0-9A-Fa-f]{6}$" style="flex: 1" oninput="try{document.getElementById('group-color-picker').value = this.value}catch(e){}" />
+          </div>
           <small style="color:#666;font-size:12px;display:block;margin-top:4px">16진수 색상 코드 (예: #4F46E5)</small>
         </div>
         <div class="detail-edit-actions">
           <button type="button" class="btn btn-secondary-light btn-small" onclick="window.groupManager.cancelEditInline()">취소</button>
-          <button type="button" class="btn btn-primary btn-small" onclick="window.groupManager.saveEditInline()">생성</button>
+          ${deleteBtn}
+          <button type="button" class="btn btn-primary btn-small" onclick="window.groupManager.saveEditInline()">${saveBtn}</button>
         </div>
       </div>
     `;
-
-    // LLM 모델 목록 로드
-    if (typeof loadOllamaModelOptions === "function") {
-      loadOllamaModelOptions("keyword-suggestion-model");
-    }
-
-    document.getElementById("group-name-input")?.focus();
   }
 
-  /**
-   * 편집/생성 취소 — 보기 모드로 복귀
-   */
+  /** 편집/생성 취소 */
   cancelEditInline() {
     this.manager.editingGroupId = null;
     this.manager.selectedSuggestedKeywords.clear();
@@ -351,7 +284,6 @@ class KeywordGroupCRUD {
       }
     }
 
-    // 선택된 그룹이 없으면 빈 상태 표시
     const panel = document.getElementById("group-detail-panel");
     if (panel) {
       panel.innerHTML = '<div class="detail-empty-state"><p>좌측에서 그룹을 선택하세요</p></div>';
@@ -391,6 +323,7 @@ class KeywordGroupCRUD {
           showSuccess(`그룹이 수정되었고 ${suggestedKeywords.length}개의 키워드가 추가되었습니다.`);
         } catch (keywordError) {
           console.error("키워드 추가 실패:", keywordError);
+          showError("키워드 추가 중 오류가 발생했습니다: " + (keywordError.message || "알 수 없는 오류"));
         }
       }
       this.manager.editingGroupId = null;
@@ -435,6 +368,10 @@ class KeywordGroupCRUD {
       // 생성된 그룹 자동 선택
       this.manager.selectedGroupId = result.id;
       await this.loadGroups();
+      // 트리 동기화
+      if (this.manager && this.manager.treeView) {
+        await this.manager.treeView.loadTree();
+      }
       await this.manager.matching.loadKeywords();
     } catch (error) {
       console.error("그룹 생성 실패:", error);
@@ -460,6 +397,10 @@ class KeywordGroupCRUD {
 
       showSuccess("그룹이 수정되었습니다.");
       await this.loadGroups();
+      // 트리 동기화
+      if (this.manager && this.manager.treeView) {
+        await this.manager.treeView.loadTree();
+      }
     } catch (error) {
       console.error("그룹 수정 실패:", error);
       showError(error.message || "그룹 수정 중 오류가 발생했습니다.");
@@ -503,6 +444,10 @@ class KeywordGroupCRUD {
       }
 
       await this.loadGroups();
+      // 트리 동기화
+      if (this.manager && this.manager.treeView) {
+        await this.manager.treeView.loadTree();
+      }
       await this.manager.matching.loadKeywords();
     } catch (error) {
       console.error("그룹 삭제 실패:", error);

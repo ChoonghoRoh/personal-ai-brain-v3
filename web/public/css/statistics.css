@@ -26,7 +26,7 @@
 /* Summary Cards */
 .summary-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 1.5rem;
   margin-bottom: 2rem;
 }
@@ -78,7 +78,7 @@
 /* Charts Row */
 .charts-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
   margin-bottom: 2rem;
 }
@@ -143,7 +143,7 @@
 /* Details Section */
 .details-section {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
 }
 
@@ -240,7 +240,24 @@ td.loading {
   }
 }
 
-/* Responsive */
+/* Responsive - Phase 19-2 3단계 반응형 레이아웃 */
+
+/* Tablet: 768px ~ 1200px */
+@media (max-width: 1200px) {
+  .summary-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .charts-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .details-section {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile: ~768px */
 @media (max-width: 768px) {
   .page-header {
     flex-direction: column;
@@ -252,22 +269,19 @@ td.loading {
   }
 
   .summary-cards {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
   }
 
-  .charts-row,
+  .charts-row {
+    grid-template-columns: 1fr;
+  }
+
   .details-section {
     grid-template-columns: 1fr;
   }
 
   .chart-container {
     height: 200px;
-  }
-}
-
-@media (max-width: 480px) {
-  .summary-cards {
-    grid-template-columns: 1fr;
   }
 }
 

@@ -5,7 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/static/css/admin/admin-styles.css" />
-    <link rel="stylesheet" href="/static/css/admin/admin-groups.css" />
+    <link rel="stylesheet" href="/static/css/admin/admin-groups-base.css" />
+    <link rel="stylesheet" href="/static/css/admin/admin-groups-tree.css" />
+    <link rel="stylesheet" href="/static/css/admin/admin-groups-panel.css" />
+    <link rel="stylesheet" href="/static/css/admin/admin-groups-keywords.css" />
+    <link rel="stylesheet" href="/static/css/admin/admin-groups-responsive.css" />
     <title>Personal AI Brain - 키워드 그룹 관리</title>
   </head>
   <body>
@@ -16,100 +20,71 @@
       <div id="error-message" class="error" style="display: none"></div>
       <div id="success-message" class="success" style="display: none"></div>
 
-      <!-- 키워드 그룹 관리 컨텐츠 -->
+      <!-- 키워드 그룹 관리: 파일관리형 좌측 트리 + 우측 상세 -->
       <div class="admin-panel">
-        <!-- 상단 헤더: 제목 + 새 그룹 버튼 -->
         <div class="groups-page-header">
           <h3>키워드 그룹 관리</h3>
           <button class="btn btn-primary" onclick="showCreateGroupModal()">+ 새 그룹</button>
         </div>
 
-        <!-- 검색 바 -->
-        <div class="groups-search-bar">
-          <input
-            type="text"
-            id="group-search-input"
-            placeholder="그룹/키워드 검색..."
-            onkeyup="searchGroupsAndKeywords()"
-          />
-        </div>
-
-        <!-- 3단 레이아웃 -->
-        <div class="groups-three-col">
-          <!-- 1단: 그룹 목록 -->
-          <div class="groups-col groups-col-list">
-            <div class="col-header">
-              <h4>그룹 목록</h4>
-              <div class="tab-nav">
-                <button class="tab-btn active" data-tab="list" onclick="switchTab('list')">목록</button>
-                <button class="tab-btn" data-tab="tree" onclick="switchTab('tree')">트리 연결</button>
+        <div class="kg-explorer">
+          <!-- 좌측: 트리 패널 -->
+          <div class="kg-tree-panel">
+            <div class="kg-tree-header">
+              <div class="kg-tree-header-row">
+                <span class="kg-tree-title">키워드 그룹</span>
+                <select id="kg-tree-max-depth" class="kg-depth-select" onchange="applyTreeMaxDepth()">
+                  <option value="3">3</option>
+                  <option value="5" selected>5</option>
+                  <option value="10">전체</option>
+                </select>
+              </div>
+              <div class="kg-tree-search">
+                <input type="text" id="group-search-input" placeholder="검색..." onkeyup="searchGroupsAndKeywords()" />
               </div>
             </div>
-            <div id="groups-list" class="groups-list-container">
-              <div class="loading">그룹 목록을 불러오는 중...</div>
+            <div class="kg-tree-body">
+              <div id="tree-breadcrumb" class="tree-breadcrumb" style="display:none;margin-bottom:8px;font-size:12px"></div>
+              <div id="groups-tree" class="groups-tree-container"></div>
             </div>
-            <div id="groups-pagination" class="groups-pagination"></div>
-            <div id="groups-tree" class="groups-tree-container" style="display:none"></div>
           </div>
 
-          <!-- 2단: 그룹 상세/편집 -->
-          <div class="groups-col groups-col-detail">
-            <div class="col-header">
-              <h4>그룹 상세</h4>
-            </div>
-            <div id="tree-breadcrumb" class="tree-breadcrumb" style="display:none"></div>
+          <!-- 우측: 상세 패널 (그룹 상세 + 데이터 연결 레벨 + 키워드 목록) -->
+          <div class="kg-detail-panel">
             <div id="group-detail-panel" class="group-detail-panel">
               <div class="detail-empty-state">
                 <p>좌측에서 그룹을 선택하세요</p>
               </div>
             </div>
-          </div>
 
-          <!-- 3단: 키워드 목록 -->
-          <div class="groups-col groups-col-keywords">
-            <div class="col-header">
-              <h4>키워드 목록</h4>
-              <button class="btn btn-sm btn-ai" id="llm-suggest-btn" onclick="suggestKeywordsForSelectedGroup()" disabled>🤖 LLM 추천</button>
-            </div>
-            <div id="keywords-list" class="keywords-list-container">
-              <div class="loading">키워드 목록을 불러오는 중...</div>
-            </div>
-            <div id="llm-suggestion-section" class="llm-suggestion-section" style="display: none">
-              <div class="llm-suggestion-header">
-                <h5>💡 LLM 추천 키워드</h5>
-                <button class="btn btn-sm btn-primary" id="add-suggested-btn" onclick="addSelectedSuggestedKeywords()">선택 추가</button>
+            <!-- 키워드 목록 -->
+            <div class="kg-keywords-section">
+              <div class="col-header">
+                <h4>키워드 목록</h4>
               </div>
-              <div id="llm-suggestion-error" class="error-message" style="display: none"></div>
-              <div id="llm-suggestion-success" class="success-message" style="display: none"></div>
-              <div id="llm-suggested-keywords-list" class="llm-suggested-keywords-list"></div>
-            </div>
-            <div id="related-keywords-section" class="related-keywords-section" style="display: none">
-              <div class="related-keywords-header">
-                <h5>🔗 연관 키워드 추천</h5>
+              <div class="keyword-search-bar">
+                <input type="text" id="keyword-search-input" placeholder="키워드 검색..." onkeyup="searchKeywords()" />
               </div>
-              <div class="related-search">
-                <input type="text" id="related-keyword-search" placeholder="키워드 검색..." />
-                <button class="btn btn-sm" onclick="searchRelatedKeywords()">조회</button>
+              <div id="keywords-list" class="keywords-list-container">
+                <div class="loading">그룹을 선택하면 키워드 목록이 표시됩니다</div>
               </div>
-              <div id="related-keywords-error" class="error-message" style="display: none"></div>
-              <div id="related-keywords-list" class="related-keywords-list"></div>
-              <button class="btn btn-sm btn-primary" id="add-related-btn" onclick="addSelectedRelatedKeywords()" style="display: none">선택 추가</button>
+              <div id="keywords-pagination" class="groups-pagination"></div>
+              <div id="related-keywords-section" class="related-keywords-section" style="display: none">
+                <div class="related-keywords-header">
+                  <h5>유사 키워드</h5>
+                </div>
+                <div id="related-keywords-error" class="error-message" style="display: none"></div>
+                <div id="related-keywords-list" class="related-keywords-list"></div>
+                <button class="btn btn-sm btn-primary" id="add-related-btn" onclick="addSelectedRelatedKeywords()" style="display: none">선택 추가</button>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <!-- 하단 고정 바: 선택 요약 + 그룹 액션 + 일괄 적용 버튼 -->
-        <div id="matching-summary-bar" class="matching-summary-bar" style="display: none">
-          <div class="matching-summary-inner">
-            <div id="selection-summary" class="selection-summary"></div>
-            <div class="matching-actions">
-              <div class="group-actions" id="group-action-buttons" style="display: none">
-                <button class="btn btn-secondary" onclick="showEditGroupModal(groupManager?.crud?.selectedGroupId)">수정</button>
-                <button class="btn btn-danger-light" onclick="deleteCurrentGroup()">삭제</button>
-              </div>
-              <button class="btn btn-primary" id="apply-keywords-btn" onclick="applyGroupKeywords()" style="display: none">선택 연결</button>
-              <button class="btn btn-danger-light" id="remove-keywords-btn" onclick="removeGroupKeywords()" style="display: none">선택 해제</button>
-              <button class="btn btn-secondary-light" onclick="clearSelection()">선택 취소</button>
+            <!-- 우측 상단 액션: 선택 연결 / 선택 해제 / 선택 취소 -->
+            <div id="matching-actions-inline" class="kg-matching-actions" style="display: none">
+              <span id="selection-summary-inline" class="selection-summary"></span>
+              <button class="btn btn-primary btn-sm" id="apply-keywords-btn" onclick="applyGroupKeywords()">선택 연결</button>
+              <button class="btn btn-danger-light btn-sm" id="remove-keywords-btn" onclick="removeGroupKeywords()">선택 해제</button>
+              <button class="btn btn-secondary-light btn-sm" onclick="clearSelection()">선택 취소</button>
             </div>
           </div>
         </div>
@@ -125,6 +100,7 @@
     <script src="/static/js/admin/keyword-group-ui.js"></script>
     <script src="/static/js/admin/keyword-group-suggestion.js"></script>
     <script src="/static/js/admin/keyword-group-search.js"></script>
+    <script src="/static/js/admin/keyword-group-context-menu.js"></script>
     <script src="/static/js/admin/keyword-group-treeview.js"></script>
     <script src="/static/js/admin/keyword-group-manager.js"></script>
     <script src="/static/js/components/ollama-model-options.js"></script>

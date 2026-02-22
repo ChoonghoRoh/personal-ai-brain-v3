@@ -73,8 +73,31 @@ def resolve_model(model: Optional[str] = None) -> str:
     return use_model
 
 
+def _is_single_concept_word(word: str) -> bool:
+    """단일 개념어 판별 (공백 분리 허용 조건).
+
+    - 한글만 2자 이상: "화성", "우주", "프로젝트"
+    - 영어만 2자 이상: "AI", "backend", "design"
+    """
+    if not word or len(word) < 2:
+        return False
+    # 한글만
+    if re.match(r"^[가-힣]{2,}$", word):
+        return True
+    # 영어만
+    if re.match(r"^[a-zA-Z]{2,}$", word):
+        return True
+    return False
+
+
 def generate_keywords_via_llm(prompt: str, model: str) -> Optional[List[str]]:
-    """LLM 호출 → postprocess_korean_keywords → 단일 라인 분리."""
+    """LLM 호출 → postprocess_korean_keywords → 조건부 공백 분리.
+
+    분리 우선순위:
+    1순위: 쉼표(,) / 세미콜론(;) 분리
+    2순위: 개행(\n) 분리
+    3순위: 공백 분리 (각 토큰이 단일 개념어인 경우만)
+    """
     from backend.services.ai.ollama_client import ollama_generate
     from backend.utils.korean_utils import postprocess_korean_keywords
 
@@ -82,11 +105,26 @@ def generate_keywords_via_llm(prompt: str, model: str) -> Optional[List[str]]:
     if not raw:
         return None
     lines = postprocess_korean_keywords(raw)
-    # LLM이 공백 구분 단일 라인으로 응답한 경우 개별 단어로 분리
-    if len(lines) == 1 and " " in lines[0] and len(lines[0].split()) >= 2:
-        words = [w.strip() for w in lines[0].split() if len(w.strip()) >= 2]
-        if words:
-            lines = words
+
+    # 단일 라인인 경우 추가 분리 시도
+    if len(lines) == 1 and lines[0]:
+        single_line = lines[0]
+
+        # 1순위: 쉼표/세미콜론 분리
+        if "," in single_line or ";" in single_line:
+            # postprocess_korean_keywords에서 이미 처리됨 (L104-107)
+            pass
+        # 2순위: 개행 분리
+        elif "\n" in single_line:
+            # postprocess_korean_keywords에서 이미 처리됨 (L100)
+            pass
+        # 3순위: 공백 분리 (단일 개념어만)
+        elif " " in single_line and len(single_line.split()) >= 2:
+            words = [w.strip() for w in single_line.split() if len(w.strip()) >= 2]
+            # 모든 토큰이 단일 개념어인 경우에만 분리
+            if words and all(_is_single_concept_word(w) for w in words):
+                lines = words
+
     return lines if lines else None
 
 
@@ -97,27 +135,84 @@ def match_and_score_labels(
     all_label_names_lower: Set[str],
     limit: int,
 ) -> Dict[str, Any]:
-    """LLM 추출 키워드를 DB 라벨과 매칭하여 suggestions + new_keywords 생성."""
+    """LLM 추출 키워드를 DB 라벨과 3단계 계층 매칭하여 suggestions + new_keywords 생성.
+
+    Tier 1: 정확 매칭 (모든 키워드) - base_conf
+    Tier 2: 접두사 매칭 (3자 이상) - base_conf × 0.85
+    Tier 3: 부분 매칭 (4자 이상) - base_conf × 0.7
+    """
+    from sqlalchemy import func
+
     scored: Dict[int, tuple] = {}
     matched_keywords: set = set()
+
     for i, keyword in enumerate(keywords[:15]):
         if not keyword or len(keyword) < 2:
             continue
+
         kw_clean = keyword.strip().lower()
-        labels = (
+        kw_len = len(kw_clean)
+        base_conf = 0.9 - (i * 0.03)
+        base_conf = max(0.5, min(base_conf, 0.9))
+
+        matched_in_tier = False
+
+        # Tier 1: 정확 매칭 (모든 키워드)
+        tier1_labels = (
             db.query(Label)
-            .filter(Label.name.ilike(f"%{kw_clean}%"))
+            .filter(func.lower(Label.name) == kw_clean)
             .limit(5)
             .all()
         )
-        conf = 0.9 - (i * 0.03)
-        conf = max(0.5, min(conf, 0.9))
-        if labels:
+        if tier1_labels:
             matched_keywords.add(kw_clean)
-            for lb in labels:
-                if lb.id not in existing_ids and (lb.id not in scored or scored[lb.id][0] < conf):
-                    scored[lb.id] = (conf, "llm")
+            matched_in_tier = True
+            for lb in tier1_labels:
+                if lb.id not in existing_ids:
+                    if lb.id not in scored or scored[lb.id][0] < base_conf:
+                        scored[lb.id] = (base_conf, "llm")
 
+        # Tier 2: 접두사 매칭 (3자 이상만)
+        if not matched_in_tier and kw_len >= 3:
+            tier2_labels = (
+                db.query(Label)
+                .filter(Label.name.ilike(f"{kw_clean}%"))
+                .limit(5)
+                .all()
+            )
+            # Tier 1 정확 매칭 제외
+            tier2_labels = [lb for lb in tier2_labels if lb.name.lower() != kw_clean]
+            if tier2_labels:
+                matched_keywords.add(kw_clean)
+                matched_in_tier = True
+                tier2_conf = base_conf * 0.85
+                for lb in tier2_labels:
+                    if lb.id not in existing_ids:
+                        if lb.id not in scored or scored[lb.id][0] < tier2_conf:
+                            scored[lb.id] = (tier2_conf, "llm")
+
+        # Tier 3: 부분 매칭 (4자 이상만)
+        if not matched_in_tier and kw_len >= 4:
+            tier3_labels = (
+                db.query(Label)
+                .filter(Label.name.ilike(f"%{kw_clean}%"))
+                .limit(5)
+                .all()
+            )
+            # Tier 1, 2 제외
+            tier3_labels = [
+                lb for lb in tier3_labels
+                if lb.name.lower() != kw_clean and not lb.name.lower().startswith(kw_clean)
+            ]
+            if tier3_labels:
+                matched_keywords.add(kw_clean)
+                tier3_conf = base_conf * 0.7
+                for lb in tier3_labels:
+                    if lb.id not in existing_ids:
+                        if lb.id not in scored or scored[lb.id][0] < tier3_conf:
+                            scored[lb.id] = (tier3_conf, "llm")
+
+    # new_keywords: Tier 1~3 모두 실패한 키워드만 분류
     new_keywords: List[str] = []
     for keyword in keywords[:15]:
         if not keyword or len(keyword) < 2:
@@ -125,7 +220,7 @@ def match_and_score_labels(
         kw_clean = keyword.strip().lower()
         if kw_clean in matched_keywords:
             continue
-        # exact match만 체크 (substring 매칭은 짧은 라벨이 긴 키워드에 오탐 유발)
+        # exact match 체크 (all_label_names_lower는 정확 매칭용)
         if kw_clean in all_label_names_lower:
             continue
         if kw_clean not in [k.lower() for k in new_keywords]:

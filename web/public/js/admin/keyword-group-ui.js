@@ -63,11 +63,9 @@ class KeywordGroupUI {
 
     if (summaryBar && summaryText) {
       if (this.manager.selectedGroupId) {
-        summaryBar.style.display = "block";
-        const selectedGroupCard = document.querySelector(`.group-card[data-group-id="${this.manager.selectedGroupId}"]`);
-        const groupName = selectedGroupCard
-          ? selectedGroupCard.querySelector(".group-card-name")?.textContent || `그룹 #${this.manager.selectedGroupId}`
-          : `그룹 #${this.manager.selectedGroupId}`;
+        summaryBar.style.display = "flex";
+        const treeNameEl = document.querySelector("#groups-tree .tree-node-content.selected .tree-name");
+        const groupName = treeNameEl ? treeNameEl.textContent : `그룹 #${this.manager.selectedGroupId}`;
 
         const parts = [];
         if (this.manager.selectedKeywordIds.size > 0) {
@@ -135,10 +133,10 @@ class KeywordGroupUI {
     this.manager.selectedRemoveKeywordIds.clear();
     this.manager.selectedKeywordForGroupCheck = null;
 
-    // 상세 패널 초기화
+    // 상세 패널 초기화 (우측 빈 상태)
     const panel = document.getElementById("group-detail-panel");
     if (panel) {
-      panel.innerHTML = '<div class="detail-empty-state"><p>좌측에서 그룹을 선택하세요</p></div>';
+      panel.innerHTML = "<div class=\"detail-empty-state\"><p>좌측에서 그룹을 선택하세요</p></div>";
     }
 
     this.updateMatchingUI();

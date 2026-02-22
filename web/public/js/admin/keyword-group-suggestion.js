@@ -78,8 +78,11 @@ class KeywordGroupSuggestion {
       const suggestions = data.suggestions || [];
       let newKeywords = data.new_keywords || [];
 
-      // new_keywords는 LLM 원시 출력이므로 정제 적용
-      newKeywords = this.extractKeywordsOnly(newKeywords);
+      // new_keywords는 백엔드에서 이미 postprocess_korean_keywords()로 정제됨
+      // 최소 처리만 적용 (trim + 2글자 이상 필터)
+      newKeywords = newKeywords
+        .map(kw => kw.trim())
+        .filter(kw => kw.length >= 2);
 
       const totalCount = suggestions.length + newKeywords.length;
 

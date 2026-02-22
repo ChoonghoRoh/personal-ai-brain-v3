@@ -1,0 +1,208 @@
+/* 키워드 그룹 관리 페이지 — 그룹 상세 패널 스타일 */
+
+/* ===== 그룹 상세 패널 ===== */
+.group-detail-panel {
+  padding: 0;
+  overflow: visible;
+}
+
+.detail-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 200px;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+/* 상세 패널 내 폼 — 보기 모드 */
+.detail-view-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-field-value {
+  font-size: 14px;
+  color: #1f2937;
+  line-height: 1.5;
+}
+
+.detail-field-value.empty {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.detail-color-swatch {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+.detail-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* 인라인 편집 폼 */
+.detail-edit-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-edit-mode .form-group {
+  margin-bottom: 0;
+}
+
+.detail-edit-mode .form-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.detail-edit-mode .form-group input,
+.detail-edit-mode .form-group textarea {
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.detail-edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding-top: 8px;
+}
+
+/* 키워드 추천 영역 (상세 패널 내) */
+.detail-suggestion-area {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.detail-suggestion-area .form-group {
+  margin-bottom: 8px;
+}
+
+#keyword-suggestion-error {
+  margin-top: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: 6px;
+  border: 1px solid #fecaca;
+}
+
+#keyword-suggestion-success {
+  margin-top: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  background: #d1fae5;
+  color: #065f46;
+  border-radius: 6px;
+  border: 1px solid #a7f3d0;
+}
+
+#suggested-keywords-container {
+  margin-top: 8px;
+  padding: 10px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+#suggested-keywords-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* ===== 하단 요약 바 ===== */
+.matching-summary-bar {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding: 12px 16px;
+  border-top: 2px solid #e5e7eb;
+  border-radius: 0 0 8px 8px;
+  margin-top: 16px;
+}
+
+.matching-summary-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.selection-summary {
+  font-weight: 500;
+  color: #333;
+  font-size: 14px;
+}
+
+.matching-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.group-actions {
+  display: flex;
+  gap: 8px;
+  padding-right: 8px;
+  border-right: 1px solid #e5e7eb;
+  margin-right: 8px;
+}
+
+.btn-danger-light {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.btn-danger-light:hover {
+  background: #fecaca;
+}
+
+.btn-secondary-light {
+  background: #e5e7eb;
+  color: #333;
+}
+
+.btn-secondary-light:hover {
+  background: #d1d5db;
+}
+
+/* ===== 키워드 그룹 정보 표시 ===== */
+#selected-keyword-group-info {
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  font-size: 13px;
+  color: #333;
+  margin-top: 8px;
+}

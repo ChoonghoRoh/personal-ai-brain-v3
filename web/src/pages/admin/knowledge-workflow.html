@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/css/admin/admin-styles.css" />
+    <link rel="stylesheet" href="/static/css/admin/admin-knowledge-workflow.css" />
+    <!-- 기존 CSS 재사용 (각 탭별 세부 스타일) -->
+    <link rel="stylesheet" href="/static/css/admin/admin-chunk-create.css" />
+    <link rel="stylesheet" href="/static/css/admin/admin-approval.css" />
+    <link rel="stylesheet" href="/static/css/admin/admin-chunk-labels.css" />
+    <title>Personal AI Brain - 지식 워크플로우</title>
+  </head>
+  <body>
+    <div class="container">
+      <div id="header-placeholder"></div>
+      <div id="error-message" class="error" style="display: none"></div>
+      <div id="success-message" class="success" style="display: none"></div>
+
+      <div class="admin-container kw-container">
+        <div class="admin-panel">
+          <!-- 탭 바 -->
+          <nav class="kw-tabs" role="tablist">
+            <button class="kw-tab active" data-tab="create" role="tab" aria-selected="true">1. 생성</button>
+            <button class="kw-tab" data-tab="approval" role="tab" aria-selected="false">2. 승인</button>
+            <button class="kw-tab" data-tab="manage" role="tab" aria-selected="false">3. 관리</button>
+          </nav>
+
+          <!-- 탭 콘텐츠 -->
+          <div class="kw-tab-content">
+            <div id="tab-create" class="kw-tab-panel active chunk-create-flow" data-tab="create">
+              <p class="chunk-create-desc">문서 스토리지(brain/, docs/)의 마크다운 파일을 선택한 뒤 분할해 청크로 등록합니다.</p>
+
+              <!-- 상단: 단계 탭 -->
+              <nav class="chunk-create-tabs" role="tablist">
+                <button type="button" class="chunk-create-tab active" data-step="1" role="tab" aria-selected="true">1. 파일 선택</button>
+                <button type="button" class="chunk-create-tab" data-step="2" role="tab" aria-selected="false">2. 분할·선택</button>
+                <button type="button" class="chunk-create-tab" data-step="3" role="tab" aria-selected="false">3. 등록</button>
+              </nav>
+
+              <!-- 하단: 단계별 상세 (좌 / 우) -->
+              <div class="chunk-create-body">
+                <!-- 1단계 패널 -->
+                <div id="kw-create-step1-panel" class="chunk-create-panel active" data-step="1">
+                  <div class="chunk-create-row">
+                    <aside class="chunk-create-left step1-left">
+                      <h4>스토리지 파일 목록</h4>
+                      <p class="form-hint">brain/, docs/ 내 .md 파일. 클릭 시 우측에 내용이 표시됩니다.</p>
+                      <div id="kw-create-file-list" class="chunk-create-file-list chunk-create-panel-area">
+                        <div class="loading">파일 목록을 불러오는 중...</div>
+                      </div>
+                      <div id="kw-create-file-list-pagination" class="chunk-create-pagination" style="display: none">
+                        <button type="button" class="btn btn-small" id="kw-create-btn-file-prev" disabled>이전</button>
+                        <span id="kw-create-file-page-info" class="chunk-create-page-info">1 / 1</span>
+                        <button type="button" class="btn btn-small" id="kw-create-btn-file-next" disabled>다음</button>
+                      </div>
+                    </aside>
+                    <main class="chunk-create-right step1-right">
+                      <h4>선택된 문서 · 분할 방식</h4>
+                      <div id="kw-create-source-content-group" class="step1-doc-area chunk-create-panel-area" style="display: none">
+                        <div class="step1-split-row form-group">
+                          <label for="kw-create-split-mode">분할 방식</label>
+                          <select id="kw-create-split-mode">
+                            <option value="paragraph">문단 (빈 줄 기준)</option>
+                            <option value="line">한 줄씩</option>
+                            <option value="heading">헤딩 기준 (#)</option>
+                          </select>
+                          <button type="button" class="btn btn-primary" id="kw-create-btn-run-split">자동 생성</button>
+                        </div>
+                        <div class="form-group">
+                          <label>문서 내용 (청크 분할 대상)</label>
+                          <div id="kw-create-source-text" class="chunk-source-text" aria-label="문서 내용">파일을 선택하면 내용이 여기 표시됩니다.</div>
+                        </div>
+                      </div>
+                      <div id="kw-create-step1-empty" class="chunk-create-empty step1-empty">왼쪽 목록에서 파일을 선택하세요.</div>
+                    </main>
+                  </div>
+                </div>
+
+                <!-- 2단계 패널 -->
+                <div id="kw-create-step2-panel" class="chunk-create-panel" data-step="2" style="display: none">
+                  <div class="chunk-create-row step2-row">
+                    <aside class="chunk-create-left step2-left" id="kw-create-step2-left">
+                      <div class="step2-controls chunk-create-panel-area">
+                        <h4>선택</h4>
+                        <div class="chunk-create-toolbar">
+                          <button type="button" class="btn btn-small" id="kw-create-btn-select-all">전체 선택</button>
+                          <button type="button" class="btn btn-small" id="kw-create-btn-select-none">전체 해제</button>
+                          <span id="kw-create-temp-selected-count" class="chunk-create-count">0개 선택</span>
+                        </div>
+                        <h4>병합</h4>
+                        <div class="chunk-create-merge-toolbar">
+                          <button type="button" class="btn btn-small" id="kw-create-btn-merge-selected">선택한 청크 병합</button>
+                        </div>
+                        <div class="chunk-create-merge-toolbar">
+                          <span class="chunk-create-merge-label">헤딩 레벨</span>
+                          <select id="kw-create-merge-heading-level" class="chunk-create-merge-select">
+                            <option value="">선택...</option>
+                            <option value="1"># (H1)</option>
+                            <option value="2">## (H2)</option>
+                            <option value="3">### (H3)</option>
+                          </select>
+                          <button type="button" class="btn btn-small" id="kw-create-btn-merge-by-heading">적용</button>
+                        </div>
+                        <h4>청크 목록</h4>
+                        <p class="form-hint">등록할 항목을 선택한 뒤 「3단계 이동」을 누르세요.</p>
+                      </div>
+                    </aside>
+                    <main class="chunk-create-right step2-right">
+                      <h4>분할된 청크 목록</h4>
+                      <div class="step2-list-header">
+                        <button type="button" class="btn btn-primary" id="kw-create-btn-go-step3">선택한 청크로 3단계 이동</button>
+                      </div>
+                      <div class="chunk-create-temp-list chunk-create-panel-area" id="kw-create-temp-chunk-list">
+                        <!-- 체크박스 + 미리보기 목록 -->
+                      </div>
+                      <div class="chunk-create-step-actions">
+                        <button type="button" class="btn btn-small" id="kw-create-btn-back-to-step1">← 1단계로</button>
+                      </div>
+                    </main>
+                  </div>
+                </div>
+
+                <!-- 3단계 패널 -->
+                <div id="kw-create-step3-panel" class="chunk-create-panel" data-step="3" style="display: none">
+                  <div class="chunk-create-row">
+                    <aside class="chunk-create-left step3-left">
+                      <h4>등록 방식</h4>
+                      <div class="chunk-create-panel-area">
+                        <div class="step3-segmented form-group" role="group" aria-label="등록 방식">
+                          <label class="step3-segmented-label">
+                            <input type="radio" name="kw-create-doc-target" value="new" id="kw-create-doc-target-new" checked />
+                            <span>새로운 청크로 등록</span>
+                          </label>
+                          <label class="step3-segmented-label">
+                            <input type="radio" name="kw-create-doc-target" value="existing" id="kw-create-doc-target-existing" />
+                            <span>기존 문서에 청크 추가</span>
+                          </label>
+                        </div>
+                        <div id="kw-create-doc-target-new-fields" class="doc-target-fields">
+                          <p class="form-hint" id="kw-create-new-doc-hint">입력한 경로·이름은 <strong>DB에서 문서를 구분하는 값</strong>입니다. 선택한 청크가 이 문서에 등록됩니다.</p>
+                          <p class="form-hint form-hint-warning">실제 brain/, docs/ 스토리지 파일은 수정·덮어쓰기되지 않습니다.</p>
+                        </div>
+                        <div id="kw-create-doc-target-existing-fields" class="doc-target-fields" style="display: none">
+                          <div class="form-group">
+                            <label>등록할 문서 선택</label>
+                            <select id="kw-create-existing-doc-select">
+                              <option value="">문서를 선택하세요...</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    </aside>
+                    <main class="chunk-create-right step3-right">
+                      <h4>문서 정보</h4>
+                      <div class="chunk-create-panel-area">
+                        <div class="form-group">
+                          <label>문서 경로 (DB용 file_path)</label>
+                          <input type="text" id="kw-create-new-doc-file-path" placeholder="brain/projects/my-project/note.md" />
+                        </div>
+                        <div class="form-group">
+                          <label>문서 이름 (DB용 file_name)</label>
+                          <input type="text" id="kw-create-new-doc-file-name" placeholder="note.md" />
+                        </div>
+                        <div class="chunk-create-step-actions">
+                          <button type="button" class="btn btn-small" id="kw-create-btn-back-to-step2">← 2단계로</button>
+                          <button type="button" class="btn btn-primary" id="kw-create-btn-register">선택한 청크 등록</button>
+                          <button type="button" class="btn btn-success" id="kw-create-btn-quick-approve">⚡ 빠른 승인</button>
+                        </div>
+                      </div>
+                    </main>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="tab-approval" class="kw-tab-panel approval-layout" data-tab="approval" style="display:none">
+              <!-- 좌측: 청크 목록 -->
+              <div class="approval-left">
+                <div class="admin-panel">
+                  <h3>✅ 청크 승인 센터</h3>
+                  <div class="approval-toolbar">
+                    <div class="approval-status-filters">
+                      <button class="status-filter-btn active" data-status="draft">📝 대기 중</button>
+                      <button class="status-filter-btn" data-status="approved">✅ 승인됨</button>
+                      <button class="status-filter-btn" data-status="rejected">❌ 거절됨</button>
+                    </div>
+                  </div>
+                  <div class="kw-bulk-toolbar" id="kw-approval-bulk-toolbar" style="display:none">
+                    <span class="kw-bulk-toolbar-count" id="kw-approval-selected-count">0개 선택</span>
+                    <div class="kw-bulk-toolbar-actions">
+                      <button type="button" class="btn btn-small" id="kw-approval-btn-select-all">전체 선택</button>
+                      <button type="button" class="btn btn-small" id="kw-approval-btn-deselect-all">선택 해제</button>
+                      <button type="button" class="btn btn-success btn-small" id="kw-approval-btn-approve-selected">선택 승인</button>
+                    </div>
+                  </div>
+                  <div class="approval-toolbar" style="margin-top: 12px;">
+                    <button type="button" class="btn btn-success btn-small" id="kw-approval-btn-approve-all">전체 승인</button>
+                    <button type="button" class="btn btn-primary btn-small" id="kw-approval-btn-approve-and-label">전체 승인+라벨</button>
+                  </div>
+                  <p class="approval-hint">전체 승인: 현재 목록의 대기 중 청크를 한 번에 승인합니다. 전체 승인+라벨: 승인 후 관리 탭으로 이동합니다.</p>
+                  <div id="kw-approval-chunk-list" class="approval-chunk-list">
+                    <div class="loading">청크 목록을 불러오는 중...</div>
+                  </div>
+                  <div id="pagination-controls" class="approval-pagination" style="display: none">
+                    <div class="approval-pagination-inner">
+                      <div class="approval-per-page-row">
+                        <label for="items-per-page" class="approval-per-page-label">페이지당 항목:</label>
+                        <select id="items-per-page" class="approval-per-page-select">
+                          <option value="10">10</option>
+                          <option value="20" selected>20</option>
+                          <option value="50">50</option>
+                          <option value="100">100</option>
+                        </select>
+                      </div>
+                      <div id="pagination-info" class="approval-pagination-info"></div>
+                      <div id="pagination-buttons" class="approval-pagination-buttons"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 우측: 청크 상세 -->
+              <div class="approval-right">
+                <div class="admin-panel approval-detail-panel">
+                  <h3>📄 청크 상세</h3>
+                  <div id="kw-approval-detail-body" class="approval-detail-body" aria-hidden="true">
+                    <div class="approval-detail-placeholder" id="kw-approval-detail-placeholder">청크를 선택하면 상세 내용, 현재 라벨, AI 라벨 추천이 여기에 표시됩니다.</div>
+                    <div id="kw-approval-detail-content" class="approval-detail-content" style="display: none"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="tab-manage" class="kw-tab-panel chunk-labels-layout" data-tab="manage" style="display:none">
+              <!-- 좌측: 청크 목록 -->
+              <div class="chunk-labels-left">
+                <div class="admin-panel">
+                  <h3>📋 청크 목록</h3>
+                  <div class="form-group">
+                    <input type="text" id="kw-manage-chunk-search" placeholder="청크 검색..." />
+                  </div>
+                  <div class="kw-bulk-toolbar" id="kw-manage-bulk-toolbar" style="display:none">
+                    <span class="kw-bulk-toolbar-count" id="kw-manage-selected-count">0개 선택</span>
+                    <div class="kw-bulk-toolbar-actions">
+                      <button type="button" class="btn btn-small" id="kw-manage-btn-select-all-chunks">전체 선택</button>
+                      <button type="button" class="btn btn-small" id="kw-manage-btn-deselect-all-chunks">선택 해제</button>
+                      <button type="button" class="btn btn-primary btn-small" id="kw-manage-btn-bulk-add-labels">선택 청크에 라벨 추가</button>
+                    </div>
+                  </div>
+                  <div id="kw-manage-bulk-status" class="kw-hint" style="color: #2563eb; font-weight: 600;"></div>
+                  <div class="chunk-list" id="kw-manage-chunk-list">
+                    <div class="loading">청크 목록을 불러오는 중...</div>
+                  </div>
+                  <div id="pagination-controls" class="chunk-labels-pagination" style="display: none">
+                    <div class="chunk-labels-pagination-inner">
+                      <div class="chunk-labels-per-page-row">
+                        <label for="items-per-page" class="chunk-labels-per-page-label">페이지당 항목:</label>
+                        <select id="items-per-page" class="chunk-labels-per-page-select">
+                          <option value="10">10</option>
+                          <option value="20" selected>20</option>
+                          <option value="50">50</option>
+                          <option value="100">100</option>
+                        </select>
+                      </div>
+                      <div id="pagination-info" class="chunk-labels-pagination-info"></div>
+                      <div id="pagination-buttons" class="chunk-labels-pagination-buttons"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 우측: 라벨 관리 -->
+              <div class="chunk-labels-right">
+                <div class="admin-panel chunk-labels-section" id="kw-manage-labels-section">
+                  <h3>📝 선택된 청크</h3>
+                  <div class="chunk-labels-add-block">
+                    <!-- 위: 라벨 선택 (좌: 분류, 우: 목록) -->
+                    <div class="label-picker-block">
+                      <h4>라벨 선택</h4>
+                      <div class="label-picker-row">
+                        <aside class="label-picker-filter">
+                          <span class="label-picker-filter-title">라벨 분류</span>
+                          <button type="button" class="label-filter-btn active" data-type="">전체</button>
+                          <button type="button" class="label-filter-btn" data-type="project_phase">프로젝트 단계</button>
+                          <button type="button" class="label-filter-btn" data-type="role">역할</button>
+                          <button type="button" class="label-filter-btn" data-type="domain">도메인</button>
+                          <button type="button" class="label-filter-btn" data-type="importance">중요도</button>
+                          <button type="button" class="label-filter-btn" data-type="keyword">키워드</button>
+                        </aside>
+                        <div class="label-picker-main">
+                          <div class="label-picker-toolbar">
+                            <button type="button" class="btn btn-small" onclick="labelManager.selectAllLabelsInPicker()">전체 선택</button>
+                            <button type="button" class="btn btn-small" onclick="labelManager.selectSimilarLabelsInPicker()">유사선택</button>
+                            <button type="button" class="btn btn-small" onclick="labelManager.deselectAllLabelsInPicker()">선택 해제</button>
+                            <button type="button" class="btn btn-primary btn-small" onclick="labelManager.addSelectedLabelsToChunk()">선택된 항목 라벨 추가</button>
+                          </div>
+                          <div id="kw-manage-label-picker-list" class="label-picker-list"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- 아래: 청크내 연결된 라벨 -->
+                    <div class="chunk-linked-labels-block">
+                      <h4>청크내 연결된 라벨</h4>
+                      <div id="kw-manage-current-labels" class="current-labels-wrap"></div>
+                    </div>
+                  </div>
+                  <div class="chunk-content-block">
+                    <h4>청크 내용</h4>
+                    <div class="chunk-content-ai-row">
+                      <button type="button" class="btn btn-primary btn-small" id="kw-manage-btn-ai-suggest">AI 키워드·라벨 추천</button>
+                      <span id="kw-manage-ai-status" class="ai-suggest-status"></span>
+                    </div>
+                    <div id="kw-manage-ai-suggestions" class="ai-label-suggestions" style="display: none"></div>
+                    <div id="kw-manage-ai-new-keywords-wrap" class="ai-new-keywords-wrap" style="display: none">
+                      <h5 class="ai-new-keywords-title">새 키워드 (라벨로 등록 가능)</h5>
+                      <div id="kw-manage-ai-new-keywords" class="ai-new-keywords"></div>
+                    </div>
+                    <div id="kw-manage-current-chunk-info" class="chunk-labels-current-info" aria-hidden="true"></div>
+                    <div id="kw-manage-chunk-content" class="chunk-content-body"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 공통 스크립트 -->
+    <script src="/static/js/components/layout-component.js"></script>
+    <script src="/static/js/components/header-component.js"></script>
+    <script src="/static/js/admin/admin-common.js"></script>
+    <script src="/static/js/components/utils.js"></script>
+    <script src="/static/js/components/pagination-component.js"></script>
+    <!-- 기존 API + 클래스 재사용 -->
+    <script src="/static/js/admin/chunk-approval-api.js"></script>
+    <script src="/static/js/admin/chunk-approval-manager.js"></script>
+    <script src="/static/js/admin/label-manager-api.js"></script>
+    <script src="/static/js/admin/label-manager.js"></script>
+    <!-- 신규 탭 모듈 -->
+    <script src="/static/js/admin/kw-tab-create.js"></script>
+    <script src="/static/js/admin/kw-tab-approval.js"></script>
+    <script src="/static/js/admin/kw-tab-manage.js"></script>
+    <!-- 메인 워크플로우 -->
+    <script src="/static/js/admin/knowledge-workflow.js"></script>
+  </body>
+</html>

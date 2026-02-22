@@ -12,8 +12,8 @@ def _chinese_ratio(text: str) -> float:
     return cjk_count / len(text)
 
 
-# 허용 문자: 한글, 영어, 숫자, 공백, 하이픈, 점, 슬래시, 언더스코어
-_ALLOWED_CHARS_RE = re.compile(r"^[가-힣a-zA-Z0-9\s\-\./_]+$")
+# 허용 문자: 한글, 영어, 숫자, 공백, 하이픈, 점, 슬래시, 언더스코어, +, #, &, @
+_ALLOWED_CHARS_RE = re.compile(r"^[가-힣a-zA-Z0-9\s\-\./_+#&@]+$")
 
 
 def _contains_only_allowed(text: str) -> bool:
@@ -27,8 +27,8 @@ def _clean_disallowed_chars(text: str) -> str:
     """허용되지 않는 문자(중국어, 일본어, 키릴 등)를 제거하고 정리."""
     if not text:
         return ""
-    # 허용: 한글, 영어, 숫자, 공백, 하이픈, 점, 슬래시, 언더스코어
-    cleaned = re.sub(r"[^가-힣a-zA-Z0-9\s\-\./_]", "", text)
+    # 허용: 한글, 영어, 숫자, 공백, 하이픈, 점, 슬래시, 언더스코어, +, #, &, @
+    cleaned = re.sub(r"[^가-힣a-zA-Z0-9\s\-\./_+#&@]", "", text)
     # 연속 공백 정리
     cleaned = re.sub(r"\s+", " ", cleaned).strip()
     return cleaned
@@ -43,18 +43,32 @@ def _is_garbled_keyword(text: str) -> bool:
     규칙: 한 단어 안에서 한글 뒤에 소문자 영어가 바로 붙거나,
           소문자 영어 뒤에 한글이 바로 붙으면 garbled로 판단.
           (대문자 약어 조합은 허용: 'UI디자이너', 'QA분석가')
+
+    FIX-4: 한글→영문 3자 이상이면 허용 (예: '화성Mars' 같은 정상 키워드)
     """
     if not text:
         return False
+
     # 한글 바로 뒤에 소문자 영어 (예: 김chi, 초flex)
-    if re.search(r"[가-힣][a-z]", text):
-        return True
+    # 단, 한글→영문 3자 이상이면 허용
+    hangul_to_english = re.findall(r"[가-힣]+[a-z]+", text)
+    for match in hangul_to_english:
+        # 영문 부분이 3자 이상이면 정상으로 간주
+        english_part = re.search(r"[a-z]+$", match)
+        if english_part and len(english_part.group()) < 3:
+            return True
+
     # 소문자 영어 바로 뒤에 한글 (예: kontrol → 아님, 이건 순수 영어)
     # 단, 공백으로 구분된 건 허용 ("backend 개발자")
     # 한 토큰 내에서만 검사
     for token in text.split():
-        if re.search(r"[a-z][가-힣]", token):
-            return True
+        english_to_hangul = re.findall(r"[a-z]+[가-힣]+", token)
+        for match in english_to_hangul:
+            # 영문 부분이 3자 이상이면 정상으로 간주
+            english_part = re.search(r"^[a-z]+", match)
+            if english_part and len(english_part.group()) < 3:
+                return True
+
     return False
 
 

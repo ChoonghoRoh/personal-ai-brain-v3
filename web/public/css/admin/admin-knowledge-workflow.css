@@ -1,0 +1,229 @@
+/* 지식 워크플로우 통합 페이지 - 탭 기반 레이아웃 */
+
+/* 컨테이너 전체 폭 */
+.kw-container.admin-container {
+  grid-template-columns: 1fr;
+  max-width: none;
+}
+
+.kw-container .admin-panel {
+  grid-column: 1;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* ── 탭 바 ── */
+.kw-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 0;
+  border-bottom: 2px solid #e5e7eb;
+  position: relative;
+}
+
+.kw-tab {
+  padding: 14px 28px;
+  font-size: 14px;
+  font-weight: 500;
+  background: #f9fafb;
+  color: #6b7280;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  flex: 1;
+  text-align: center;
+  min-width: 0;
+}
+
+.kw-tab:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.kw-tab.active {
+  background: #fff;
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+  font-weight: 600;
+}
+
+/* ── 탭 콘텐츠 ── */
+.kw-tab-content {
+  padding: 24px 0;
+  min-height: 480px;
+}
+
+.kw-tab-panel {
+  display: none;
+}
+
+.kw-tab-panel.active {
+  display: block;
+}
+
+/* ── 다중 선택 툴바 (Task 19-4-3, 19-4-4용) ── */
+.kw-bulk-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.kw-bulk-toolbar-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #92400e;
+  margin-right: 8px;
+}
+
+.kw-bulk-toolbar-count {
+  font-size: 13px;
+  color: #78350f;
+}
+
+.kw-bulk-toolbar-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+/* ── 체크박스 열 (테이블/리스트용) ── */
+.kw-checkbox-col {
+  width: 40px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kw-checkbox-col input[type="checkbox"] {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
+/* ── 반응형: 모바일에서 탭 스크롤 ── */
+@media (max-width: 640px) {
+  .kw-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .kw-tab {
+    flex: 0 0 auto;
+    min-width: 120px;
+    padding: 12px 20px;
+    font-size: 13px;
+  }
+
+  .kw-tab-content {
+    padding: 16px 0;
+    min-height: 360px;
+  }
+
+  .kw-bulk-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .kw-bulk-toolbar-actions {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+/* ── 공통 유틸리티 ── */
+.kw-empty-state {
+  color: #9ca3af;
+  font-size: 14px;
+  padding: 32px;
+  text-align: center;
+  border: 1px dashed #e5e7eb;
+  border-radius: 8px;
+  background: #fafafa;
+  margin: 24px 0;
+}
+
+.kw-loading {
+  color: #6b7280;
+  font-size: 14px;
+  padding: 24px;
+  text-align: center;
+}
+
+.kw-section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 12px 0;
+}
+
+.kw-hint {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+/* ── 알림 배너 (탭 간 이벤트 알림용) ── */
+.kw-notification {
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.kw-notification.success {
+  background: #d1fae5;
+  border: 1px solid #10b981;
+  color: #065f46;
+}
+
+.kw-notification.info {
+  background: #dbeafe;
+  border: 1px solid #2563eb;
+  color: #1e40af;
+}
+
+.kw-notification.warning {
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+}
+
+.kw-notification-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.kw-notification-message {
+  flex: 1;
+}
+
+.kw-notification-close {
+  padding: 4px 8px;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 16px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.kw-notification-close:hover {
+  opacity: 1;
+}
