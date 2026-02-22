@@ -20,7 +20,14 @@
 
 ---
 
-## 2. 필독 체크리스트
+## 2. 실행 단위 로딩 (권장)
+
+테스트 **1회** 시작 시 (선택) 해당 task-X-Y-N.md·phase-X-Y-status.md, 본 문서 테스트 명령.  
+➜ [3-workflow.md §9.5](../3-workflow.md#95-실행-단위-컨텍스트-권장-로딩-집합)
+
+---
+
+## 3. 필독 체크리스트
 
 - [ ] [0-entrypoint.md](../0-entrypoint.md) § 코어 개념
 - [ ] 본 문서 — 테스트 명령·판정 규칙
@@ -32,9 +39,9 @@
 
 ---
 
-## 3. 테스트 명령
+## 4. 테스트 명령
 
-### 3.1 백엔드 테스트 (pytest)
+### 4.1 백엔드 테스트 (pytest)
 
 > **필수**: 테스트 실행 전 반드시 `clear` 명령으로 터미널을 초기화한 뒤 진행합니다.
 
@@ -44,7 +51,7 @@ clear && pytest tests/ --cov=backend --cov-report=term-missing
 clear && pytest tests/test_admin_api.py -v
 ```
 
-### 3.2 프론트엔드 테스트 (Playwright)
+### 4.2 프론트엔드 테스트 (Playwright)
 
 > **필수**: 테스트 실행 전 반드시 `clear` 명령으로 터미널을 초기화한 뒤 진행합니다.
 
@@ -56,7 +63,7 @@ clear && npx playwright test e2e/smoke.spec.js
 
 ---
 
-## 4. 판정 기준
+## 5. 판정 기준
 
 | 조건 | 판정 |
 |------|------|
@@ -67,7 +74,7 @@ clear && npx playwright test e2e/smoke.spec.js
 
 ---
 
-## 5. 참조 문서
+## 6. 참조 문서
 
 | 문서 | 용도 | 경로 |
 |------|------|------|

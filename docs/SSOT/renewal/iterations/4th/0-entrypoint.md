@@ -139,8 +139,8 @@
 ```
 Team Lead (메인 세션)
   ├── planner (Plan/opus) — 계획 수립
-  ├── backend-dev (general-purpose/sonnet) — 백엔드 구현
-  ├── frontend-dev (general-purpose/sonnet) — 프론트엔드 구현
+  ├── backend-dev (general-purpose/sonnet, **리팩토링·큰 업무 시 opus**) — 백엔드 구현
+  ├── frontend-dev (general-purpose/sonnet, **리팩토링·큰 업무 시 opus**) — 프론트엔드 구현
   ├── verifier (Explore/sonnet) — 코드 리뷰
   └── tester (Bash/sonnet) — 테스트 실행
 ```
@@ -219,6 +219,13 @@ Phase 실행 중 (PLANNING~E2E_REPORT)
 | **FRESH-6** | 팀원 역할별 로딩 | 각 팀원은 스폰 시 해당 **ROLES/*.md** 1개만 로딩 (본 4th 세트 내) |
 | **FRESH-7** | 컨텍스트 복구 시 SSOT 리로드 필수 | 컨텍스트 압축·세션 중단 후 복구 시, 작업 재개 전 반드시 SSOT 리로드 + status.md 확인 + 팀 재구성. [3-workflow.md §9](3-workflow.md#9-컨텍스트-복구-프로토콜) 참조. **팀 없이 코드 수정 절대 금지** |
 | **FRESH-8** | 리팩토링 레지스트리 관리 | ① Phase X-Y 완료(DONE) 시 코드 스캔→500줄 초과 파일을 레지스트리에 등록. ② 새 Master Plan 작성 시 레지스트리 읽기→700줄 초과 있으면 리팩토링 sub-phase 자동 편성. [3-workflow.md §10](3-workflow.md#10-코드-유지관리-리팩토링) 참조 |
+| **FRESH-9** | 실행 단위 컨텍스트 (권장) | 역할별 "작업 1회"(계획/Task/검증) 시작 시 [3-workflow.md §9.5](3-workflow.md#95-실행-단위-컨텍스트-권장-로딩-집합) 권장 로딩 집합 준수 시 토큰·품질 일관성 향상. planner·verifier 우선 적용 권장 |
+
+**토큰·컨텍스트 관리 요약**:
+- **세션/Phase**: FRESH-1(Team Lead 0→1→2→3), FRESH-6(팀원 스폰 시 ROLES/*.md 1개).
+- **Phase 간**: Phase Chain 시 [§8](3-workflow.md#8-phase-chain-자동-순차-실행) CHAIN-2 — `/clear`로 토큰 초기화.
+- **복구**: FRESH-7 + [3-workflow.md §9](3-workflow.md#9-컨텍스트-복구-프로토콜) (압축·세션 중단·토큰 초과 후 필수 절차).
+- **작업 1회 단위**: FRESH-9 — [§9.5 실행 단위 컨텍스트](3-workflow.md#95-실행-단위-컨텍스트-권장-로딩-집합) 권장 로딩 집합.
 
 **로딩 순서 (Team Lead)**:
 ```
@@ -321,7 +328,7 @@ Phase 시작
   │
   ▼
 [2] Task tool(team_name, name, subagent_type, model) × N  ← 팀원 스폰
-  │   예: planner (Plan/opus), backend-dev, frontend-dev (general-purpose/sonnet),
+  │   예: planner (Plan/opus), backend-dev, frontend-dev (general-purpose/sonnet; 리팩토링·큰 업무 시 opus),
   │       verifier (Explore/sonnet), tester (Bash/sonnet)
   │
   ▼

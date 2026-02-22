@@ -54,6 +54,8 @@
 | **Verifier** | `QA.md` | `verifier` | `Explore` | sonnet | ❌ | — (코드 리뷰) |
 | **Tester** | `QA.md` | `tester` | `Bash` | sonnet | ❌ | — (테스트 실행) |
 
+*backend-dev·frontend-dev: 리팩토링 관련 큰 업무 시 **opus 최신 버전** 사용 (§7.2).*
+
 **코드 편집 원칙**:
 - Team Lead는 코드를 직접 수정하지 않는다 (조율·판정·통신 허브)
 - `backend-dev`는 `backend/`, `tests/`, `scripts/` 편집
@@ -378,8 +380,9 @@ ELSE IF (High 이슈만 존재):
 | **작업 완료** | 팀원이 `TaskUpdate(status: "completed")` 후 Team Lead에게 SendMessage |
 | **병렬 실행** | 독립적인 Task는 여러 팀원이 동시 수행 (BE + FE 병렬) |
 | **팀 해산** | Phase 완료 후 `SendMessage(type: "shutdown_request")` → `TeamDelete` |
-| **모델 선택** | planner: `opus` (계획 수립), 나머지 팀원: `sonnet` (구현/검증/테스트) |
+| **모델 선택** | planner: `opus` (계획 수립), 나머지 팀원: `sonnet` (구현/검증/테스트). **예외**: 리팩토링 관련 큰 업무 시 backend-dev·frontend-dev는 **opus 최신 버전** 사용 (§7.2) |
 | **지연 스폰** | verifier, tester는 VERIFYING/TESTING 단계 진입 시 스폰 (비용 절감) |
+| **실행 단위 컨텍스트** | 역할별 "작업 1회" 시작 시 [3-workflow.md §9.5](3-workflow.md#95-실행-단위-컨텍스트-권장-로딩-집합) 권장 로딩 집합 준수 시 토큰·품질 일관성 향상 (권장) |
 
 ### 7.1 도메인별 편집 원칙
 
@@ -390,6 +393,16 @@ ELSE IF (High 이슈만 존재):
 | **EDIT-3** | 상태·SSOT 쓰기 독점 | `phase-X-Y-status.md`와 SSOT 문서는 Team Lead만 수정 가능 |
 | **EDIT-4** | 읽기 전용 팀원 | `verifier`(Explore)와 `planner`(Plan)는 파일 쓰기/편집 권한 없음 |
 | **EDIT-5** | 동시 편집 금지 | 동일 파일을 두 팀원이 동시에 편집하지 않음. [FS] Task는 BE 파트 → FE 파트 순차 진행 |
+
+### 7.2 리팩토링·큰 업무 시 모델 선택 (backend-dev, frontend-dev)
+
+| 조건 | 모델 | 적용 |
+|------|------|------|
+| **일반 구현** (기능 개발, 소규모 수정) | sonnet | 기본 |
+| **리팩토링 관련 큰 업무** | **opus 최신 버전** | backend-dev, frontend-dev 스폰 시 해당 Task/Phase에 한해 적용 |
+
+**리팩토링 관련 큰 업무**의 예: phase-X-refactoring Phase, 500줄 초과 파일 분리·구조 개편, 다수 파일 연쇄 수정이 필요한 리팩토링 Task, Master Plan에서 "리팩토링(대규모)"로 명시된 작업.  
+Team Lead는 해당 Task/Phase 시작 시 `Task tool` 스폰에 `model: "opus"`를 지정하여 backend-dev 또는 frontend-dev를 호출한다.
 
 ---
 

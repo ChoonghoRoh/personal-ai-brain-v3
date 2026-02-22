@@ -361,6 +361,21 @@ docs/phases/
 | team_name 존재하나 팀원 응답 없음 | TeamDelete → 새 팀 생성 |
 | tasks/ 문서 미생성 상태 | 산출물 먼저 생성 후 BUILDING 진입 |
 
+### 9.5 실행 단위 컨텍스트 (권장 로딩 집합)
+
+**목적**: 역할별로 "작업 1회"(계획 1회, Task 1건, 검증 1회 등) 실행 시 **권장 로딩 집합**을 정의하여 토큰 예측·품질 일관성·재현성을 높인다.  
+**성격**: 권장(필수 아님). 도구가 강제 로딩하지 않더라도 팀원 스폰 시 프롬프트 또는 Task 지시에 포함할 수 있다.
+
+| 역할 | 실행 단위 | 권장 로딩 집합 (순서) | 비고 |
+|------|-----------|------------------------|------|
+| **planner** | 계획 분석 1회 | ① phase-X-Y-status.md (ssot_version, current_state, blockers) ② master-plan·navigation(Team Lead 전달분) ③ [ROLES/planner.md](ROLES/planner.md) §2 SSOT·리스크 ④ [GUIDES/planner-work-guide.md](GUIDES/planner-work-guide.md) | 입력 고정적 → 실행 단위 로딩 효과 큼 |
+| **backend-dev** | Task 1건 구현 | ① task-X-Y-N.md (해당 Task) ② [2-architecture.md](2-architecture.md) § 백엔드 ③ (선택) phase-X-Y-status.md | Task별 범위 상이 → 최소 집합만 고정 |
+| **frontend-dev** | Task 1건 구현 | ① task-X-Y-N.md (해당 Task) ② [2-architecture.md](2-architecture.md) § 프론트엔드 ③ (선택) phase-X-Y-status.md | 동일 |
+| **verifier** | 검증 1회 | ① 변경된 파일 목록(Team Lead 전달) 및 해당 파일 내용 ② 해당 task-X-Y-N.md (완료 기준) ③ [ROLES/verifier.md](ROLES/verifier.md) §3 검증 기준 | 판정 일관성·감사 추적에 유리 |
+| **tester** | 테스트 1회 | ① (선택) 해당 task-X-Y-N.md·phase-X-Y-status.md ② [ROLES/tester.md](ROLES/tester.md) 테스트 명령 | CLI 위주라 문서 로딩은 보조 |
+
+**적용**: Team Lead가 SendMessage로 Task/검증 요청 시 위 권장 로딩 집합을 안내하거나, 팀원이 작업 시작 전 스스로 해당 문서를 읽어 컨텍스트에 포함할 수 있다.
+
 ---
 
 ## 10. 코드 유지관리 (리팩토링)
@@ -424,5 +439,5 @@ docs/phases/
 
 **문서 관리**:
 - 버전: 6.0-renewal-4th (4th iteration)
-- 최종 수정: 2026-02-21
-- 단독 사용: 본 iterations/4th 세트만으로 SSOT 완결 (Phase Chain 포함)
+- 최종 수정: 2026-02-22
+- 단독 사용: 본 iterations/4th 세트만으로 SSOT 완결 (Phase Chain·컨텍스트 §9·§9.5 포함)

@@ -4,6 +4,8 @@
 **릴리스 날짜**: 2026-02-17  
 **전략**: **단독 사용** — claude/ 의존 제거, 4th 세트만으로 SSOT 완결
 
+**최근 변경 (2026-02-22)**: 토큰·컨텍스트 관리 정비 — 3-workflow §9.5 실행 단위 컨텍스트(권장 로딩 집합) 추가, 0-entrypoint FRESH-9·토큰·컨텍스트 요약 추가, 1-project §7·ROLES 5종·GUIDES 5종 반영. **리팩토링·큰 업무 시 모델**: 1-project §7.2 추가 — backend-dev·frontend-dev 리팩토링 관련 큰 업무 시 opus 최신 버전 사용, 0-entrypoint·ROLES(backend-dev, frontend-dev) 반영.
+
 ---
 
 ## 릴리스 정보
@@ -24,7 +26,7 @@
 | `0-entrypoint.md` | 진입점, 코어 개념, 팀 라이프사이클(§3.9), FRESH 규칙, 상세 링크는 4th 내부만 |
 | `1-project.md` | 프로젝트·팀 구성·역할, 참조는 4th 내부만 |
 | `2-architecture.md` | 인프라·BE/FE 구조·DB, 참조는 4th 내부만 |
-| `3-workflow.md` | 상태 머신, ENTRYPOINT, 품질 게이트, **Phase Chain (§8)** |
+| `3-workflow.md` | 상태 머신, ENTRYPOINT, 품질 게이트, **Phase Chain (§8)**, **컨텍스트 복구 (§9)**, **실행 단위 컨텍스트 (§9.5)** |
 | `PERSONA/LEADER.md` | Team Lead 페르소나 (docs/rules/role → 4th 통합) |
 | `PERSONA/BACKEND.md` | Backend Developer 페르소나 |
 | `PERSONA/FRONTEND.md` | Frontend Developer 페르소나 |
